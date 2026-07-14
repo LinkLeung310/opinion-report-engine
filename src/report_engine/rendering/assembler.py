@@ -1,0 +1,117 @@
+"""Assemble ordered section results into Markdown and frontend metadata."""
+
+from __future__ import annotations
+
+from datetime import datetime
+
+from report_engine.config import ReportConfig, SectionId
+from report_engine.domain.results import ReportResult, SectionResult, SectionStatus
+
+
+class ReportAssembler:
+    def assemble(
+        self,
+        config: ReportConfig,
+        report_id: str,
+        sections: tuple[SectionResult, ...],
+        generated_at: datetime,
+    ) -> ReportResult:
+        title = f"{config.topic.event_title}舆情分析报告"
+        markdown = self._markdown(config, title, sections)
+        meta = self._meta(config, report_id, title, sections, generated_at)
+        return ReportResult(
+            report_id=report_id,
+            config=config,
+            sections=sections,
+            generated_at=generated_at,
+            markdown=markdown,
+            meta=meta,
+        )
+
+    @staticmethod
+    def _markdown(
+        config: ReportConfig,
+        title: str,
+        sections: tuple[SectionResult, ...],
+    ) -> str:
+        date_range = config.date_range
+        parts = [
+            f"# {title}",
+            (
+                f"> 监测范围：{date_range.from_date.isoformat()} 至 "
+                f"{date_range.to_date.isoformat()}（Asia/Shanghai）"
+            ),
+        ]
+        for section in sections:
+            parts.append(section.markdown.strip())
+            parts.extend(
+                f"![{section.section_id.value} chart](charts/{chart})"
+                for chart in section.charts
+            )
+        parts.append(
+            "_方法说明：报告数字由固定 SQL 与 Python 计算；模型仅基于批准的事实与证据撰写文字。_"
+        )
+        return "\n\n".join(parts) + "\n"
+
+    def _meta(
+        self,
+        config: ReportConfig,
+        report_id: str,
+        title: str,
+        sections: tuple[SectionResult, ...],
+        generated_at: datetime,
+    ) -> dict:
+        status_counts = {
+            status: sum(section.status is status for section in sections)
+            for status in SectionStatus
+        }
+        failures = [
+            {
+                "sectionId": section.section_id.value,
+                "stage": section.failure.stage.value,
+                "message": section.failure.message,
+            }
+            for section in sections
+            if section.failure is not None
+        ]
+        return {
+            "id": report_id,
+            "title": title,
+            "reportType": config.report_type.value,
+            "language": config.language.value,
+            "topic": config.topic.display_name,
+            "dateRange": {
+                "from": config.date_range.from_date.isoformat(),
+                "to": config.date_range.to_date.isoformat(),
+            },
+            "sections": len(sections),
+            "charts": sum(len(section.charts) for section in sections),
+            "stats": self._summary_stats(sections),
+            "file": f"/reports/{report_id}.pdf",
+            "generatedAt": generated_at.isoformat(),
+            "generation": {
+                "requested": len(sections),
+                "complete": status_counts[SectionStatus.COMPLETE],
+                "noData": status_counts[SectionStatus.NO_DATA],
+                "failed": status_counts[SectionStatus.FAILED],
+            },
+            "failures": failures,
+        }
+
+    @staticmethod
+    def _summary_stats(sections: tuple[SectionResult, ...]) -> dict:
+        metrics = next(
+            (
+                section.facts
+                for section in sections
+                if section.section_id is SectionId.METRICS and section.facts is not None
+            ),
+            None,
+        )
+        if metrics is None:
+            return {"articles": 0, "negativeRatio": "暂无", "peakDay": "暂无"}
+        return {
+            "articles": metrics.get("articles").raw_value,
+            "negativeRatio": metrics.get("negativeRatio").formatted_value,
+            "peakDay": metrics.get("peakDay").formatted_value,
+        }
