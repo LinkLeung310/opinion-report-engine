@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol
 
 from report_engine.config import Language, SectionId
@@ -22,12 +23,27 @@ class MetricsRepository(Protocol):
     def fetch(self, scope: AnalysisScope) -> MetricsSnapshot: ...
 
 
+class MetricsChartBuilder(Protocol):
+    def build(self, snapshot: MetricsSnapshot, output_directory: Path) -> Path: ...
+
+
 class MetricsSectionRunner:
-    def __init__(self, repository: MetricsRepository, narrator: Narrator) -> None:
+    def __init__(
+        self,
+        repository: MetricsRepository,
+        chart_builder: MetricsChartBuilder,
+        narrator: Narrator,
+    ) -> None:
         self._repository = repository
+        self._chart_builder = chart_builder
         self._narrator = narrator
 
-    def run(self, scope: AnalysisScope, language: Language) -> SectionResult:
+    def run(
+        self,
+        scope: AnalysisScope,
+        language: Language,
+        chart_directory: Path,
+    ) -> SectionResult:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
@@ -42,6 +58,15 @@ class MetricsSectionRunner:
 
         facts = snapshot.to_fact_set()
         try:
+            chart_path = self._chart_builder.build(snapshot, chart_directory)
+        except Exception:
+            return self._failed(
+                FailureStage.CHART,
+                "Metrics chart rendering failed",
+                facts=facts,
+            )
+
+        try:
             markdown = self._narrator.narrate(
                 NarrationRequest(
                     section_id=SectionId.METRICS,
@@ -51,13 +76,19 @@ class MetricsSectionRunner:
                 )
             )
         except Exception:
-            return self._failed(FailureStage.LLM, "Metrics narration failed", facts=facts)
+            return self._failed(
+                FailureStage.LLM,
+                "Metrics narration failed",
+                facts=facts,
+                charts=(chart_path.name,),
+            )
 
         return SectionResult(
             section_id=SectionId.METRICS,
             status=SectionStatus.COMPLETE,
             markdown=markdown,
             facts=facts,
+            charts=(chart_path.name,),
         )
 
     @staticmethod
@@ -65,11 +96,13 @@ class MetricsSectionRunner:
         stage: FailureStage,
         message: str,
         facts: FactSet | None = None,
+        charts: tuple[str, ...] = (),
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.METRICS,
             status=SectionStatus.FAILED,
             markdown="## 全网数据概览\n\n本章节生成失败，请稍后重试。",
             facts=facts,
+            charts=charts,
             failure=SectionFailure(stage=stage, message=message),
         )
