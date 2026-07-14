@@ -6,7 +6,14 @@ from datetime import date
 from enum import StrEnum
 from typing import Any, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ModelWrapValidatorHandler,
+    PrivateAttr,
+    model_validator,
+)
 
 
 class ContractModel(BaseModel):
@@ -71,23 +78,40 @@ class SectionConfig(ContractModel):
 
 
 class ReportConfig(ContractModel):
+    _normalization_warnings: tuple[str, ...] = PrivateAttr(default=())
+
     report_type: ReportType = Field(alias="reportType")
     language: Language
     topic: TopicConfig
     date_range: DateRange = Field(alias="dateRange")
     sections: list[SectionConfig]
 
-    @field_validator("report_type", mode="before")
+    @model_validator(mode="wrap")
     @classmethod
-    def fallback_unknown_report_type(cls, value: object) -> object:
-        """Apply the brief's explicit fallback for unknown report-type strings."""
+    def fallback_unknown_report_type(
+        cls,
+        data: object,
+        handler: ModelWrapValidatorHandler[Self],
+    ) -> Self:
+        """Apply and retain a warning for the brief's report-type fallback."""
 
-        if isinstance(value, str) and value not in {
-            ReportType.CSUITE.value,
-            ReportType.PR.value,
-        }:
-            return ReportType.CSUITE
-        return value
+        fell_back = False
+        if isinstance(data, dict):
+            field_name = "reportType" if "reportType" in data else "report_type"
+            value = data.get(field_name)
+            if isinstance(value, str) and value not in {
+                ReportType.CSUITE.value,
+                ReportType.PR.value,
+            }:
+                data = {**data, field_name: ReportType.CSUITE.value}
+                fell_back = True
+
+        model = handler(data)
+        if fell_back:
+            model._normalization_warnings = (
+                "Unknown reportType was normalized to csuite",
+            )
+        return model
 
     @model_validator(mode="after")
     def validate_sections(self) -> Self:
@@ -97,3 +121,9 @@ class ReportConfig(ContractModel):
         if not any(section.enabled for section in self.sections):
             raise ValueError("sections must enable at least one section")
         return self
+
+    @property
+    def normalization_warnings(self) -> tuple[str, ...]:
+        """Internal diagnostics that do not alter the public JSON contract."""
+
+        return self._normalization_warnings
