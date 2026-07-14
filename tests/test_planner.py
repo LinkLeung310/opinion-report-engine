@@ -29,7 +29,9 @@ def test_scope_includes_the_complete_end_date() -> None:
 
     assert plan.scope.from_date.isoformat() == "2026-03-17"
     assert plan.scope.to_date.isoformat() == "2026-03-23"
-    assert plan.scope.to_exclusive.isoformat() == "2026-03-24"
+    assert plan.scope.from_inclusive.isoformat() == "2026-03-17T00:00:00+08:00"
+    assert plan.scope.to_exclusive.isoformat() == "2026-03-24T00:00:00+08:00"
+    assert plan.scope.timezone_name == "Asia/Shanghai"
 
 
 def test_missing_special_input_fails_only_that_planned_section() -> None:
