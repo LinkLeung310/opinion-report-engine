@@ -16,4 +16,4 @@ The `main` branch is kept runnable. Feature work is developed on `codex/*` branc
 - [Architecture](docs/architecture.md)
 - [Requirements traceability](docs/requirements-traceability.md)
 - [Framework audit](docs/framework-audit.md)
-- [Open questions and assumptions](docs/open-questions.md)
+- [Product and architecture decisions](docs/design-decisions.md)

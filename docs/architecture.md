@@ -1,8 +1,8 @@
 # Architecture Framework v1
 
-This framework covers every binding requirement in the assignment brief. The exact 19
-section definitions, SQL, fixture schema, frontend metadata type, and gold-report CSS
-remain pending repository inspection; they are intentionally not invented here.
+This framework covers every binding requirement in the assignment brief. The project
+owns the unspecified product-design space and will define the 19-section specification,
+fixture schema, examples, metadata extensions, report CSS, and catalog behavior.
 
 ## 1. Objective
 
@@ -59,7 +59,7 @@ n8n (optional) -> FastAPI submit/status/download endpoints
    array order exactly. The registry never auto-adds a public section.
 5. Validate global config before querying. Validate section-specific inputs at the
    section boundary: a missing `responseDate`, `comparisonTag`, or `notes` marks only
-   that section missing.
+   that section failed and returns an actionable user prompt.
 6. Produce an ordered `ExecutionPlan`.
 
 ### Phase B: run sections
@@ -82,10 +82,10 @@ are rendered or their configured order.
 
 ### Phase C: assemble and publish
 
-1. Assemble complete and visible-missing section fragments in config order.
+1. Assemble complete, no-data, and visible-failed section fragments in config order.
 2. Render deterministic report metadata and data-quality notes.
 3. Produce Markdown, HTML, A4 PDF, charts, and `meta.json` in a temporary directory.
-4. Write visible missing-section fragments and failure metadata for section failures.
+4. Write visible no-data/failed fragments and failure metadata for section failures.
 5. Atomically rename the temporary directory to `out/{id}` only after required bundle
    files exist.
 
@@ -134,7 +134,7 @@ model-invented examples.
 ### `SectionResult`
 
 ```text
-status: complete | missing
+status: complete | no_data | failed
 markdown
 charts
 facts
@@ -175,23 +175,24 @@ Narrator protocol
 
 | Failure | Section result | Report behavior |
 |---|---|---|
-| Valid query with no rows | `missing` | Render a visible data-missing section and continue |
-| Database/query error | `missing` | Record failure in metadata and continue |
-| Chart error | `missing` | Render a visible missing section and continue |
-| LLM timeout/error | `missing` | Render a visible missing section and continue |
-| Invalid LLM fact reference | `missing` | Reject unsafe narrative, record failure, continue |
+| Valid query with no rows | `no_data` | Render a valid no-data finding and continue |
+| Database/query error | `failed` | Record failure in metadata and continue |
+| Chart error | `failed` | Render a visible failed-section note and continue |
+| LLM timeout/error | `failed` | Render a visible failed-section note and continue |
+| Invalid LLM fact reference | `failed` | Reject unsafe narrative, record failure, continue |
 | PDF render error | report-level failure | Preserve Markdown and diagnostics |
 
 Only failures that prevent the required bundle contract are report-level failures.
 
-`meta.json` keeps the required frontend fields and adds a `failures` array when one or
-more sections are missing. Each entry contains `sectionId`, `stage`, and a safe message;
+`meta.json` keeps the required frontend fields and adds a `generation` summary plus a
+`failures` array when one or more sections fail. Each entry contains `sectionId`,
+`stage`, and a safe message;
 it never exposes DSNs, API keys, or raw provider errors. If the existing frontend type
 already defines an equivalent field, that field takes precedence.
 
 ## 8. Technology choices
 
-Initial choices, subject to fixture and repository inspection:
+Technology choices:
 
 - Python 3.12+
 - Pydantic for config and result models
@@ -286,30 +287,27 @@ Manual/Webhook Trigger
 
 This workflow demonstrates integration but does not replace the required CLI or API.
 
-## 11. Adopted decisions pending repository inspection
+## 11. Adopted product decisions
 
-These choices are deliberately explicit. They may be replaced only where supplied
-fixtures, frontend types, or `02-report-spec.md` require a different behavior.
+These choices are deliberately explicit and form part of the project's product design.
 
 1. **Date range:** interpret dates as `[from 00:00, to + 1 day 00:00)` in the fixture
    database timezone. This avoids excluding records on the final day.
 2. **Unknown sections:** reject them as a global configuration error. The brief only
    grants a fallback for an unknown `reportType`, not for unknown section IDs.
 3. **Section-specific input:** a known enabled section without its required input
-   renders as missing; it does not invalidate unrelated sections.
+   renders as failed with an actionable prompt; it does not invalidate unrelated sections.
 4. **Report IDs:** use a human-readable base (`{tag}-{to-date}`), allocating a `-2`,
    `-3`, ... suffix when the same report is generated concurrently or repeatedly. A
    task ID remains separate from a report ID in M3.
-5. **LLM attempts:** default to one dispatched model request per section in M1/M2, which
-   satisfies the measurable call cap. Retry infrastructure is injectable but disabled
-   until the conflicting retry requirement is clarified.
-6. **Generated-report list:** the engine publishes a complete bundle and `meta.json`;
-   updating a deployed frontend's `index.json` remains a publishing/integration concern
-   unless the provided repository explicitly places it inside this module.
+5. **LLM attempts:** one narrator operation per section, with at most one bounded
+   transport retry for transient failures; attempts are recorded in diagnostics.
+6. **Generated-report list:** after atomic bundle publication, `CatalogPublisher`
+   atomically updates `index.json` so the report appears immediately.
 7. **Metadata failures:** append the safe `failures` array described above; preserve all
    existing required `ReportMeta` fields.
 8. **Empty charts directory:** always create `charts/`, including when every enabled
-   section is missing, so the bundle shape remains stable.
+   section is no-data or failed, so the bundle shape remains stable.
 
 ## 12. Verification strategy
 
