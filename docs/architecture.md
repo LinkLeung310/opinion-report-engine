@@ -1,4 +1,8 @@
-# Architecture (Draft)
+# Architecture Framework v1
+
+This framework covers every binding requirement in the assignment brief. The exact 19
+section definitions, SQL, fixture schema, frontend metadata type, and gold-report CSS
+remain pending repository inspection; they are intentionally not invented here.
 
 ## 1. Objective
 
@@ -51,8 +55,11 @@ n8n (optional) -> FastAPI submit/status/download endpoints
 2. Normalize the report type according to the documented fallback rule.
 3. Build one immutable `AnalysisScope` from tag, display name, event title, date range,
    language, and audience.
-4. Resolve enabled section IDs through the `SectionRegistry`.
-5. Validate required section inputs before querying data.
+4. Resolve enabled section IDs through the `SectionRegistry`, preserving their original
+   array order exactly. The registry never auto-adds a public section.
+5. Validate global config before querying. Validate section-specific inputs at the
+   section boundary: a missing `responseDate`, `comparisonTag`, or `notes` marks only
+   that section missing.
 6. Produce an ordered `ExecutionPlan`.
 
 ### Phase B: run sections
@@ -64,19 +71,22 @@ fetch fixed SQL
   -> calculate typed facts
   -> select evidence from real titles/summaries
   -> build deterministic charts
-  -> request at most one logical narration
+  -> request at most one model narration
   -> validate narrative
   -> return SectionResult
 ```
 
 The engine catches errors at the section boundary and continues with the next section.
+Internal shared calculations may be cached, but must never change which public sections
+are rendered or their configured order.
 
 ### Phase C: assemble and publish
 
-1. Assemble successful, partial, no-data, and failed section fragments in config order.
+1. Assemble complete and visible-missing section fragments in config order.
 2. Render deterministic report metadata and data-quality notes.
 3. Produce Markdown, HTML, A4 PDF, charts, and `meta.json` in a temporary directory.
-4. Atomically rename the temporary directory to `out/{id}` only after required bundle
+4. Write visible missing-section fragments and failure metadata for section failures.
+5. Atomically rename the temporary directory to `out/{id}` only after required bundle
    files exist.
 
 ## 5. Core domain models
@@ -93,7 +103,7 @@ Declarative registration metadata:
 ```text
 id
 required inputs
-dependencies
+internal data requirements
 fetcher
 calculator
 chart builder
@@ -124,13 +134,13 @@ model-invented examples.
 ### `SectionResult`
 
 ```text
-status: success | partial | no_data | failed
+status: complete | missing
 markdown
 charts
 facts
 evidence references
 warnings
-error metadata
+failure stage and safe error metadata
 ```
 
 ### `ReportResult`
@@ -148,10 +158,10 @@ The LLM receives:
 - bounded real evidence;
 - explicit output constraints.
 
-The LLM does not receive raw responsibility for aggregation. To reduce numeric
-hallucination, prompts may require fact references such as `[[fact:negative_ratio]]`.
-The renderer replaces these tokens with code-calculated values. Unknown fact tokens or
-unapproved numeric claims fail section validation.
+The LLM does not receive raw responsibility for aggregation. Prompts use approved fact
+references such as `[[fact:negative_ratio]]`; the renderer replaces them with
+code-calculated values. Unknown references or unapproved numeric claims fail section
+validation. Real quoted source text is carried as evidence and is not altered.
 
 The LLM interface is injectable:
 
@@ -165,14 +175,19 @@ Narrator protocol
 
 | Failure | Section result | Report behavior |
 |---|---|---|
-| Valid query with no rows | `no_data` | Render a deterministic no-data note |
-| Database/query error | `failed` | Record error and continue |
-| Chart error | `partial` | Keep facts and narrative where available |
-| LLM timeout/error | `partial` | Keep deterministic facts and charts |
-| Invalid LLM fact reference | `partial` or `failed` | Reject unsafe narrative |
+| Valid query with no rows | `missing` | Render a visible data-missing section and continue |
+| Database/query error | `missing` | Record failure in metadata and continue |
+| Chart error | `missing` | Render a visible missing section and continue |
+| LLM timeout/error | `missing` | Render a visible missing section and continue |
+| Invalid LLM fact reference | `missing` | Reject unsafe narrative, record failure, continue |
 | PDF render error | report-level failure | Preserve Markdown and diagnostics |
 
 Only failures that prevent the required bundle contract are report-level failures.
+
+`meta.json` keeps the required frontend fields and adds a `failures` array when one or
+more sections are missing. Each entry contains `sectionId`, `stage`, and a safe message;
+it never exposes DSNs, API keys, or raw provider errors. If the existing frontend type
+already defines an equivalent field, that field takes precedence.
 
 ## 8. Technology choices
 
@@ -188,8 +203,10 @@ Initial choices, subject to fixture and repository inspection:
 - FastAPI with an in-process executor for M3
 - pytest, with PostgreSQL fixture integration tests and an LLM stub
 
-The synchronous engine remains framework-independent. M3 can run generation jobs in a
-bounded thread/process executor without rewriting section code as async code.
+The bundled CJK font must be registered both by matplotlib and by the report CSS; a
+browser-installed font is not a cross-platform guarantee. The synchronous engine remains
+framework-independent. M3 can run generation jobs in a bounded thread/process executor
+without rewriting section code as async code.
 
 ## 9. Proposed package boundaries
 
@@ -268,3 +285,43 @@ Manual/Webhook Trigger
 ```
 
 This workflow demonstrates integration but does not replace the required CLI or API.
+
+## 11. Adopted decisions pending repository inspection
+
+These choices are deliberately explicit. They may be replaced only where supplied
+fixtures, frontend types, or `02-report-spec.md` require a different behavior.
+
+1. **Date range:** interpret dates as `[from 00:00, to + 1 day 00:00)` in the fixture
+   database timezone. This avoids excluding records on the final day.
+2. **Unknown sections:** reject them as a global configuration error. The brief only
+   grants a fallback for an unknown `reportType`, not for unknown section IDs.
+3. **Section-specific input:** a known enabled section without its required input
+   renders as missing; it does not invalidate unrelated sections.
+4. **Report IDs:** use a human-readable base (`{tag}-{to-date}`), allocating a `-2`,
+   `-3`, ... suffix when the same report is generated concurrently or repeatedly. A
+   task ID remains separate from a report ID in M3.
+5. **LLM attempts:** default to one dispatched model request per section in M1/M2, which
+   satisfies the measurable call cap. Retry infrastructure is injectable but disabled
+   until the conflicting retry requirement is clarified.
+6. **Generated-report list:** the engine publishes a complete bundle and `meta.json`;
+   updating a deployed frontend's `index.json` remains a publishing/integration concern
+   unless the provided repository explicitly places it inside this module.
+7. **Metadata failures:** append the safe `failures` array described above; preserve all
+   existing required `ReportMeta` fields.
+8. **Empty charts directory:** always create `charts/`, including when every enabled
+   section is missing, so the bundle shape remains stable.
+
+## 12. Verification strategy
+
+1. **Config/planner unit tests**: fallback report type, enabled section filtering,
+   ordering, and section-scoped validation.
+2. **SQL integration tests**: start the supplied fixture PostgreSQL and assert each
+   section's facts against direct parameterized SQL results.
+3. **LLM contract tests**: use `StubNarrator` to make output deterministic and assert
+   one request at most per rendered section.
+4. **Failure-isolation tests**: inject empty SQL, query, chart, and LLM failures; assert
+   remaining sections, bundle files, and `meta.json` failure details survive.
+5. **Bundle/PDF tests**: assert A4 PDF, all referenced chart files, 150 dpi images, and
+   a visual-render smoke check against the supplied gold report.
+6. **M3 tests**: submit two concurrent jobs, assert separate paths/statuses, restart the
+   service, and download already completed bundles.

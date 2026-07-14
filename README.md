@@ -12,5 +12,8 @@ The `main` branch is kept runnable. Feature work is developed on `codex/*` branc
 
 ## Design documents
 
+- [最终版框架（中文）](docs/final-framework.zh-CN.md)
 - [Architecture](docs/architecture.md)
+- [Requirements traceability](docs/requirements-traceability.md)
+- [Framework audit](docs/framework-audit.md)
 - [Open questions and assumptions](docs/open-questions.md)

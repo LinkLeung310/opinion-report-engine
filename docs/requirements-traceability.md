@@ -1,0 +1,41 @@
+# 任务书需求追踪矩阵
+
+来源：[开发任务书](source/2026-07-11-舆情报告生成模块%20%E2%80%94%20开发任务书.md)。本表将任务书的每一条约束映射为实现责任与可验证证据；没有证据的事项不视为完成。
+
+| ID | 任务书要求 | 框架中的落实方式 | 最终验证证据 | 状态 |
+|---|---|---|---|---|
+| R-01 | `report-config.json` 是唯一输入；未知 `reportType` 按 `csuite` | `ReportConfig` 解析器；标准化后的类型进入执行计划 | 配置单测：未知类型生成 `csuite` 计划 | 已设计 |
+| R-02 | 19 个章节按 `sections` 数组顺序渲染 | `SectionRegistry` 仅解析 enabled ID，并严格保留配置顺序 | 任意乱序配置的 markdown 章节顺序测试 | 待 `02-report-spec.md` |
+| R-03 | 输出必须是 `out/{id}` bundle，含 md/pdf/charts/meta | `BundleWriter` 在临时目录完成后原子发布 | CLI 端到端测试检查目录及必需文件 | 已设计 |
+| R-04 | `meta.json` 与前端类型对应，包含统计、数量、路径、时间 | `ReportMetadata`；实际渲染章节和图表数由结果汇总；失败时附加安全的 `failures` 数组 | JSON schema/前端类型兼容性测试 | 待前端类型确认字段名 |
+| R-05 | 每个启用章节：固定 SQL → 图表 → 一次 LLM 叙述 | 公共 Section 生命周期；SQL 不由 LLM 生成 | Stub 记录每节调用次数；集成测试验证 SQL | 已设计 |
+| R-06 | 整份报告 LLM 调用不超过章节数 | 每个成功取数的章节至多发起一条模型请求 | Call recorder 断言 `calls <= enabled_sections` | 与重试条款冲突，待确认 |
+| R-07 | 所有数字由代码计算且可追溯 | `FactSet` 统一承载数值、格式和查询/计算来源；图表和模板共用它 | 将 markdown 数字与 fixture SQL 结果逐项比对 | 已设计 |
+| R-08 | 主要观点来自真实摘要、标题 | `EvidenceSet` 保留文章 ID、标题、摘要和平台；prompt 只接收这些证据 | Stub prompt 测试及证据引用测试 | 已设计 |
+| R-09 | SQL 空结果/LLM 超时只影响该章节，章节标注缺失，失败写入 meta | Section 边界捕获异常，输出 visible `missing` fragment 和失败详情 | 故障注入测试：其它章节仍生成，meta 有失败记录 | 已设计；meta 字段待确认 |
+| R-10 | `.env` 提供 PG/LLM 全部配置，仓库无真实凭据 | `Settings` 仅读取 `PG_DSN`、`LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL`；提交 `.env.example` | secret 扫描、缺配置启动错误测试 | 已设计 |
+| R-11 | PDF 跨平台、A4、中文、分页参照 gold report | HTML/CSS + Playwright Chromium；同一项目内 CJK 字体供 HTML 和图表使用 | Linux/Windows 渲染冒烟、页图视觉检查 | 待 gold-report CSS |
+| R-12 | 图表 150 dpi、指定情感颜色、白底、隐藏上/右框、标题表达洞察 | `ChartTheme` 作为唯一图表入口 | 图表元数据/像素检查和视觉金样检查 | 已设计 |
+| R-13 | M1：一条 CLI 命令；csuite 7 章和 pr 11 章中文报告 | Typer CLI 调用同一 `ReportApplicationService` | 两份 examples 配置的完整端到端测试 | 待 examples/fixtures |
+| R-14 | M2：19 章节、三类额外输入、英文、任意组合 | Registry + section-scoped input validation + locale prompt/template | 参数化组合和英文 fixture 测试 | 待 `02-report-spec.md` |
+| R-15 | M3：提交、状态、下载；两个任务互不干扰；重启后成品可下载 | FastAPI + 进程内队列 + 独立 bundle 目录 + 磁盘状态恢复 | 两任务并发及重启后的下载测试 | 已设计 |
+| R-16 | 30 分钟开发环境：fixtures Docker、`.env`、样例 SQL、gold report | `README` 的 bootstrap 命令、健康检查和示例命令 | 干净环境计时跑通 | 待仓库资产 |
+| R-17 | 小步提交；SQL 集成测试；LLM stub；不静默绕过规范 | `main` 稳定、功能分支；测试分层；open-question/PR 假设记录 | Git 历史、测试报告、PR 描述 | 已启用 |
+| R-18 | 前端发布、生产部署和数据源切换不在范围 | 核心不写部署逻辑；仅保持 API/Bundle 契约 | 范围审查 | 已设计 |
+| R-19 | 最终报告应出现在读取 `index.json` 的既有列表 | 先确认现有仓库的发布/index 写入职责；核心始终输出可发布 bundle/meta | 与现有报告列表的集成测试或明确交接说明 | 待仓库代码确认 |
+
+## 已采用的临时判断
+
+- 日期范围使用包含起始日、不包含结束日次日零点的区间，避免漏掉结束日数据。
+- 未知章节 ID 是全局配置错误；未知 `reportType` 依任务书回退为 `csuite`。
+- 已知章节缺少其专属输入时，只生成该章节的缺失提示。
+- M1/M2 每章节默认只发起一次模型请求；重试能力保留为可配置接口，待澄清后开启。
+- 同一 tag/截止日期的重复生成使用带序号的报告 ID，M3 的任务 ID 与报告 ID 分离。
+- 核心模块产出 bundle 和 `meta.json`；`index.json` 更新只有在现有仓库明确归属本模块时才实现。
+
+## 架构约束补充
+
+- 公共章节之间不能因“依赖”而被自动加入报告。用户配置决定可见章节和顺序。
+- 数据复用应通过内部 `AnalysisCache` 或分析块完成，不得改变 `sections` 的可见结果。
+- 全局配置错误（例如无法解析的日期）可以拒绝任务；仅某章节缺少专属输入时，必须将该章节标为缺失并继续。
+- `index.json` 的更新责任、`meta.json` 的失败字段和产物 ID 规则需要以现有前端/样例为准，不能凭空实现。
