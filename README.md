@@ -9,3 +9,8 @@ Development follows the assignment milestones:
 - M3: FastAPI report jobs and persistent downloads
 
 The `main` branch is kept runnable. Feature work is developed on `codex/*` branches.
+
+## Design documents
+
+- [Architecture](docs/architecture.md)
+- [Open questions and assumptions](docs/open-questions.md)
