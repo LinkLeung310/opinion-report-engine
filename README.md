@@ -13,7 +13,13 @@ The `main` branch is kept runnable. Feature work is developed on `codex/*` branc
 ## Design documents
 
 - [最终版框架（中文）](docs/final-framework.zh-CN.md)
+- [Section and SQL specification](docs/02-report-spec.md)
 - [Architecture](docs/architecture.md)
 - [Requirements traceability](docs/requirements-traceability.md)
 - [Framework audit](docs/framework-audit.md)
 - [Product and architecture decisions](docs/design-decisions.md)
+
+## Local data fixture
+
+The repository supplies a synthetic PostgreSQL dataset so every reported number can be
+verified without production access. See [fixtures/README.md](fixtures/README.md).

@@ -18,6 +18,8 @@ contracts is treated as product-design space owned by this project.
 | D-11 | PDF is primary; ZIP bundle is secondary | Executives get one-click reading and reviewers retain full artifacts |
 | D-12 | CatalogPublisher atomically updates `index.json` after bundle publication | A completed report immediately appears in report history |
 | D-13 | n8n visualizes API submission, polling, and completion | Workflow observability improves without replacing required code |
+| D-14 | Fixture timestamps and report day boundaries use `Asia/Shanghai` | Chinese event dates include the complete calendar day consistently |
+| D-15 | The repository supplies a synthetic, deterministic fixture dataset | Reviewers can verify every number without exposing production or claiming fabricated records are real |
 
 The repository itself will define the 19-section specification, fixtures, examples,
 gold-report HTML/CSS, metadata extensions, and catalog publishing behavior.
