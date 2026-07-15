@@ -1,14 +1,14 @@
 # Current Project State
 
 最后核对日期：2026-07-15  
-最后实现基线：`main@0f514d1`（PR #1，first runnable metrics report slice）
+最后实现基线：`main@286e6dc`（PR #2，durable project guardrails；功能基线仍为 PR #1 的 metrics slice）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；目前只有 `metrics` 章节完成端到端实现。
+- 19 个章节 ID 注册表；目前 `verdict` 与 `metrics` 两章完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -20,9 +20,11 @@
 
 ## 当前证据
 
-- PR #1 已用 merge commit 合并：`0f514d1`。
-- main 分支 CI：47 项测试通过。
+- PR #1 的 metrics slice 已用 merge commit 合并：`0f514d1`。
+- PR #2 的仓库治理已用 merge commit 合并：`286e6dc`。
+- `main@286e6dc` 的 GitHub CI：47 项测试通过。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
+- 当前分支真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - wheel 已确认包含 CLI、PDF renderer 和中文字体。
 
 测试数量会随实现增长；恢复工作时必须重新运行并记录最新结果，不得把 47 当成永久常量。
@@ -46,7 +48,7 @@
 
 ## 当前范围约束
 
-context recovery 治理已经写入仓库。用户已明确要求暂不开始 RAG；本治理切片没有新增 embedding、vector store、retriever、模型调用或 n8n 节点。
+context recovery 治理已经合并。当前分支 `codex/m1-verdict-section` 已接通 M1 `verdict` 的固定 SQL、确定性 Python 判断、fault-isolated runner、stub narrator、CLI 和 bundle 流水线。用户要求暂不开始 RAG，因此本阶段没有新增 embedding、vector store、retriever 或 n8n 节点。
 
 ## 治理切片验证
 
@@ -56,6 +58,26 @@ context recovery 治理已经写入仓库。用户已明确要求暂不开始 RA
 
 以后每个小步必须在本文件记录本次结果，并重新执行与该小步相称的两轮检查；历史结果不能替代当前验证。
 
+## M1 `verdict` 规格切片
+
+- `docs/02-report-spec.md` 已写明输入、固定查询计划、Python 派生事实、证据边界、图表决定、一次 narrator 约束和 no-data/failed 行为。
+- D-18 记录透明风险/走势阈值由 Python 计算，并解释不生成重复装饰图表的决定。
+- 第一次检查（静态规格）：必需规格字段、`verdict.v1` 查询标识和 narrator 次数约束检查通过；`git diff --check` 通过。
+- 第二次检查（可执行回归）：健康的 fixture PostgreSQL 下完整 pytest 为 47 项通过；项目虚拟环境 `pip check` 无破损依赖。
+- 固定 `verdict.sql`、`PostgresVerdictRepository`、`VerdictSnapshot`、可追溯 `FactSet` 和透明风险/走势规则已实现。
+- SQL/计算小步第一次检查：Python 静态编译、SQL 五个绑定参数和 `git diff --check` 通过。
+- SQL/计算小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 58 项通过；`pip check` 无破损依赖。
+- fault-isolated `VerdictSectionRunner`、确定性中英文 stub 文本和运行时接线已实现；`verdict` 不产生重复图表。
+- runner 小步第一次检查：Python 静态编译、唯一 narrator 操作和 `git diff --check` 通过。
+- runner 小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 64 项通过；`pip check` 无破损依赖。
+- CLI 集成测试验证 `verdict`、`metrics` 严格按配置顺序渲染，2 章 complete、0 章 failed，并只统计 metrics 的 1 张有效图表。
+- 新增 `examples/report-config.verdict-metrics.json` 和 README 一命令复现路径；示例配置通过公共 `ReportConfig` 契约解析。
+- 实际 CLI 产物的 `meta.json` 为 12 篇、负面占比 58.3%、2 章 complete、0 章 failed，并按 D-14 修正为 Asia/Shanghai `+08:00` 生成时间。
+- PDF 通过 Poppler 检查为 A4 单页；最新页图人工复核无中文乱码、截断、重叠或图表颜色异常。
+- 分支最终第一次检查：示例配置契约、Python 静态编译和 `git diff --check` 通过。
+- 分支最终第二次检查：健康的 fixture PostgreSQL 下完整 pytest 为 64 项通过；`pip check` 无破损依赖。
+- `verdict` 的 stub 模式纵向切片已接通；真实 narrator 仍未实现，M1 默认 7/11 章仍未完成。
+
 ## 恢复清单
 
 1. 读取根目录 `AGENTS.md`。
@@ -64,9 +86,8 @@ context recovery 治理已经写入仓库。用户已明确要求暂不开始 RA
 4. 重新运行与下一目标相关的测试。
 5. 向用户报告已完成、未完成和任何冲突，再开始修改。
 
-## 下一阶段候选（尚未授权）
+## 当前阶段与下一步
 
-- 在独立分支实现真实 OpenAI-compatible narrator；或
-- 先为 `viewpoints` 编写完整 section spec，再实现可引用证据的 RAG 纵向切片。
-
-开始任一候选前都需要用户明确选择；不得因为它写在这里就自动扩大范围。
+- 当前分支已完成 `verdict` 规格、实现、真实 CLI bundle 与视觉验收；下一步发布 Draft PR，等待 CI 绿色后用 merge commit 合并。
+- 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
+- RAG 继续延期，不在当前 M1 `verdict` 阶段实现；n8n 保持 Draft，等待 M3 API。

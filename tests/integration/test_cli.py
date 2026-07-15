@@ -43,3 +43,49 @@ def test_cli_generates_a_complete_metrics_bundle(tmp_path, monkeypatch) -> None:
         "negativeRatio": "58.3%",
         "peakDay": "3/20",
     }
+
+
+def test_cli_generates_verdict_before_metrics_in_configured_order(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+
+    source = Path(__file__).parents[2] / "examples" / "report-config.metrics.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    raw["sections"] = [
+        {"id": "verdict", "enabled": True},
+        {"id": "metrics", "enabled": True},
+    ]
+    config = tmp_path / "report-config.verdict-metrics.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert markdown.index("## 核心结论") < markdown.index("## 全网数据概览")
+    assert "代码判定当前风险等级为高" in markdown
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generatedAt"].endswith("+08:00")
+    assert meta["generation"] == {
+        "requested": 2,
+        "complete": 2,
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == 1
