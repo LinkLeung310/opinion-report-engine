@@ -92,7 +92,7 @@ context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1
 ## 当前阶段与下一步
 
 - PR #4 已合并，`main@c35106f` 的独立 CI 已通过 76 项测试；当前分支 `codex/m1-platforms-section` 已从该绿色基线创建。
-- `platforms` 的规格与 D-20 已定义并通过两轮检查；下一小步实现固定 SQL、typed snapshot、可追溯 `FactSet` 和真实 fixture 集成测试，不接图表或 narrator。
+- `platforms` 的规格、D-20、固定 SQL、typed snapshot、可追溯 `FactSet` 和真实 fixture 集成测试已完成；下一小步实现双面板图表、fault-isolated runner、stub narrator 和运行时接线。
 - 分支建立/状态恢复第一次检查：工作区仅修改本状态文件，merge SHA、PR #4、新分支、未实现边界和 RAG 延期声明一致，`git diff --check` 通过。
 - 分支建立/状态恢复第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -127,3 +127,8 @@ context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1
 - 规格小步第一次检查：必需规格段、`platforms.v1`、一次 narrator、无 RAG 边界、D-20 和 `git diff --check` 全部通过。
 - 规格小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
 - fixture 口径预查确认 4 个平台、文章量 `[4, 4, 3, 1]`；微博与 B站并列量级第一，微博总互动 15,715 且负面文章 3 篇。该预查只校准规格，尚未构成 `platforms` 实现证据。
+- 固定 `platforms.sql`、`PostgresPlatformsRepository`、`PlatformRow`、`PlatformsSnapshot`、可追溯 leader/tie `FactSet` 和最多七平台加 `其他` 的确定性 display rows 已实现。
+- SQL/计算小步第一次检查：Python 静态编译、恰好三个 SQL 绑定参数、`git diff --check` 以及 platforms 单元/真实数据库专属测试 5 项通过。
+- SQL/计算小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 81 项通过；`pip check` 无破损依赖。
+- fixture 集成测试正式验证平台顺序 `微博、B站、新闻、知乎`、文章量 `[4, 4, 3, 1]`、负面文章 `[3, 2, 1, 1]`、互动 `[15,715, 6,610, 2,425, 1,420]`，并验证空话题返回空 snapshot。
+- 图表、runner、narrator、运行时和 CLI 尚未接入；本小步不构成完整 `platforms` 章节。

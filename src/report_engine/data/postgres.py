@@ -10,6 +10,7 @@ from psycopg.rows import dict_row
 
 from report_engine.domain.scope import AnalysisScope
 from report_engine.sections.metrics import MetricsSnapshot
+from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
 from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
 from report_engine.sections.verdict import VerdictSnapshot
 
@@ -25,6 +26,12 @@ VERDICT_SQL = (
 TREND_QUERY_ID = "trend.v1"
 TREND_SQL = (
     files("report_engine.data.queries").joinpath("trend.sql").read_text(encoding="utf-8")
+)
+PLATFORMS_QUERY_ID = "platforms.v1"
+PLATFORMS_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("platforms.sql")
+    .read_text(encoding="utf-8")
 )
 
 
@@ -122,4 +129,37 @@ class PostgresTrendRepository:
                 for row in rows
             ),
             query_id=TREND_QUERY_ID,
+        )
+
+
+class PostgresPlatformsRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> PlatformsSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(PLATFORMS_SQL, parameters)
+            rows = cursor.fetchall()
+
+        return PlatformsSnapshot(
+            rows=tuple(
+                PlatformRow(
+                    platform=row["platform"],
+                    article_count=row["article_count"],
+                    positive_articles=row["positive_articles"],
+                    neutral_articles=row["neutral_articles"],
+                    negative_articles=row["negative_articles"],
+                    likes=row["likes"],
+                    comments=row["comments"],
+                    shares=row["shares"],
+                    favorites=row["favorites"],
+                )
+                for row in rows
+            ),
+            query_id=PLATFORMS_QUERY_ID,
         )
