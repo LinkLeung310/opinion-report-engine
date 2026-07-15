@@ -19,6 +19,46 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.VERDICT:
+            if request.language is Language.EN:
+                risk = {"low": "low", "medium": "medium", "high": "high"}[
+                    values["riskLevel"]
+                ]
+                momentum = {
+                    "cooling": "cooling",
+                    "easing": "easing",
+                    "sustained": "remaining elevated",
+                }[values["momentum"]]
+                return (
+                    "## Executive verdict\n\n"
+                    f"The computed risk level is {risk}. Negative items account for "
+                    f"{values['negativeRatio']}; high-risk items represent "
+                    f"{values['highRiskNegativeRatio']} of negative coverage.\n\n"
+                    f"- Discussion peaks on {values['peakDay']} with "
+                    f"{values['peakArticles']} items.\n"
+                    f"- The final day records {values['finalDayArticles']} items, or "
+                    f"{values['latestVsPeakRatio']} of the peak; momentum is {momentum}."
+                )
+
+            risk = {"low": "低", "medium": "中", "high": "高"}[
+                values["riskLevel"]
+            ]
+            momentum = {
+                "cooling": "回落",
+                "easing": "缓和",
+                "sustained": "高位持续",
+            }[values["momentum"]]
+            return (
+                "## 核心结论\n\n"
+                f"代码判定当前风险等级为{risk}。负面内容占比为 "
+                f"{values['negativeRatio']}，其中高风险内容占全部负面内容的 "
+                f"{values['highRiskNegativeRatio']}。\n\n"
+                f"- 讨论于 {values['peakDay']} 达峰，峰值日共有 "
+                f"{values['peakArticles']} 篇内容。\n"
+                f"- 截止日共有 {values['finalDayArticles']} 篇，为峰值的 "
+                f"{values['latestVsPeakRatio']}，热度处于{momentum}状态。"
+            )
+
         if request.section_id is SectionId.METRICS:
             if request.language is Language.EN:
                 return (
