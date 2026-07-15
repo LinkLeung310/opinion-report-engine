@@ -1,7 +1,7 @@
 # Current Project State
 
 最后核对日期：2026-07-15  
-最后实现基线：`main@8c2381d`（PR #3，auditable executive verdict section）
+最后实现基线：`main@c35106f`（PR #4，auditable daily trend section）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
@@ -23,9 +23,11 @@
 - PR #1 的 metrics slice 已用 merge commit 合并：`0f514d1`。
 - PR #2 的仓库治理已用 merge commit 合并：`286e6dc`。
 - PR #3 的 verdict slice 已用 merge commit 合并：`8c2381d`。
-- `main@8c2381d` 的 GitHub CI：64 项测试通过。
+- PR #4 的 trend slice 已用 merge commit 合并：`c35106f`。
+- `main@c35106f` 的 GitHub CI：76 项测试通过。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
+- PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - wheel 已确认包含 CLI、PDF renderer 和中文字体。
 
 测试数量会随实现增长；恢复工作时必须重新运行并记录最新结果，不得把 47 当成永久常量。
@@ -49,7 +51,7 @@
 
 ## 当前范围约束
 
-context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-section` 已接通 M1 `trend` 的完整日期序列 SQL、确定性 Python 事实、堆叠图表、fault-isolated runner、stub narrator、CLI 和 bundle 流水线。用户要求暂不开始 RAG，因此本阶段没有新增 embedding、vector store、retriever 或 n8n 节点。
+context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1-platforms-section` 从绿色 `main@c35106f` 创建，准备定义 M1 `platforms` 的规格；尚未开始该章节实现。用户要求暂不开始 RAG，因此下一切片只处理固定 SQL、Python 事实、图表和 stub narrator，不新增 embedding、vector store、retriever 或 n8n 节点。
 
 ## 治理切片验证
 
@@ -89,7 +91,10 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 
 ## 当前阶段与下一步
 
-- 当前分支已完成 `trend` 规格、数据/计算层、堆叠图表、fault-isolated runner、stub narrator、应用接线和真实产物验收；下一步完成最终两轮检查后发布 Draft PR。
+- PR #4 已合并，`main@c35106f` 的独立 CI 已通过 76 项测试；当前分支 `codex/m1-platforms-section` 已从该绿色基线创建。
+- 下一小步仅扩展 `docs/02-report-spec.md`，定义 `platforms` 的输入、固定 SQL、Python 派生事实、图表、一次 narrator 和 no-data/failed 行为，再经两轮检查单独提交。
+- 分支建立/状态恢复第一次检查：工作区仅修改本状态文件，merge SHA、PR #4、新分支、未实现边界和 RAG 延期声明一致，`git diff --check` 通过。
+- 分支建立/状态恢复第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
 - RAG 继续延期，不在当前 M1 `trend` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
@@ -112,4 +117,4 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 - PDF 经 Poppler 验证为 A4 两页；两页逐页人工复核无中文乱码、截断、重叠、图例/轴标签异常或内容丢失。第二页保留完整趋势图并因此存在合理留白。
 - 分支最终第一次检查：三章节示例契约与中文字段、Python 静态编译、唯一 narrator 操作、旧评审路径清理和 `git diff --check` 全部通过。
 - 分支最终第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
-- 当前 stub 模式纵向切片和真实产物验收已完成；分支 Draft PR 尚未发布。
+- 当前 stub 模式纵向切片、真实产物验收、Draft PR、分支 CI、merge commit 和合并后 main CI 均已完成。
