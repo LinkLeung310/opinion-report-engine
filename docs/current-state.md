@@ -52,7 +52,7 @@
 
 ## 明确未完成
 
-- M1 未完成：中文 csuite 7 章与 PR 11 章均已具备 stub 模式实现；仍缺任务书指定文件名的两份标准默认配置及其精确 CLI/PDF 验收。
+- M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
 - M2 未开始：其余章节、3 类章节专属输入的完整行为、英文和任意组合未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
@@ -131,6 +131,12 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 - 任务书明确要求 `examples/report-config.csuite.json` 一条命令生成中文 csuite 七章报告，并要求 csuite 7 章与 pr 11 章两种默认配置均可生成；这两份文件名和章节数是本阶段的固定验收目标。
 - 两份配置必须使用同一公共 `ReportConfig` 契约和相同 fixture 话题/日期，不复制引擎代码；章节顺序采用已经记录的 csuite 七章与 PR 在其后追加四章的项目自主默认组合。
 - 本阶段只补配置、回归测试、README/追踪证据与真实 stub CLI/PDF 验收，不开始 M2、RAG、M3、真实模型调用或 n8n 修改。
+- `examples/report-config.csuite.json` 与 `examples/report-config.pr.json` 已创建；两份均保留完整 19 章及三个禁用专属输入形状，只分别启用严格有序的 7/11 章，`reportType` 分别为 `csuite`/`pr`。
+- 默认配置聚焦 5 项测试验证公共契约解析、19 ID 顺序、7/11 enabled 计划、三个禁用输入形状，以及两份配置各自生成完整有序 bundle；全部通过。
+- 实际标准 CLI 的 csuite 产物为 7 章 complete、0 章 failed、5 张图、A4 四页；PR 产物为 11 章 complete、0 章 failed、9 张图、A4 七页。两者 `meta.reportType`、章节数、图表文件数和 PDF 文件均与配置一致。
+- PR 默认产物 7 页与已逐页验收的 media-social 最终产物逐像素一致；csuite 前 3 页与同源 PR 前缀一致，第 4 页因报告在 risk 后结束而包含方法说明，单独复核无中文乱码、截断、重叠、图例遮挡或孤页。
+- 默认配置小步第一次检查：两份 JSON 可解析、各含完整 19 ID、执行计划严格为 7/11 章、`git diff --check` 和聚焦 5 项测试通过。
+- 默认配置小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 180 项通过；`pip check` 无破损依赖，两条标准 stub CLI 与 PDF 视觉验收通过。
 
 ## M1 `media-social` 阶段入口
 

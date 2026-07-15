@@ -1,0 +1,46 @@
+{
+  "reportType": "pr",
+  "language": "zh",
+  "topic": {
+    "tag": "bilibili-dislike",
+    "displayName": "B站猜你不喜欢算法调整",
+    "eventTitle": "B站猜你不喜欢算法调整事件"
+  },
+  "dateRange": {
+    "from": "2026-03-17",
+    "to": "2026-03-23"
+  },
+  "sections": [
+    {"id": "verdict", "enabled": true},
+    {"id": "metrics", "enabled": true},
+    {"id": "trend", "enabled": true},
+    {"id": "viewpoints", "enabled": true},
+    {"id": "platforms", "enabled": true},
+    {"id": "severity", "enabled": true},
+    {"id": "risk", "enabled": true},
+    {"id": "sentiment-evolution", "enabled": true},
+    {"id": "keywords", "enabled": true},
+    {"id": "engagement", "enabled": true},
+    {"id": "media-social", "enabled": true},
+    {"id": "timeline", "enabled": false},
+    {"id": "top-content", "enabled": false},
+    {"id": "negative-themes", "enabled": false},
+    {"id": "spread-path", "enabled": false},
+    {
+      "id": "response",
+      "enabled": false,
+      "input": {"responseDate": null}
+    },
+    {
+      "id": "benchmark",
+      "enabled": false,
+      "input": {"comparisonTag": null}
+    },
+    {
+      "id": "biz-impact",
+      "enabled": false,
+      "input": {"notes": null}
+    },
+    {"id": "recommendations", "enabled": false}
+  ]
+}
