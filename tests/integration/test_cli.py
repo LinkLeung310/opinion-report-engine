@@ -81,6 +81,7 @@ def test_cli_generates_verdict_before_metrics_in_configured_order(
     assert markdown.index("## 核心结论") < markdown.index("## 全网数据概览")
     assert "代码判定当前风险等级为高" in markdown
     meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generatedAt"].endswith("+08:00")
     assert meta["generation"] == {
         "requested": 2,
         "complete": 2,

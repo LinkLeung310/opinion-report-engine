@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from psycopg import Connection
 
@@ -20,6 +21,9 @@ from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.registry import default_registry
 from report_engine.sections.verdict_runner import VerdictSectionRunner
 from report_engine.storage.bundle import BundlePublisher
+
+
+REPORT_TIMEZONE = ZoneInfo("Asia/Shanghai")
 
 
 def build_report_service(
@@ -44,5 +48,5 @@ def build_report_service(
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),
         publisher=BundlePublisher(),
-        clock=lambda: datetime.now(UTC),
+        clock=lambda: datetime.now(REPORT_TIMEZONE),
     )

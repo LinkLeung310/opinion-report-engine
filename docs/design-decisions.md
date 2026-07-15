@@ -18,7 +18,7 @@ contracts is treated as product-design space owned by this project.
 | D-11 | PDF is primary; ZIP bundle is secondary | Executives get one-click reading and reviewers retain full artifacts |
 | D-12 | CatalogPublisher atomically updates `index.json` after bundle publication | A completed report immediately appears in report history |
 | D-13 | n8n visualizes API submission, polling, and completion | Workflow observability improves without replacing required code |
-| D-14 | Fixture timestamps and report day boundaries use `Asia/Shanghai` | Chinese event dates include the complete calendar day consistently |
+| D-14 | Fixture timestamps, report day boundaries, and `generatedAt` use `Asia/Shanghai` | Chinese event dates and report-history timestamps use one explicit local timezone |
 | D-15 | The repository supplies a synthetic, deterministic fixture dataset | Reviewers can verify every number without exposing production or claiming fabricated records are real |
 | D-16 | ReportLab renders the first A4 PDF bundle with an embedded Noto Sans SC font | Reviewers get reproducible Chinese PDFs without installing a browser or system font |
 | D-17 | Evidence-heavy sections may use Python-owned hybrid RAG after fixed SQL scope filtering, with validated Evidence ID citations | Qualitative findings remain relevant, diverse, testable, and traceable to real source records |
