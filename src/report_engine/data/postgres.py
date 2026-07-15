@@ -15,6 +15,10 @@ from report_engine.sections.risk import RiskSnapshot
 from report_engine.sections.severity import SeverityEvidenceRecord, SeveritySnapshot
 from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
 from report_engine.sections.verdict import VerdictSnapshot
+from report_engine.sections.viewpoints import (
+    ViewpointEvidenceRecord,
+    ViewpointsSnapshot,
+)
 
 
 METRICS_QUERY_ID = "metrics.v1"
@@ -44,6 +48,12 @@ SEVERITY_SQL = (
 RISK_QUERY_ID = "risk.v1"
 RISK_SQL = (
     files("report_engine.data.queries").joinpath("risk.sql").read_text(encoding="utf-8")
+)
+VIEWPOINTS_QUERY_ID = "viewpoints.v1"
+VIEWPOINTS_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("viewpoints.sql")
+    .read_text(encoding="utf-8")
 )
 
 
@@ -280,4 +290,51 @@ class PostgresRiskRepository:
             total_engagement=row["total_engagement"],
             negative_engagement=row["negative_engagement"],
             query_id=RISK_QUERY_ID,
+        )
+
+
+class PostgresViewpointsRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> ViewpointsSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(VIEWPOINTS_SQL, parameters)
+            rows = cursor.fetchall()
+
+        if not rows:
+            return ViewpointsSnapshot(
+                article_count=0,
+                positive_articles=0,
+                neutral_articles=0,
+                negative_articles=0,
+                evidence_records=(),
+                query_id=VIEWPOINTS_QUERY_ID,
+            )
+
+        aggregate = rows[0]
+        return ViewpointsSnapshot(
+            article_count=aggregate["article_count"],
+            positive_articles=aggregate["positive_articles"],
+            neutral_articles=aggregate["neutral_articles"],
+            negative_articles=aggregate["negative_articles"],
+            evidence_records=tuple(
+                ViewpointEvidenceRecord(
+                    external_id=row["external_id"],
+                    title=row["title"],
+                    summary=row["summary"],
+                    platform=row["platform"],
+                    published_at=row["published_at"],
+                    sentiment=row["sentiment"],
+                    total_engagement=row["total_engagement"],
+                    evidence_rank=row["evidence_rank"],
+                )
+                for row in rows
+            ),
+            query_id=VIEWPOINTS_QUERY_ID,
         )
