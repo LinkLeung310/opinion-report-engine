@@ -22,6 +22,10 @@
     {
       "id": "trend",
       "enabled": true
+    },
+    {
+      "id": "platforms",
+      "enabled": true
     }
   ]
 }
