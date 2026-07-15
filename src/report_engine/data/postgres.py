@@ -12,6 +12,7 @@ from report_engine.domain.scope import AnalysisScope
 from report_engine.sections.engagement import EngagementRecord, EngagementSnapshot
 from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.keywords import KeywordSourceRecord, KeywordsSnapshot
+from report_engine.sections.media_social import MediaSocialRow, MediaSocialSnapshot
 from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
 from report_engine.sections.risk import RiskSnapshot
 from report_engine.sections.severity import SeverityEvidenceRecord, SeveritySnapshot
@@ -40,6 +41,12 @@ ENGAGEMENT_SQL = (
 KEYWORDS_QUERY_ID = "keywords.v1"
 KEYWORDS_SQL = (
     files("report_engine.data.queries").joinpath("keywords.sql").read_text(encoding="utf-8")
+)
+MEDIA_SOCIAL_QUERY_ID = "media-social.v1"
+MEDIA_SOCIAL_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("media_social.sql")
+    .read_text(encoding="utf-8")
 )
 VERDICT_QUERY_ID = "verdict.v1"
 VERDICT_SQL = (
@@ -194,6 +201,48 @@ class PostgresKeywordsRepository:
             to_date=scope.to_date,
             query_id=KEYWORDS_QUERY_ID,
         )
+
+
+class PostgresMediaSocialRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> MediaSocialSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(MEDIA_SOCIAL_SQL, parameters)
+            rows = cursor.fetchall()
+
+        if len(rows) != 2:
+            raise RuntimeError("media-social query must return exactly two source rows")
+        total_article_counts = {row["total_article_count"] for row in rows}
+        total_negative_counts = {row["total_negative_articles"] for row in rows}
+        if len(total_article_counts) != 1 or len(total_negative_counts) != 1:
+            raise RuntimeError("media-social query returned inconsistent totals")
+
+        snapshot = MediaSocialSnapshot(
+            rows=tuple(
+                MediaSocialRow(
+                    source_type=row["source_type"],
+                    article_count=row["article_count"],
+                    positive_articles=row["positive_articles"],
+                    neutral_articles=row["neutral_articles"],
+                    negative_articles=row["negative_articles"],
+                    platform_count=row["platform_count"],
+                )
+                for row in rows
+            ),
+            query_id=MEDIA_SOCIAL_QUERY_ID,
+        )
+        if snapshot.article_count != next(iter(total_article_counts)):
+            raise RuntimeError("media-social article total does not match source rows")
+        if snapshot.negative_articles != next(iter(total_negative_counts)):
+            raise RuntimeError("media-social negative total does not match source rows")
+        return snapshot
 
 
 class PostgresVerdictRepository:

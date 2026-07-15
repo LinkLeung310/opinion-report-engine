@@ -134,6 +134,11 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 - fixture 口径预查得到媒体 3 篇（正/中/负 1/1/1，负面 33.3%，总量占 25.0%）与社交 9 篇（1/2/6，负面 66.7%，总量占 75.0%）；社交负面占比较媒体高 33.3 个百分点，7 篇负面中媒体/社交分别占 14.3%/85.7%。该预查只校准规格，尚未构成实现证据。
 - 规格小步第一次检查：必需规格段、`media-social.v1`、存储分类、绝对量/组内构成、单组无样本、一次 narrator、无 EvidenceSet/RAG/n8n 边界、D-27、schema 约束和 `git diff --check` 全部通过；未修改实现、fixtures 或 n8n。
 - 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 160 项通过；`pip check` 无破损依赖。
+- 固定 `media_social.sql`、`PostgresMediaSocialRepository`、`MediaSocialRow`、`MediaSocialSnapshot` 和可追溯 `FactSet` 已实现；查询无论有无数据都按固定顺序返回 `media`、`social` 两行，并校验行合计与查询总计一致。
+- Python 校验 source type、情感加总、平台覆盖和两行顺序；分别保留文章占比、组内情感占比、负面总体来源占比、量级并列和两组均有样本时的负面占比差。单组缺失时不生成该组情感百分比、差值或假赢家；两组零负面仍是合法可比较并列。
+- fixture 集成测试正式验证媒体/社交文章数 3/9、正面 1/1、中性 1/2、负面 1/6、平台数 1/3、组内负面 33.3%/66.7% 和差值 `+33.3%`；空话题仍返回两行显式零值并判定 `no_data`。
+- SQL/事实小步第一次检查：Python 静态编译、恰好三个 SQL 绑定参数、`git diff --check` 以及 media-social 单元/真实数据库专属测试 7 项通过。
+- SQL/事实小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 167 项通过；`pip check` 无破损依赖。
 
 ## M1 `engagement` 阶段入口
 
