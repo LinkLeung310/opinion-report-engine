@@ -6,8 +6,10 @@ from pathlib import Path
 
 from matplotlib import rc_context
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.font_manager import FontProperties, fontManager
 from matplotlib.figure import Figure
 
+from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
 from report_engine.sections.metrics import MetricsSnapshot
 
@@ -21,6 +23,9 @@ class MetricsChartBuilder:
 
         output_directory.mkdir(parents=True, exist_ok=True)
         facts = snapshot.to_fact_set()
+        font_path = report_font_path()
+        fontManager.addfont(font_path)
+        font_family = FontProperties(fname=font_path).get_name()
         labels = ["正面", "中性", "负面"]
         values = [
             snapshot.positive_articles,
@@ -32,10 +37,7 @@ class MetricsChartBuilder:
         with rc_context(
             {
                 "font.sans-serif": [
-                    "Microsoft YaHei",
-                    "Noto Sans CJK SC",
-                    "Noto Sans SC",
-                    "DejaVu Sans",
+                    font_family,
                 ],
                 "axes.unicode_minus": False,
             }
