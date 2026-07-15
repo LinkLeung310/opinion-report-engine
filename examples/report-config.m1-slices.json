@@ -24,6 +24,10 @@
       "enabled": true
     },
     {
+      "id": "viewpoints",
+      "enabled": true
+    },
+    {
       "id": "platforms",
       "enabled": true
     },

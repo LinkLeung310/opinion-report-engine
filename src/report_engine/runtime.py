@@ -22,6 +22,7 @@ from report_engine.data.postgres import (
     PostgresSeverityRepository,
     PostgresTrendRepository,
     PostgresVerdictRepository,
+    PostgresViewpointsRepository,
 )
 from report_engine.llm.protocol import Narrator
 from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
@@ -32,6 +33,7 @@ from report_engine.sections.risk_runner import RiskSectionRunner
 from report_engine.sections.severity_runner import SeveritySectionRunner
 from report_engine.sections.trend_runner import TrendSectionRunner
 from report_engine.sections.verdict_runner import VerdictSectionRunner
+from report_engine.sections.viewpoints_runner import ViewpointsSectionRunner
 from report_engine.storage.bundle import BundlePublisher
 
 
@@ -56,6 +58,10 @@ def build_report_service(
         chart_builder=TrendChartBuilder(),
         narrator=narrator,
     )
+    viewpoints_runner = ViewpointsSectionRunner(
+        repository=PostgresViewpointsRepository(connection),
+        narrator=narrator,
+    )
     platforms_runner = PlatformsSectionRunner(
         repository=PostgresPlatformsRepository(connection),
         chart_builder=PlatformsChartBuilder(),
@@ -77,6 +83,7 @@ def build_report_service(
             SectionId.VERDICT: verdict_runner,
             SectionId.METRICS: metrics_runner,
             SectionId.TREND: trend_runner,
+            SectionId.VIEWPOINTS: viewpoints_runner,
             SectionId.PLATFORMS: platforms_runner,
             SectionId.SEVERITY: severity_runner,
             SectionId.RISK: risk_runner,

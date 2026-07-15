@@ -27,6 +27,7 @@ contracts is treated as product-design space owned by this project.
 | D-20 | `platforms` discloses volume ties, ranks negative concentration by negative count before rate, and groups chart rows after the top seven into `其他` | Readers see material platform differences without false winners, one-item rate distortion, or an unreadable long tail |
 | D-21 | `severity` treats zero negative records as a valid no-data finding and selects at most three high-risk evidence records by deterministic severity/score/engagement/recency order without RAG | Readers see auditable risk concentration and real source examples without fabricated causes or opaque retrieval |
 | D-22 | `risk` equally averages five transparent structured pressure ratios, labels the result a non-probability diagnostic index, and excludes/discloses executive-association and rumor dimensions absent from the schema | Readers can see which measured signals are elevated without false precision, keyword guessing, or invented risk claims |
+| D-23 | `viewpoints` selects at most two real records per sentiment by engagement with cross-platform preference, separates representative evidence from population sentiment shares, and validates ordered Evidence ID plus verbatim source text without RAG | Readers see auditable concerns, explanations, and easing views without mistaking a curated sample for measured prevalence |
 
 The repository itself will define the 19-section specification, fixtures, examples,
 gold-report visual baseline, metadata extensions, and catalog publishing behavior.

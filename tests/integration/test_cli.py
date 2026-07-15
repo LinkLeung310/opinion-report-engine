@@ -122,6 +122,7 @@ def test_cli_generates_all_review_slices_in_configured_order(
     assert (
         markdown.index("## 全网数据概览")
         < markdown.index("## 热度趋势")
+        < markdown.index("## 主要观点")
         < markdown.index("## 平台表现")
         < markdown.index("## 负面严重程度")
         < markdown.index("## 风险评估")
@@ -131,6 +132,12 @@ def test_cli_generates_all_review_slices_in_configured_order(
     assert (target / "charts" / "severity-distribution.png").is_file()
     assert (target / "charts" / "risk-signal-index.png").is_file()
     assert "高/危内容 4 篇，占 57.1%" in markdown
+    assert "不是完整主题普查" in markdown
+    assert "[Evidence: bili-001]" in markdown
+    assert "[Evidence: bili-008]" in markdown
+    assert "[Evidence: bili-002]" in markdown
+    assert "[Evidence: bili-010]" in markdown
+    assert "[Evidence: bili-006]" in markdown
     assert "[Evidence: bili-007]" in markdown
     assert "[Evidence: bili-005]" in markdown
     assert "[Evidence: bili-003]" in markdown
@@ -138,6 +145,6 @@ def test_cli_generates_all_review_slices_in_configured_order(
     assert "不代表事件发生概率" in markdown
     assert "高管关联、谣言核验" in markdown
     meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
-    assert meta["generation"]["complete"] == 6
+    assert meta["generation"]["complete"] == 7
     assert meta["generation"]["failed"] == 0
     assert meta["charts"] == 5
