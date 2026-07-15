@@ -65,6 +65,16 @@
 
 context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、`keywords` slice 已经合并。当前分支 `codex/m1-engagement-section` 从绿色 `main@1ee06f4` 创建；下一切片实现 PR 版新增的互动传播章节。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
+## Context recovery 规则强化小步
+
+- 根目录继续使用 Codex 自动识别的标准文件名 `AGENTS.md`，不另建内容重复的 `agent.md`；它是所有新会话和上下文压缩后的唯一治理入口。
+- `AGENTS.md` 已明确整理任务书、产品框架、引擎架构、逐章规格、设计决定、追踪矩阵和当前状态的文档职责，避免把项目自主设计误称为面试方要求，也避免在多处复制 19 章细节。
+- RAG 继续冻结为计划边界，未开始 embedding、vector store、retriever、reranker 或检索评测；n8n 继续是 Draft/inactive 的 M3 API 可视化编排层，本小步没有修改本机工作流或导出 JSON。
+- Git 闭环已写清：每步从规则恢复上下文、限定一个意图、做两轮检查、更新本文件、选择性提交并 push；阶段完成后才走 Draft PR/CI/merge，合并后的下一阶段必须从最新绿色 `main` 新建分支。
+- 真实模型 API 只在全部本地功能与自动化验证完成后做凭据门控的最终冒烟测试；开发与 CI 使用可注入 stub/fake。
+- 第一次检查（静态与一致性）：`git diff --check` 通过；`AGENTS.md` 引用的 7 份框架/状态文档全部存在，RAG 延期、n8n Draft 边界、每步两轮检查、GitHub push 和最终 API 冒烟规则均可定位；`n8n/` 无变更。
+- 第二次检查（可执行回归）：真实 fixture PostgreSQL 下完整 pytest 160 项通过；`python -m pip check` 无破损依赖。
+
 ## 治理切片验证
 
 - 第一次检查（静态一致性）：`git diff --check` 通过；README、AGENTS、状态文件和文档导航中的本地 Markdown 链接全部可解析；工作区只包含预期治理文件。
