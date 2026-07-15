@@ -1,14 +1,14 @@
 # Current Project State
 
 最后核对日期：2026-07-15  
-最后实现基线：`main@7ca8f00`（PR #8，auditable viewpoints section）
+最后实现基线：`main@13663e3`（PR #9，auditable sentiment evolution section）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；目前中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，以及 PR 版新增的 `sentiment-evolution` 已完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -28,7 +28,8 @@
 - PR #6 的 severity slice 已用 merge commit 合并：`01b0cef`。
 - PR #7 的 risk slice 已用 merge commit 合并：`9d14725`。
 - PR #8 的 viewpoints slice 已用 merge commit 合并：`7ca8f00`。
-- `main@7ca8f00` 的 GitHub CI：121 项测试通过。
+- PR #9 的 sentiment-evolution slice 已用 merge commit 合并：`13663e3`。
+- `main@13663e3` 的 GitHub CI：134 项测试通过。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -36,6 +37,7 @@
 - PR #6 本地真实 CLI 验收得到前述 4 章 + `severity` 共 5 章 complete、0 章 failed、4 张图表的完整 A4 三页 bundle；`generatedAt` 为 `+08:00`。
 - 当前 `codex/m1-risk-section` 本地真实 CLI 验收得到前述 5 章 + `risk` 共 6 章 complete、0 章 failed、5 张图表的完整 A4 四页 bundle；`generatedAt` 为 `+08:00`。
 - 当前 `codex/m1-viewpoints-section` 本地真实 CLI 验收得到完整 csuite 7 章 complete、0 章 failed、5 张图表的 A4 四页 bundle；`generatedAt` 为 `+08:00`。
+- PR #9 本地真实 CLI 验收得到 csuite 7 章 + `sentiment-evolution` 共 8 章 complete、0 章 failed、6 张图表的 A4 五页 bundle；`generatedAt` 为 `+08:00`。
 - wheel 已确认包含 CLI、PDF renderer 和中文字体。
 
 测试数量会随实现增长；恢复工作时必须重新运行并记录最新结果，不得把 47 当成永久常量。
@@ -59,7 +61,7 @@
 
 ## 当前范围约束
 
-context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支 `codex/m1-sentiment-evolution-section` 从绿色 `main@7ca8f00` 创建；下一切片实现 PR 版新增的结构化情感演变章节。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution` slice 已经合并。当前分支 `codex/m1-keywords-section` 从绿色 `main@13663e3` 创建；下一切片实现 PR 版新增的关键词与话题章节。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## 治理切片验证
 
@@ -99,12 +101,33 @@ context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支
 
 ## 当前阶段与下一步
 
-- PR #8 已合并，`main@7ca8f00` 的独立 CI 已通过 121 项测试；当前分支 `codex/m1-sentiment-evolution-section` 已从该绿色基线创建。
-- 中文 csuite 七章纵向报告已经完整合并；`sentiment-evolution` 规格、SQL/事实层、100% 堆叠图、fault-isolated runner、stub narrator、运行时与 PR 版 CLI/PDF 产物已经接通，下一步是提交本小步并进入分支 PR 验收。
-- 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #8、章节边界与 RAG 延期声明一致，`git diff --check` 通过。
-- 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 121 项通过；`pip check` 无破损依赖。
+- PR #9 已合并，`main@13663e3` 的独立 CI 已通过 134 项测试；当前分支 `codex/m1-keywords-section` 已从该绿色基线创建。
+- 中文 csuite 七章与 `sentiment-evolution` 已完整合并；`keywords` 的规格、SQL/事实层、图表、fault-isolated runner、stub narrator、运行时与 PR 版 CLI/PDF 产物均已实现，当前小步进入最终回归与 PR 审核。
+- 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #9、19 章注册表、PR 默认组合与 RAG 延期声明一致，`git diff --check` 通过。
+- 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 134 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 M1 `sentiment-evolution` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 M1 `keywords` 阶段实现；n8n 保持 Draft，等待 M3 API。
+
+## M1 `keywords` 规格切片
+
+- `docs/02-report-spec.md` 已定义标题/摘要固定查询、NFKC 标准化、3–6 字重复短语、相同来源集合的嵌套折叠、文档覆盖率、后半期新增阈值、堆叠情感图、一次 narrator 和两类 no-data 行为。
+- D-25 要求短语至少覆盖两篇不同文章，负面文章数不参与排名；只有在前半期零出现且后半期至少覆盖两篇时才标记“后期新增”，并用可审查横向条形图替代不稳定词云。
+- 每个短语事实必须携带真实 source record ID；narrator 只接收批准的短语与数字，不接收自由证据，不得创造语义主题名、原因或受众意图。本章节不使用 RAG 或 n8n。
+- fixture 口径预查得到 6 个重复短语：`不喜欢`、`入口调整`、`反馈机制`、`控制感`、`透明度`、`负反馈入口`，均覆盖 2/12 篇；没有短语满足后半期至少两篇且前半期零出现的新增阈值。该预查只校准规格，尚未构成实现证据。
+- 规格小步第一次检查：必需规格段、`keywords.v1`、短语阈值/嵌套折叠、source record ID、无词云、一次 narrator、两类 no-data、无 RAG 边界、D-25 和 `git diff --check` 全部通过。
+- 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 134 项通过；`pip check` 无破损依赖。
+- 固定 `keywords.sql`、`PostgresKeywordsRepository`、`KeywordSourceRecord`、`KeywordPhrase`、`KeywordsSnapshot` 和可追溯 `FactSet` 已实现；SQL 只做 tag/完整日期过滤，短语提取与排名完全由 Python 负责。
+- Python 对标题/摘要做 NFKC 标准化和 3–6 字/ASCII token 提取，同一文章只计一次；至少两篇才保留，相同来源集合保留最长嵌套短语，按文档数/标题文档数/首次日期/词面排序，最多显示八项。
+- SQL/事实小步第一次检查：Python 静态编译、恰好四个 SQL 绑定参数、`git diff --check` 以及 keywords 单元/真实数据库专属测试 7 项通过。
+- SQL/事实小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 141 项通过；`pip check` 无破损依赖。
+- fixture 集成测试正式验证 12 篇内容、短语顺序 `不喜欢`、`入口调整`、`反馈机制`、`控制感`、`透明度`、`负反馈入口`，文档数均为 2，负面文档数为 `[2, 1, 2, 2, 2, 2]`，且无“后期新增”短语；空话题返回合法空 snapshot。
+- FactSet 将 2/12 文档覆盖率显示为 16.7%，保留所有短语的未四舍五入占比、情感文档数、首末日期、后期新增标签和真实 supporting source record IDs；6 项并列第一被完整披露。
+- `KeywordsChartBuilder`、fault-isolated `KeywordsSectionRunner`、确定性中英文 stub、运行时接线、专属图片 alt 和九章节评审示例已实现；本章使用空 `EvidenceSet`，只执行一次 narrator 操作。
+- 图表/runner 专属 15 项检查验证横向堆叠情感构成、150 dpi、并列覆盖量、完整标签、无数据跳过，以及 query/calculation/chart/LLM 安全失败隔离；全部通过。
+- 实际 CLI 产物为 9 章 complete、0 章 failed、7 张图表；正文准确披露 12 篇、6 个重复短语、6 项以 2 篇并列第一、`入口调整` 的 2 篇/16.7% 覆盖和 1/2 负面构成，并明确没有达到阈值的后期新增短语，不宣称语义聚类或支持度。
+- PDF 经 Poppler 验证为 A4 六页。第一次产物检查确认 `meta.json`、Markdown 与 7 张图一致；第二次逐页和图表原图视觉检查确认关键词正文位于第 5 页、完整图表及方法说明位于第 6 页，无孤立标题、中文乱码、截断、重叠、图例遮挡或标签裁切。第 6 页留白来自保持图表整体。
+- 图表/runner 小步第一次检查：Python 静态编译、九章节配置契约、唯一 keywords narrator 操作、`git diff --check` 和专属 15 项测试通过。
+- 图表/runner 小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 146 项通过；`pip check` 无破损依赖，实际九章节 bundle 与六页 PDF 验收通过。
 
 ## M1 `sentiment-evolution` 规格切片
 

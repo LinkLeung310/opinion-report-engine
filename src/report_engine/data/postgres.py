@@ -10,6 +10,7 @@ from psycopg.rows import dict_row
 
 from report_engine.domain.scope import AnalysisScope
 from report_engine.sections.metrics import MetricsSnapshot
+from report_engine.sections.keywords import KeywordSourceRecord, KeywordsSnapshot
 from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
 from report_engine.sections.risk import RiskSnapshot
 from report_engine.sections.severity import SeverityEvidenceRecord, SeveritySnapshot
@@ -28,6 +29,10 @@ from report_engine.sections.viewpoints import (
 METRICS_QUERY_ID = "metrics.v1"
 METRICS_SQL = (
     files("report_engine.data.queries").joinpath("metrics.sql").read_text(encoding="utf-8")
+)
+KEYWORDS_QUERY_ID = "keywords.v1"
+KEYWORDS_SQL = (
+    files("report_engine.data.queries").joinpath("keywords.sql").read_text(encoding="utf-8")
 )
 VERDICT_QUERY_ID = "verdict.v1"
 VERDICT_SQL = (
@@ -98,6 +103,39 @@ class PostgresMetricsRepository:
             peak_day=row["peak_day"],
             peak_article_count=row["peak_article_count"],
             query_id=METRICS_QUERY_ID,
+        )
+
+
+class PostgresKeywordsRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> KeywordsSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+            "timezone_name": scope.timezone_name,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(KEYWORDS_SQL, parameters)
+            rows = cursor.fetchall()
+
+        return KeywordsSnapshot(
+            records=tuple(
+                KeywordSourceRecord(
+                    external_id=row["external_id"],
+                    title=row["title"],
+                    summary=row["summary"],
+                    published_at=row["published_at"],
+                    published_day=row["published_day"],
+                    sentiment=row["sentiment"],
+                )
+                for row in rows
+            ),
+            from_date=scope.from_date,
+            to_date=scope.to_date,
+            query_id=KEYWORDS_QUERY_ID,
         )
 
 

@@ -19,6 +19,65 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.KEYWORDS:
+            display_count = int(values["displayPhraseCount"].replace(",", ""))
+            lines = []
+            for index in range(1, min(display_count, 5) + 1):
+                prefix = f"keyword{index}"
+                if request.language is Language.EN:
+                    lines.append(
+                        f"- {values[f'{prefix}Text']}: "
+                        f"{values[f'{prefix}Documents']} articles "
+                        f"({values[f'{prefix}Coverage']}), including "
+                        f"{values[f'{prefix}NegativeDocuments']} negative "
+                        f"({values[f'{prefix}NegativeShare']}); first seen "
+                        f"{values[f'{prefix}FirstDay']}."
+                    )
+                else:
+                    lines.append(
+                        f"- {values[f'{prefix}Text']}：覆盖 "
+                        f"{values[f'{prefix}Documents']} 篇（"
+                        f"{values[f'{prefix}Coverage']}），其中负面 "
+                        f"{values[f'{prefix}NegativeDocuments']} 篇（"
+                        f"{values[f'{prefix}NegativeShare']}），首次出现于 "
+                        f"{values[f'{prefix}FirstDay']}。"
+                    )
+            phrase_lines = "\n".join(lines)
+            if request.language is Language.EN:
+                emergence = (
+                    f"Late-emerging recurring phrases from "
+                    f"{values['lateWindowStart']}: {values['emergingPhrases']} "
+                    f"({values['emergingPhraseCount']} total)."
+                    if values["emergingPhraseCount"] != "0"
+                    else f"From {values['lateWindowStart']}, no late-only phrase met "
+                    f"the {values['minimumDocuments']}-article recurrence threshold."
+                )
+                return (
+                    "## Keywords and topics\n\n"
+                    f"Across {values['articles']} articles, deterministic extraction "
+                    f"finds {values['recurringPhraseCount']} recurring exact phrases. "
+                    f"{values['leadingPhraseCount']} phrases tie for the broadest "
+                    f"coverage at {values['leadingDocumentCount']} articles each.\n\n"
+                    f"{phrase_lines}\n\n{emergence} These are exact-phrase coverage "
+                    "signals, not semantic topic clusters or measures of support."
+                )
+            emergence = (
+                f"后半期自 {values['lateWindowStart']} 起新增重复短语为"
+                f"{values['emergingPhrases']}，共 {values['emergingPhraseCount']} 项。"
+                if values["emergingPhraseCount"] != "0"
+                else f"后半期自 {values['lateWindowStart']} 起，没有短语满足“前半期"
+                f"零出现且后半期至少 {values['minimumDocuments']} 篇”的新增阈值。"
+            )
+            return (
+                "## 关键词与话题\n\n"
+                f"从 {values['articles']} 篇标题与摘要中确定性提取出 "
+                f"{values['recurringPhraseCount']} 个重复原文短语；"
+                f"{values['leadingPhraseCount']} 项并列最高，均覆盖 "
+                f"{values['leadingDocumentCount']} 篇。\n\n"
+                f"{phrase_lines}\n\n{emergence}本章展示精确短语覆盖，不等同于"
+                "语义主题聚类或公众支持度。"
+            )
+
         if request.section_id is SectionId.SENTIMENT_EVOLUTION:
             if request.language is Language.EN:
                 if values["direction"] == "仅单阶段有数据":
