@@ -12,8 +12,13 @@ dependencies = [
   "matplotlib>=3.10,<4",
   "pydantic>=2.12,<3",
   "psycopg[binary]>=3.2,<4",
+  "python-dotenv>=1.1,<2",
   "reportlab>=4.4,<5",
+  "typer>=0.15,<1",
 ]
+
+[project.scripts]
+report = "report_engine.cli:app"
 
 [project.optional-dependencies]
 dev = [
