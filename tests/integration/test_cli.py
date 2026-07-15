@@ -91,7 +91,7 @@ def test_cli_generates_verdict_before_metrics_in_configured_order(
     assert meta["charts"] == 1
 
 
-def test_cli_generates_trend_after_metrics_with_a_second_chart(
+def test_cli_generates_trend_and_platforms_in_configured_order(
     tmp_path,
     monkeypatch,
 ) -> None:
@@ -119,9 +119,14 @@ def test_cli_generates_trend_after_metrics_with_a_second_chart(
     assert result.exit_code == 0, result.output
     target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
     markdown = (target / "report.md").read_text(encoding="utf-8")
-    assert markdown.index("## 全网数据概览") < markdown.index("## 热度趋势")
+    assert (
+        markdown.index("## 全网数据概览")
+        < markdown.index("## 热度趋势")
+        < markdown.index("## 平台表现")
+    )
     assert (target / "charts" / "daily-sentiment-trend.png").is_file()
+    assert (target / "charts" / "platform-performance.png").is_file()
     meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
-    assert meta["generation"]["complete"] == 3
+    assert meta["generation"]["complete"] == 4
     assert meta["generation"]["failed"] == 0
-    assert meta["charts"] == 2
+    assert meta["charts"] == 3

@@ -8,7 +8,7 @@
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；目前 `verdict`、`metrics` 与 `trend` 三章完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；目前 `verdict`、`metrics`、`trend` 与 `platforms` 四章完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -92,7 +92,7 @@ context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1
 ## 当前阶段与下一步
 
 - PR #4 已合并，`main@c35106f` 的独立 CI 已通过 76 项测试；当前分支 `codex/m1-platforms-section` 已从该绿色基线创建。
-- `platforms` 的规格、D-20、固定 SQL、typed snapshot、可追溯 `FactSet` 和真实 fixture 集成测试已完成；下一小步实现双面板图表、fault-isolated runner、stub narrator 和运行时接线。
+- `platforms` 的规格、数据层、双面板图表、fault-isolated runner、stub narrator、运行时/CLI 接线和真实产物验收已完成；下一步完成最终两轮检查后发布 Draft PR。
 - 分支建立/状态恢复第一次检查：工作区仅修改本状态文件，merge SHA、PR #4、新分支、未实现边界和 RAG 延期声明一致，`git diff --check` 通过。
 - 分支建立/状态恢复第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -131,4 +131,11 @@ context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1
 - SQL/计算小步第一次检查：Python 静态编译、恰好三个 SQL 绑定参数、`git diff --check` 以及 platforms 单元/真实数据库专属测试 5 项通过。
 - SQL/计算小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 81 项通过；`pip check` 无破损依赖。
 - fixture 集成测试正式验证平台顺序 `微博、B站、新闻、知乎`、文章量 `[4, 4, 3, 1]`、负面文章 `[3, 2, 1, 1]`、互动 `[15,715, 6,610, 2,425, 1,420]`，并验证空话题返回空 snapshot。
-- 图表、runner、narrator、运行时和 CLI 尚未接入；本小步不构成完整 `platforms` 章节。
+- `PlatformsChartBuilder`、fault-isolated `PlatformsSectionRunner`、确定性中英文 stub、运行时接线、专属图片 alt 和四章节评审示例已实现。
+- 图表/runner 专属检查验证规定情感颜色、互动强调色、150 dpi、最多八行、唯一 narrator 操作、no-data 跳过和 query/chart/LLM 安全失败；相关 13 项测试通过。
+- 纵向接线后真实 fixture PostgreSQL 下完整 pytest 为 86 项通过；`pip check` 无破损依赖。
+- 真实 CLI 产物为 4 章 complete、0 章 failed、3 张图表；平台正文准确包含并列 4 篇、微博负面集中 42.9%/平台内负面 75.0%、互动 15,715/占比 60.0%，`generatedAt` 为 `+08:00`。
+- 首次视觉检查发现方法说明形成 A4 第三页孤页；缩短四平台图表高度后恢复为两页。随后修正图例对数值/标题的遮挡，最终 Poppler 页图逐页复核无孤页、乱码、截断、重叠或数据标签遮挡。
+- 分支最终第一次检查：四章节示例契约、Python 静态编译、唯一 platforms narrator 操作、过期状态清理和 `git diff --check` 全部通过。
+- 分支最终第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 86 项通过；`pip check` 无破损依赖。
+- 当前完整 `platforms` stub 纵向切片已接通；真实 narrator、RAG、n8n 和其余 M1 章节仍未实现。
