@@ -102,11 +102,20 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution` sl
 ## 当前阶段与下一步
 
 - PR #9 已合并，`main@13663e3` 的独立 CI 已通过 134 项测试；当前分支 `codex/m1-keywords-section` 已从该绿色基线创建。
-- 中文 csuite 七章与 `sentiment-evolution` 已完整合并；下一小步先定义 `keywords` 的输入、固定 SQL、Python 事实、证据、图表、一次 narrator 与 no-data/failed 规则，再开始代码实现。
+- 中文 csuite 七章与 `sentiment-evolution` 已完整合并；`keywords` 的输入、固定 SQL、Python 事实、证据、图表、一次 narrator 与 no-data/failed 规则已经定义，下一小步实现固定 SQL、确定性短语事实与真实 fixture 集成测试。
 - 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #9、19 章注册表、PR 默认组合与 RAG 延期声明一致，`git diff --check` 通过。
 - 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 134 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
 - RAG 继续延期，不在当前 M1 `keywords` 阶段实现；n8n 保持 Draft，等待 M3 API。
+
+## M1 `keywords` 规格切片
+
+- `docs/02-report-spec.md` 已定义标题/摘要固定查询、NFKC 标准化、3–6 字重复短语、相同来源集合的嵌套折叠、文档覆盖率、后半期新增阈值、堆叠情感图、一次 narrator 和两类 no-data 行为。
+- D-25 要求短语至少覆盖两篇不同文章，负面文章数不参与排名；只有在前半期零出现且后半期至少覆盖两篇时才标记“后期新增”，并用可审查横向条形图替代不稳定词云。
+- 每个短语事实必须携带真实 source record ID；narrator 只接收批准的短语与数字，不接收自由证据，不得创造语义主题名、原因或受众意图。本章节不使用 RAG 或 n8n。
+- fixture 口径预查得到 6 个重复短语：`不喜欢`、`入口调整`、`反馈机制`、`控制感`、`透明度`、`负反馈入口`，均覆盖 2/12 篇；没有短语满足后半期至少两篇且前半期零出现的新增阈值。该预查只校准规格，尚未构成实现证据。
+- 规格小步第一次检查：必需规格段、`keywords.v1`、短语阈值/嵌套折叠、source record ID、无词云、一次 narrator、两类 no-data、无 RAG 边界、D-25 和 `git diff --check` 全部通过。
+- 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 134 项通过；`pip check` 无破损依赖。
 
 ## M1 `sentiment-evolution` 规格切片
 

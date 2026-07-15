@@ -523,6 +523,89 @@ populated phase remains `complete` but explicitly states that temporal compariso
 insufficient. Query, calculation, chart, or narration errors return `failed` with a
 safe stage-specific message while later sections continue.
 
+## `keywords` — 关键词与话题
+
+Purpose: show which exact phrases recur across the selected article set, how broadly
+each phrase is represented, and whether any recurring phrase appears only in the late
+part of the monitoring window. This M1 baseline is a transparent phrase signal, not a
+claim that character n-grams are semantic topic clusters.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`keywords.v1`):
+
+- hard-filter articles with the shared topic tag and complete half-open timestamp
+  scope;
+- return `external_id`, `title`, `summary`, `published_at`, and `sentiment` in stable
+  publication-time / ID order;
+- use only bound `topic_tag`, `from_inclusive`, `to_exclusive`, and `timezone_name`;
+- the query will live at `src/report_engine/data/queries/keywords.sql`. SQL performs
+  scope filtering only; it does not generate phrases, call text-search extensions, or
+  use generated SQL, RAG, embeddings, an LLM, or n8n.
+
+Derived in Python:
+
+- normalize title and summary text with Unicode NFKC while retaining original source
+  records for provenance;
+- split on non-text boundaries. From each contiguous CJK run, generate exact 3–6
+  character candidates; retain normalized ASCII/alphanumeric tokens of 3–32
+  characters. Do not use a topic-specific vocabulary or hidden stopword list;
+- count at most one occurrence per candidate per article. A candidate is recurring
+  only when it appears in at least two distinct articles;
+- when nested candidates have exactly the same source-record set, retain the longest
+  phrase. Equal-length ties prefer more title documents and then lexical order. This
+  avoids showing `负反馈` and `负反馈入口` as separate signals when both are backed by
+  exactly the same records;
+- rank the remaining candidates by distinct document count, title-document count,
+  earliest appearance, and lexical order. Negative documents never influence rank,
+  so the method does not manufacture a risk-heavy keyword list;
+- retain at most eight display phrases. For each, calculate distinct document count,
+  population coverage, positive/neutral/negative document counts, negative share,
+  first/last local day, and the exact supporting source record IDs;
+- split the complete calendar into an early and late window, assigning an odd extra
+  day to the early window. A seven-day range becomes 4 / 3 days. A displayed phrase is
+  `late-emerging` only when it appears in at least two late-window articles and zero
+  early-window articles; otherwise it is not labelled new;
+- retain total article count, recurring/display phrase counts, leading phrase ties,
+  emerging phrase count/list, extraction thresholds, and every display-phrase metric
+  in `FactSet` using `keywords.v1` or named `keywords.*.v1` calculation identifiers.
+  Each phrase fact carries its supporting `source_record_ids`.
+
+Evidence: no free-form `EvidenceSet` is passed to the narrator. Exact extracted phrases
+are approved facts whose provenance is the title/summary source IDs recorded on each
+fact. The narrator may repeat those phrase labels and calculated metrics, but may not
+quote unseen text, assign a semantic topic name, explain a cause, infer intent, or
+claim that phrase frequency equals public support.
+
+Charts: one `keyword-coverage.png` horizontal stacked bar chart for at most eight
+phrases. Each bar is the number of distinct supporting articles split by positive,
+neutral, and negative sentiment using the required colors. Labels disclose the total
+document count; late-emerging phrases, when present, receive a visible `后期新增`
+marker. The title discloses all top-coverage ties rather than naming a false winner.
+Use the shared white-background, hidden top/right spines, 150 dpi theme and embedded
+Chinese font. Do not produce a word cloud: area-based word clouds are harder to audit,
+less accessible, and unstable under small text changes.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, and charting;
+- Chinese heading `关键词与话题`, followed by a concise summary of article count,
+  recurring phrase count, leading coverage ties, and late-emerging result;
+- mention at most five approved display phrases, always with document count and
+  coverage; if a negative share is stated, include its distinct-document denominator;
+- when no phrase meets the late-emerging rule, explicitly say no recurring late-only
+  phrase met the two-document threshold instead of inventing a new issue;
+- every phrase, count, percentage, date, tie, and emergence label comes from approved
+  facts. No semantic cluster label, causal claim, recommendation, or new number may be
+  introduced.
+
+No-data rule: zero scoped articles returns `no_data`. A non-empty article set with no
+phrase repeated across at least two articles also returns `no_data` with a distinct
+message explaining that records exist but no recurring exact phrase met the threshold;
+both paths skip charting and narration. Query, extraction/calculation, chart, or
+narration errors return `failed` with a safe stage-specific message while later
+sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in
