@@ -159,6 +159,78 @@ absence message, and performs no chart or narrator operation. Query, calculation
 chart, or narration errors return `failed` with a safe stage-specific message while
 later sections continue.
 
+## `platforms` — 平台表现
+
+Purpose: compare where discussion volume, negative content, and audience interaction
+are concentrated without mistaking a one-article platform for the dominant risk
+channel.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`platforms.v1`):
+
+- hard-filter articles with the shared tag and complete half-open timestamp scope;
+- group by the stored platform label;
+- return article, positive, neutral, and negative counts for every platform;
+- return summed likes, comments, shares, and favorites for every platform;
+- order rows by article count descending, total engagement descending, then platform
+  label ascending so equal-volume results remain deterministic;
+- use only bound `topic_tag` and timestamp boundaries; the query will live at
+  `src/report_engine/data/queries/platforms.sql`.
+
+Derived in Python:
+
+- `articles`, `platformCount`, and `totalEngagement` are sums across the returned rows;
+- each platform receives `articleShare`, `negativeRatio`, `engagementShare`, and
+  `engagementPerArticle`; ratios use unrounded decimals and are formatted only after
+  calculation;
+- `volumeLeaders` contains every platform tied for the highest article count, plus
+  `leadingArticleCount` and `leadingArticleShare`; narration must disclose the tie
+  rather than invent a single volume winner;
+- `negativeLeader` is selected by negative article count, then platform negative ratio,
+  total engagement, and platform label. Its facts include negative article count,
+  share of all negative articles, and within-platform negative ratio. When the entire
+  scope has no negative articles, these leader facts are absent instead of becoming a
+  false zero-risk ranking;
+- `engagementLeader` is selected by total engagement, then article count and platform
+  label, with total engagement, engagement share, and engagement per article exposed
+  as facts;
+- display rows retain the first seven ranked platforms. Any remaining rows are summed
+  into one explicit `其他` category, so totals and sentiment composition remain intact
+  while the chart stays readable.
+
+Raw platform counts and engagement components are sourced from `platforms.v1`.
+Ratios, leaders, ties, and the optional `其他` row use named `platforms.*.v1`
+calculation identifiers in the `FactSet`.
+
+Evidence: none. This section compares structured platform aggregates only. It may not
+infer why a platform performed differently, quote an article, characterize an audience,
+or use RAG.
+
+Charts: one `platform-performance.png` two-panel horizontal chart. The left panel
+stacks positive, neutral, and negative article counts with the required sentiment
+colors; the right panel shows total engagement for the same ordered display rows. The
+title states the computed volume tie/winner and engagement leader, not a generic chart
+name. Both panels use the shared white-background, 150 dpi theme and embedded Chinese
+font; the chart displays at most eight rows including `其他`.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, and charting;
+- Chinese heading `平台表现`, followed by one concise summary and no more than three
+  comparison bullets covering volume concentration, negative concentration when it
+  exists, and engagement concentration;
+- every platform name, count, percentage, rank, and tie statement must come from the
+  approved facts; no cause, demographic claim, article claim, recommendation, or new
+  number is allowed;
+- the deterministic stub renders the same facts and tie/no-negative branches in
+  automated tests.
+
+No-data rule: zero returned platform rows returns `no_data`, renders a visible Chinese
+absence message, and performs no chart or narrator operation. Query, calculation,
+chart, or narration errors return `failed` with a safe stage-specific message while
+later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in

@@ -92,11 +92,11 @@ context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1
 ## 当前阶段与下一步
 
 - PR #4 已合并，`main@c35106f` 的独立 CI 已通过 76 项测试；当前分支 `codex/m1-platforms-section` 已从该绿色基线创建。
-- 下一小步仅扩展 `docs/02-report-spec.md`，定义 `platforms` 的输入、固定 SQL、Python 派生事实、图表、一次 narrator 和 no-data/failed 行为，再经两轮检查单独提交。
+- `platforms` 的规格与 D-20 已定义并通过两轮检查；下一小步实现固定 SQL、typed snapshot、可追溯 `FactSet` 和真实 fixture 集成测试，不接图表或 narrator。
 - 分支建立/状态恢复第一次检查：工作区仅修改本状态文件，merge SHA、PR #4、新分支、未实现边界和 RAG 延期声明一致，`git diff --check` 通过。
 - 分支建立/状态恢复第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 M1 `trend` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 M1 `platforms` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
 ## M1 `trend` 规格切片
 
@@ -118,3 +118,12 @@ context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1
 - 分支最终第一次检查：三章节示例契约与中文字段、Python 静态编译、唯一 narrator 操作、旧评审路径清理和 `git diff --check` 全部通过。
 - 分支最终第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
 - 当前 stub 模式纵向切片、真实产物验收、Draft PR、分支 CI、merge commit 和合并后 main CI 均已完成。
+
+## M1 `platforms` 规格切片
+
+- `docs/02-report-spec.md` 已定义平台聚合固定查询、Python 派生占比/并列/集中度事实、最多八行的双面板图、一次 narrator 约束和 no-data/failed 行为。
+- D-20 要求披露文章量并列，以负面文章数优先识别负面集中平台，并将图表第八行之后的长尾合并为 `其他`，避免假赢家、小样本比例误导和不可读长尾。
+- 本章节只比较结构化聚合事实，明确不使用文章证据、RAG 或 n8n。
+- 规格小步第一次检查：必需规格段、`platforms.v1`、一次 narrator、无 RAG 边界、D-20 和 `git diff --check` 全部通过。
+- 规格小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
+- fixture 口径预查确认 4 个平台、文章量 `[4, 4, 3, 1]`；微博与 B站并列量级第一，微博总互动 15,715 且负面文章 3 篇。该预查只校准规格，尚未构成 `platforms` 实现证据。
