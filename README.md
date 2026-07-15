@@ -19,6 +19,10 @@ a set of five meaningful 150 dpi charts, A4 Chinese PDF rendering, and atomic bu
 It also implements the PR-oriented `sentiment-evolution` slice with a sixth chart:
 phase composition is shown beside explicit sample sizes and is kept separate from
 the absolute discussion volume already shown by `trend`.
+The PR-oriented `keywords` slice adds a seventh chart based on distinct-document
+coverage of deterministic recurring phrases; it reports tied leaders and an honest
+absence of late-emerging phrases without claiming semantic clustering, a word cloud,
+or RAG.
 `verdict` adds an auditable Python-owned risk and momentum judgment without a redundant
 decorative chart; `trend` preserves quiet calendar days in a stacked sentiment timeline.
 `platforms` discloses volume ties and compares sentiment with engagement without

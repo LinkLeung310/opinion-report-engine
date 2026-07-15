@@ -10,6 +10,7 @@ from psycopg import Connection
 from report_engine.application.planner import ReportPlanner
 from report_engine.application.service import ReportApplicationService
 from report_engine.charts.metrics import MetricsChartBuilder
+from report_engine.charts.keywords import KeywordsChartBuilder
 from report_engine.charts.platforms import PlatformsChartBuilder
 from report_engine.charts.risk import RiskChartBuilder
 from report_engine.charts.sentiment_evolution import SentimentEvolutionChartBuilder
@@ -17,6 +18,7 @@ from report_engine.charts.severity import SeverityChartBuilder
 from report_engine.charts.trend import TrendChartBuilder
 from report_engine.config import SectionId
 from report_engine.data.postgres import (
+    PostgresKeywordsRepository,
     PostgresMetricsRepository,
     PostgresPlatformsRepository,
     PostgresRiskRepository,
@@ -29,6 +31,7 @@ from report_engine.data.postgres import (
 from report_engine.llm.protocol import Narrator
 from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
 from report_engine.sections.metrics_runner import MetricsSectionRunner
+from report_engine.sections.keywords_runner import KeywordsSectionRunner
 from report_engine.sections.platforms_runner import PlatformsSectionRunner
 from report_engine.sections.registry import default_registry
 from report_engine.sections.risk_runner import RiskSectionRunner
@@ -52,6 +55,11 @@ def build_report_service(
     metrics_runner = MetricsSectionRunner(
         repository=PostgresMetricsRepository(connection),
         chart_builder=MetricsChartBuilder(),
+        narrator=narrator,
+    )
+    keywords_runner = KeywordsSectionRunner(
+        repository=PostgresKeywordsRepository(connection),
+        chart_builder=KeywordsChartBuilder(),
         narrator=narrator,
     )
     verdict_runner = VerdictSectionRunner(
@@ -92,6 +100,7 @@ def build_report_service(
         section_runners={
             SectionId.VERDICT: verdict_runner,
             SectionId.METRICS: metrics_runner,
+            SectionId.KEYWORDS: keywords_runner,
             SectionId.TREND: trend_runner,
             SectionId.VIEWPOINTS: viewpoints_runner,
             SectionId.PLATFORMS: platforms_runner,

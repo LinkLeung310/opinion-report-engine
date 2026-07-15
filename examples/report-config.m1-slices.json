@@ -42,6 +42,10 @@
     {
       "id": "sentiment-evolution",
       "enabled": true
+    },
+    {
+      "id": "keywords",
+      "enabled": true
     }
   ]
 }
