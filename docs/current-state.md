@@ -100,11 +100,20 @@ context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支
 ## 当前阶段与下一步
 
 - PR #8 已合并，`main@7ca8f00` 的独立 CI 已通过 121 项测试；当前分支 `codex/m1-sentiment-evolution-section` 已从该绿色基线创建。
-- 中文 csuite 七章纵向报告已经完整合并；下一小步先定义 `sentiment-evolution` 的固定 SQL、阶段/日序列事实、图表、一次 narrator 与 no-data/failed 契约，再开始编码。
+- 中文 csuite 七章纵向报告已经完整合并；`sentiment-evolution` 规格已经完成，下一小步实现固定 SQL、完整日序列、平衡阶段与可追溯 FactSet。
 - 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #8、章节边界与 RAG 延期声明一致，`git diff --check` 通过。
 - 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 121 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
 - RAG 继续延期，不在当前 M1 `sentiment-evolution` 阶段实现；n8n 保持 Draft，等待 M3 API。
+
+## M1 `sentiment-evolution` 规格切片
+
+- `docs/02-report-spec.md` 已定义完整日历序列、最多三个平衡阶段、阶段情感构成、首末有效阶段比较、100% 堆叠图、一次 narrator 和 no-data/failed 行为。
+- D-24 将本章与绝对量 `trend` 明确分工：情感演变只比较构成，所有百分比必须同时显示阶段样本量；负面占比变化达到正负 10 个百分点才标记上升/下降。
+- 本章节只使用结构化日级情感计数，不使用文章证据、RAG 或 n8n，也不得解释情感变化原因。
+- fixture 口径预查确认 7 日按 3/2/2 分为前/中/后期：情感计数分别为正/中/负 `1/2/3`、`1/1/2`、`0/0/2`，负面占比为 50.0%、50.0%、100.0%。后期增至 100.0% 但只有 2 篇，必须与热度变化分开解释。该预查只校准规格，尚未构成实现证据。
+- 规格小步第一次检查：必需规格段、`sentiment-evolution.v1`、平衡阶段规则、样本量披露、10 点阈值、一次 narrator、无证据/RAG/n8n 边界、D-24 和 `git diff --check` 全部通过。
+- 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 121 项通过；`pip check` 无破损依赖。
 
 ## M1 `viewpoints` 规格切片
 
