@@ -1,0 +1,23 @@
+{
+  "reportType": "csuite",
+  "language": "zh",
+  "topic": {
+    "tag": "bilibili-dislike",
+    "displayName": "B站猜你不喜欢算法调整",
+    "eventTitle": "B站猜你不喜欢算法调整事件"
+  },
+  "dateRange": {
+    "from": "2026-03-17",
+    "to": "2026-03-23"
+  },
+  "sections": [
+    {
+      "id": "verdict",
+      "enabled": true
+    },
+    {
+      "id": "metrics",
+      "enabled": true
+    }
+  ]
+}
