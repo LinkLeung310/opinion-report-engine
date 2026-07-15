@@ -301,6 +301,84 @@ No-data rule: zero negative records returns `no_data`, renders the valid finding
 calculation, evidence, chart, or narration errors return `failed` with a safe
 stage-specific message while later sections continue.
 
+## `risk` — 风险评估
+
+Purpose: decompose observed risk pressure into a small set of auditable signals so an
+executive can see what is driving the assessment. The result is a diagnostic index of
+the monitored data, not a probability, forecast, or claim about real-world harm.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`risk.v1`):
+
+- hard-filter articles with the shared tag and complete half-open timestamp scope;
+- return total and negative article counts, plus high/critical negative count;
+- return total platform count and the number of platforms containing at least one
+  negative article;
+- return the number of distinct Asia/Shanghai calendar days containing negative
+  articles;
+- return total engagement and negative-article engagement, where engagement is the
+  stored sum of likes, comments, shares, and favorites;
+- use bound `topic_tag`, timestamp boundaries, and timezone only. The query will live
+  at `src/report_engine/data/queries/risk.sql` and returns one aggregate row even when
+  the scope is empty.
+
+Derived in Python:
+
+- `sentimentPressure` = negative articles / all articles;
+- `severityPressure` = high/critical negative articles / negative articles, or zero
+  when the scope contains no negative article;
+- `spreadPressure` = negative platforms / all active platforms;
+- `persistencePressure` = negative-active calendar days / all selected calendar days;
+- `amplificationPressure` = negative engagement / all engagement, or zero when the
+  scope has no engagement;
+- each signal is `low` below 40%, `medium` from 40% through below 70%, and `high` at
+  70% or above. Comparisons use unrounded decimals;
+- `riskSignalIndex` is the unweighted arithmetic mean of the five unrounded signal
+  ratios. `riskLevel` uses the same low/medium/high thresholds, and high/medium/low
+  signal counts are derived in code;
+- the selected calendar-day count is calculated from the immutable scope. The five
+  signals receive equal weight because this synthetic fixture provides no calibrated
+  outcome labels that would justify learned or subjective weights;
+- every query count, ratio, band, signal count, and index is carried by `FactSet` with
+  `risk.v1` or a named `risk.*.v1` Python calculation identifier.
+
+Capability boundary: the project framework names executive association and rumor as
+possible risk dimensions, but the received schema has no structured executive-link or
+rumor-verification field. This section must disclose those dimensions as unavailable
+and exclude them from the index. It may not guess them from title/summary keywords,
+external knowledge, or model inference.
+
+Evidence: none. This section compares structured aggregate signals only. It may not
+quote an article, identify a cause, diagnose intent, assert a rumor, claim executive
+involvement, or use RAG.
+
+Charts: one `risk-signal-index.png` horizontal five-bar chart. Each bar shows one
+unrounded signal formatted as a percentage on a shared 0–100% scale; low, medium, and
+high bands use the shared green, amber, and red colors. The title states the computed
+overall index and high-signal count, and the axis explicitly labels the index as a
+non-probability diagnostic. The chart uses the shared white-background, 150 dpi theme
+and embedded Chinese font.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, and charting;
+- Chinese heading `风险评估`, followed by one concise overall paragraph and no more
+  than three bullets grouping sentiment/severity, spread/persistence, and amplification;
+- the text must call the result a signal index rather than a probability or forecast,
+  and must disclose that executive association and rumor verification were unavailable;
+- every number, percentage, band, and dimension label comes from approved facts; no
+  new cause, recommendation, article claim, intent, rumor, executive claim, or external
+  knowledge is allowed;
+- the deterministic stub renders the same facts and capability disclosure in automated
+  tests.
+
+No-data rule: zero matching articles returns `no_data`, renders a visible Chinese
+absence message, and performs no chart or narrator operation. A non-empty scope with
+zero negative articles remains `complete` and renders five explicit zero-pressure
+signals. Query, calculation, chart, or narration errors return `failed` with a safe
+stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in

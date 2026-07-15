@@ -26,6 +26,7 @@ contracts is treated as product-design space owned by this project.
 | D-19 | The `trend` timeline includes zero-volume calendar days and stacks daily sentiment counts | Readers see real quiet periods and sentiment shifts instead of a compressed, misleading timeline |
 | D-20 | `platforms` discloses volume ties, ranks negative concentration by negative count before rate, and groups chart rows after the top seven into `其他` | Readers see material platform differences without false winners, one-item rate distortion, or an unreadable long tail |
 | D-21 | `severity` treats zero negative records as a valid no-data finding and selects at most three high-risk evidence records by deterministic severity/score/engagement/recency order without RAG | Readers see auditable risk concentration and real source examples without fabricated causes or opaque retrieval |
+| D-22 | `risk` equally averages five transparent structured pressure ratios, labels the result a non-probability diagnostic index, and excludes/discloses executive-association and rumor dimensions absent from the schema | Readers can see which measured signals are elevated without false precision, keyword guessing, or invented risk claims |
 
 The repository itself will define the 19-section specification, fixtures, examples,
 gold-report visual baseline, metadata extensions, and catalog publishing behavior.
