@@ -57,6 +57,8 @@ class ReportAssembler:
             return "情感分布概览" if language is Language.ZH else "Sentiment overview"
         if section_id is SectionId.TREND:
             return "每日情感趋势" if language is Language.ZH else "Daily sentiment trend"
+        if section_id is SectionId.SENTIMENT_EVOLUTION:
+            return "阶段情感构成与样本量" if language is Language.ZH else "Phase sentiment composition and sample sizes"
         if section_id is SectionId.PLATFORMS:
             return "平台量级、情感与互动对比" if language is Language.ZH else "Platform volume, sentiment, and engagement"
         if section_id is SectionId.SEVERITY:

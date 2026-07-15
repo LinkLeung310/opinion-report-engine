@@ -19,6 +19,50 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.SENTIMENT_EVOLUTION:
+            if request.language is Language.EN:
+                if values["direction"] == "仅单阶段有数据":
+                    return (
+                        "## Sentiment evolution\n\n"
+                        f"Only {values['firstPhaseLabel']} "
+                        f"({values['firstPhaseDateRange']}) contains data: "
+                        f"{values['firstPhaseArticles']} items, with "
+                        f"{values['firstPhaseNegativeShare']} negative. There is "
+                        "insufficient information for a phase comparison. Composition "
+                        "does not indicate discussion volume or renewed attention."
+                    )
+                return (
+                    "## Sentiment evolution\n\n"
+                    f"Negative share moves from {values['firstPhaseNegativeShare']} "
+                    f"across {values['firstPhaseArticles']} items in "
+                    f"{values['firstPhaseLabel']} ({values['firstPhaseDateRange']}) to "
+                    f"{values['lastPhaseNegativeShare']} across "
+                    f"{values['lastPhaseArticles']} items in "
+                    f"{values['lastPhaseLabel']} ({values['lastPhaseDateRange']}), a "
+                    f"change of {values['negativeShareDelta']} classified as "
+                    f"{values['direction']}. Composition change does not indicate "
+                    "discussion volume or renewed attention."
+                )
+            if values["direction"] == "仅单阶段有数据":
+                return (
+                    "## 情感演变\n\n"
+                    f"仅{values['firstPhaseLabel']}（{values['firstPhaseDateRange']}）"
+                    f"有数据，共 {values['firstPhaseArticles']} 篇，负面占比为 "
+                    f"{values['firstPhaseNegativeShare']}，不足以进行阶段比较。"
+                    "情感构成不代表讨论量变化或热度回升。"
+                )
+            return (
+                "## 情感演变\n\n"
+                f"{values['firstPhaseLabel']}（{values['firstPhaseDateRange']}）共 "
+                f"{values['firstPhaseArticles']} 篇，负面占比 "
+                f"{values['firstPhaseNegativeShare']}；"
+                f"{values['lastPhaseLabel']}（{values['lastPhaseDateRange']}）共 "
+                f"{values['lastPhaseArticles']} 篇，负面占比 "
+                f"{values['lastPhaseNegativeShare']}，变化为 "
+                f"{values['negativeShareDelta']}，判定为{values['direction']}。"
+                "情感构成变化不等于讨论量上升或热度回升。"
+            )
+
         if request.section_id is SectionId.VIEWPOINTS:
             labels = (
                 {

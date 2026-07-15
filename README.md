@@ -16,6 +16,9 @@ The repository currently implements all seven C-suite sections: `verdict`, `metr
 `trend`, `viewpoints`, `platforms`, `severity`, and `risk`, through the same boundaries
 the full product will use: fixed PostgreSQL SQL, Python-owned facts, injected narration,
 a set of five meaningful 150 dpi charts, A4 Chinese PDF rendering, and atomic bundle publication.
+It also implements the PR-oriented `sentiment-evolution` slice with a sixth chart:
+phase composition is shown beside explicit sample sizes and is kept separate from
+the absolute discussion volume already shown by `trend`.
 `verdict` adds an auditable Python-owned risk and momentum judgment without a redundant
 decorative chart; `trend` preserves quiet calendar days in a stacked sentiment timeline.
 `platforms` discloses volume ties and compares sentiment with engagement without

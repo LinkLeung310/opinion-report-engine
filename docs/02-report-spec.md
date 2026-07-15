@@ -449,6 +449,80 @@ zero negative articles remains `complete` and renders five explicit zero-pressur
 signals. Query, calculation, chart, or narration errors return `failed` with a safe
 stage-specific message while later sections continue.
 
+## `sentiment-evolution` — 情感演变
+
+Purpose: show how the composition of positive, neutral, and negative coverage changes
+across the selected period without confusing a percentage shift with a change in
+discussion volume. This section complements `trend`: `trend` shows daily item counts,
+while `sentiment-evolution` compares phase composition and always discloses the sample
+size behind each percentage.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`sentiment-evolution.v1`):
+
+- generate every Asia/Shanghai calendar day from `dateRange.from` through
+  `dateRange.to`;
+- hard-filter articles with the shared tag and complete half-open timestamp scope;
+- left-join daily positive, neutral, negative, and total article counts onto the
+  complete calendar series, retaining explicit zero-volume days;
+- use bound `topic_tag`, calendar boundaries, timestamp boundaries, and timezone only;
+  the query will live at
+  `src/report_engine/data/queries/sentiment_evolution.sql` and will not use generated
+  SQL, article evidence, RAG, or n8n.
+
+Derived in Python:
+
+- divide the complete calendar into at most three chronological phases. Three or more
+  days use `前期` / `中期` / `后期`; two days use `前期` / `后期`; one day uses `全期`;
+- phase lengths differ by at most one day, and any remainder is assigned to earlier
+  phases. A seven-day scope therefore becomes 3 / 2 / 2 calendar days;
+- for each phase, sum total and sentiment counts, then calculate positive, neutral,
+  and negative shares from unrounded decimals. A zero-volume phase retains three
+  explicit zero shares and is not silently removed;
+- identify the first and last populated phases. When two or more populated phases
+  exist, calculate `negativeShareDelta` as last minus first in percentage points;
+- classify the change as `负面占比上升` at +10 percentage points or more,
+  `负面占比下降` at -10 points or less, and `基本稳定` between those thresholds.
+  With only one populated phase, use `仅单阶段有数据` and do not imply a temporal
+  trend;
+- retain total articles, phase count, populated phase count, phase date ranges,
+  phase sample sizes, sentiment counts/shares, comparison endpoints, signed delta,
+  and direction in `FactSet` using `sentiment-evolution.v1` or named
+  `sentiment-evolution.*.v1` calculation identifiers.
+
+Evidence: none. The section describes structured sentiment labels and phase totals
+only. It may not quote an article, explain why sentiment changed, identify a new theme,
+infer audience intent, or use external knowledge.
+
+Charts: one `sentiment-evolution.png` 100% stacked phase bar chart. Positive, neutral,
+and negative shares use the required green, amber, and red colors. Every bar displays
+its phase date range and `n=<article count>` so a high share based on a small sample is
+visible. Zero-volume phases remain on the chart. The title states the last populated
+phase's negative share and sample size rather than a generic chart name. The chart uses
+the shared white-background, 150 dpi theme and embedded Chinese font.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, and charting;
+- Chinese heading `情感演变`, followed by one concise paragraph comparing the first
+  and last populated phases and one caution sentence separating composition from
+  volume;
+- state both endpoint sample sizes, both negative shares, the signed percentage-point
+  change, and the approved direction. A 100% share must never be described without its
+  article count;
+- every number, date range, percentage, and direction comes from approved facts; no
+  cause, article claim, recommendation, demographic statement, or new number is
+  allowed;
+- the deterministic stub renders the same endpoint and low-sample caveat in automated
+  tests.
+
+No-data rule: an all-zero calendar series returns `no_data`, renders a visible Chinese
+absence message, and performs no chart or narrator operation. A scope with one
+populated phase remains `complete` but explicitly states that temporal comparison is
+insufficient. Query, calculation, chart, or narration errors return `failed` with a
+safe stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in
