@@ -9,7 +9,7 @@ from report_engine.charts.theme import ChartTheme
 from report_engine.sections.metrics import MetricsSnapshot
 
 
-def test_metrics_chart_uses_the_required_theme_and_dpi(tmp_path) -> None:
+def test_metrics_chart_uses_the_required_theme_and_dpi(tmp_path, caplog) -> None:
     snapshot = MetricsSnapshot(
         article_count=12,
         positive_articles=2,
@@ -27,6 +27,7 @@ def test_metrics_chart_uses_the_required_theme_and_dpi(tmp_path) -> None:
 
     output = MetricsChartBuilder().build(snapshot, tmp_path)
 
+    assert "Failed to find font weight" not in caplog.text
     assert output.name == "sentiment-overview.png"
     assert output.is_file()
     with Image.open(output) as image:

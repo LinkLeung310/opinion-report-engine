@@ -53,7 +53,6 @@ class MetricsChartBuilder:
                 f"负面内容占比达到 {negative_ratio}",
                 loc="left",
                 color=ChartTheme.TEXT,
-                fontweight="bold",
                 pad=16,
             )
             axes.set_ylabel("文章数", color=ChartTheme.MUTED)
