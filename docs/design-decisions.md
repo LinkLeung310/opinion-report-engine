@@ -21,6 +21,7 @@ contracts is treated as product-design space owned by this project.
 | D-14 | Fixture timestamps and report day boundaries use `Asia/Shanghai` | Chinese event dates include the complete calendar day consistently |
 | D-15 | The repository supplies a synthetic, deterministic fixture dataset | Reviewers can verify every number without exposing production or claiming fabricated records are real |
 | D-16 | ReportLab renders the first A4 PDF bundle with an embedded Noto Sans SC font | Reviewers get reproducible Chinese PDFs without installing a browser or system font |
+| D-17 | Evidence-heavy sections may use Python-owned hybrid RAG after fixed SQL scope filtering, with validated Evidence ID citations | Qualitative findings remain relevant, diverse, testable, and traceable to real source records |
 
 The repository itself will define the 19-section specification, fixtures, examples,
 gold-report visual baseline, metadata extensions, and catalog publishing behavior.

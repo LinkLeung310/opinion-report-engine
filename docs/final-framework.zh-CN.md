@@ -441,7 +441,7 @@ n8n 演示集成能力，但不替代 CLI、FastAPI、fixtures 集成测试或 P
 
 ### SQL 集成测试
 
-- 启动任务书提供的 fixture PostgreSQL；
+- 启动本项目提供的合成 fixture PostgreSQL；
 - 对每章执行真实固定 SQL；
 - 将 FactSet 与直接 SQL 结果逐项比较；
 - 不 mock 数据库结果。

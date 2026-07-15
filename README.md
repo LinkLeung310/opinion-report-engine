@@ -12,7 +12,7 @@ The `main` branch is kept runnable. Feature work is developed on `codex/*` branc
 
 ## First runnable slice
 
-The current branch implements one complete `metrics` section through the same boundaries
+The repository currently implements one complete `metrics` section through the same boundaries
 the full product will use: fixed PostgreSQL SQL, Python-owned facts, injected narration,
 a 150 dpi chart, A4 Chinese PDF rendering, and atomic bundle publication. The remaining
 section IDs are registered but deliberately reported as visible failures until their own
@@ -41,6 +41,8 @@ $env:PG_DSN='postgresql://report:report_local_only@localhost:55432/opinion_fixtu
 
 ## Design documents
 
+- [Documentation map](docs/README.md)
+- [Current implementation state](docs/current-state.md)
 - [最终版框架（中文）](docs/final-framework.zh-CN.md)
 - [Section and SQL specification](docs/02-report-spec.md)
 - [Architecture](docs/architecture.md)
