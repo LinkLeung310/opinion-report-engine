@@ -1,7 +1,7 @@
 # Current Project State
 
 最后核对日期：2026-07-15  
-最后实现基线：`main@0f514d1`（PR #1，first runnable metrics report slice）
+最后实现基线：`main@286e6dc`（PR #2，durable project guardrails；功能基线仍为 PR #1 的 metrics slice）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
@@ -20,8 +20,9 @@
 
 ## 当前证据
 
-- PR #1 已用 merge commit 合并：`0f514d1`。
-- main 分支 CI：47 项测试通过。
+- PR #1 的 metrics slice 已用 merge commit 合并：`0f514d1`。
+- PR #2 的仓库治理已用 merge commit 合并：`286e6dc`。
+- `main@286e6dc` 的 GitHub CI：47 项测试通过。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - wheel 已确认包含 CLI、PDF renderer 和中文字体。
 
@@ -46,7 +47,7 @@
 
 ## 当前范围约束
 
-context recovery 治理已经写入仓库。用户已明确要求暂不开始 RAG；本治理切片没有新增 embedding、vector store、retriever、模型调用或 n8n 节点。
+context recovery 治理已经合并。当前分支 `codex/m1-verdict-section` 只定义 M1 `verdict` 章节规格和确定性判断规则；尚未新增 SQL、Python 章节实现、模型调用或图表。用户要求暂不开始 RAG，因此本阶段没有新增 embedding、vector store、retriever 或 n8n 节点。
 
 ## 治理切片验证
 
@@ -56,6 +57,14 @@ context recovery 治理已经写入仓库。用户已明确要求暂不开始 RA
 
 以后每个小步必须在本文件记录本次结果，并重新执行与该小步相称的两轮检查；历史结果不能替代当前验证。
 
+## M1 `verdict` 规格切片
+
+- `docs/02-report-spec.md` 已写明输入、固定查询计划、Python 派生事实、证据边界、图表决定、一次 narrator 约束和 no-data/failed 行为。
+- D-18 记录透明风险/走势阈值由 Python 计算，并解释不生成重复装饰图表的决定。
+- 第一次检查（静态规格）：必需规格字段、`verdict.v1` 查询标识和 narrator 次数约束检查通过；`git diff --check` 通过。
+- 第二次检查（可执行回归）：健康的 fixture PostgreSQL 下完整 pytest 为 47 项通过；项目虚拟环境 `pip check` 无破损依赖。
+- 当前只完成规格，`verdict.sql`、Python runner 和对应测试仍未实现。
+
 ## 恢复清单
 
 1. 读取根目录 `AGENTS.md`。
@@ -64,9 +73,8 @@ context recovery 治理已经写入仓库。用户已明确要求暂不开始 RA
 4. 重新运行与下一目标相关的测试。
 5. 向用户报告已完成、未完成和任何冲突，再开始修改。
 
-## 下一阶段候选（尚未授权）
+## 当前阶段与下一步
 
-- 在独立分支实现真实 OpenAI-compatible narrator；或
-- 先为 `viewpoints` 编写完整 section spec，再实现可引用证据的 RAG 纵向切片。
-
-开始任一候选前都需要用户明确选择；不得因为它写在这里就自动扩大范围。
+- 当前分支先小步提交 `verdict` 规格；下一小步再依据该规格实现固定 SQL 与确定性 Python 计算，并增加真实 fixture 集成测试。
+- 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
+- RAG 继续延期，不在当前 M1 `verdict` 阶段实现；n8n 保持 Draft，等待 M3 API。
