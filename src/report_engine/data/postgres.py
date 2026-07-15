@@ -9,6 +9,7 @@ from psycopg import Connection
 from psycopg.rows import dict_row
 
 from report_engine.domain.scope import AnalysisScope
+from report_engine.sections.engagement import EngagementRecord, EngagementSnapshot
 from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.keywords import KeywordSourceRecord, KeywordsSnapshot
 from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
@@ -29,6 +30,12 @@ from report_engine.sections.viewpoints import (
 METRICS_QUERY_ID = "metrics.v1"
 METRICS_SQL = (
     files("report_engine.data.queries").joinpath("metrics.sql").read_text(encoding="utf-8")
+)
+ENGAGEMENT_QUERY_ID = "engagement.v1"
+ENGAGEMENT_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("engagement.sql")
+    .read_text(encoding="utf-8")
 )
 KEYWORDS_QUERY_ID = "keywords.v1"
 KEYWORDS_SQL = (
@@ -103,6 +110,56 @@ class PostgresMetricsRepository:
             peak_day=row["peak_day"],
             peak_article_count=row["peak_article_count"],
             query_id=METRICS_QUERY_ID,
+        )
+
+
+class PostgresEngagementRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> EngagementSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(ENGAGEMENT_SQL, parameters)
+            rows = cursor.fetchall()
+
+        if not rows:
+            raise RuntimeError("engagement query returned no aggregate row")
+
+        aggregate = rows[0]
+        return EngagementSnapshot(
+            article_count=aggregate["article_count"],
+            positive_total_engagement_articles=aggregate[
+                "positive_total_engagement_articles"
+            ],
+            zero_engagement_articles=aggregate["zero_engagement_articles"],
+            likes=aggregate["likes"],
+            comments=aggregate["comments"],
+            shares=aggregate["shares"],
+            favorites=aggregate["favorites"],
+            leading_record_count=aggregate["leading_record_count"],
+            records=tuple(
+                EngagementRecord(
+                    external_id=row["external_id"],
+                    title=row["title"],
+                    summary=row["summary"],
+                    platform=row["platform"],
+                    published_at=row["published_at"],
+                    sentiment=row["sentiment"],
+                    likes=row["record_likes"],
+                    comments=row["record_comments"],
+                    shares=row["record_shares"],
+                    favorites=row["record_favorites"],
+                    engagement_rank=row["engagement_rank"],
+                )
+                for row in rows
+                if row["external_id"] is not None
+            ),
+            query_id=ENGAGEMENT_QUERY_ID,
         )
 
 

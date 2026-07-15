@@ -104,7 +104,7 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 ## 当前阶段与下一步
 
 - PR #10 已合并，`main@1ee06f4` 的独立 CI 已通过 146 项测试；当前分支 `codex/m1-engagement-section` 已从该绿色基线创建。
-- 中文 csuite 七章与 PR 版 `sentiment-evolution`、`keywords` 已完整合并；下一小步先为 `engagement` 补齐项目自主设计规格，再实现其固定 SQL 与可追溯事实层。
+- 中文 csuite 七章与 PR 版 `sentiment-evolution`、`keywords` 已完整合并；`engagement` 的项目自主规格与 SQL/事实层已经实现，下一小步接入图表、fault-isolated runner、stub narrator、运行时和 CLI/PDF 产物。
 - 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #10、19 章注册表、PR 默认组合与 RAG 延期声明一致，`git diff --check` 通过。
 - 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 146 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -121,6 +121,12 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 - fixture 口径预查得到 12 篇、总互动 26,170，赞/评/转/藏为 15,460/4,705/4,620/1,385，评论+转发占 35.6%；最高单篇占 38.3%，前三篇占 59.1%，前三篇为 `bili-007`、`bili-005`、`bili-010`。该预查只校准规格，尚未构成实现证据。
 - 规格小步第一次检查：必需规格段、`engagement.v1`、最高值并列、最多五篇图表行、最多三篇真实证据、一次 narrator、全零 complete 分支、无互动率/RAG/n8n 越界、D-26 和 `git diff --check` 全部通过。
 - 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 146 项通过；`pip check` 无破损依赖。
+- 固定 `engagement.sql`、`PostgresEngagementRepository`、`EngagementRecord`、`EngagementSnapshot`、可追溯 `FactSet` 和前三篇真实 `EvidenceSet` 已实现；SQL 始终返回一个聚合快照并只带最多五条正互动记录。
+- Python 校验文章数、正互动/零互动分区、四类聚合、连续确定性排名、最高值并列、展示记录不超过聚合和零互动分支；每条展示事实携带真实 source record ID，前三条进入 EvidenceSet；即使六篇以上并列也保留完整并列数而不伪造单一来源。
+- fixture 集成测试正式验证 12 篇、赞/评/转/藏 15,460/4,705/4,620/1,385、总互动 26,170、唯一最高值和前五顺序 `bili-007`、`bili-005`、`bili-010`、`bili-001`、`bili-011`，并验证空话题返回合法空 snapshot。
+- FactSet 保留未四舍五入的四类份额和集中度，仅显示为评论+转发 35.6%、最高单篇 38.3%、前三篇 59.1%；前三篇 Evidence ID 为 `bili-007`、`bili-005`、`bili-010`。
+- SQL/事实小步第一次检查：Python 静态编译、恰好三个 SQL 绑定参数、`git diff --check` 以及 engagement 单元/真实数据库专属测试 8 项通过。
+- SQL/事实小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 154 项通过；`pip check` 无破损依赖。
 
 ## M1 `keywords` 规格切片
 
