@@ -23,6 +23,10 @@ The PR-oriented `keywords` slice adds a seventh chart based on distinct-document
 coverage of deterministic recurring phrases; it reports tied leaders and an honest
 absence of late-emerging phrases without claiming semantic clustering, a word cloud,
 or RAG.
+The PR-oriented `engagement` slice adds an eighth chart that separates the four stored
+interaction counters from their concentration in high-count records. Its ranked source
+evidence is auditable, while the text explicitly avoids engagement-rate, unique-reach,
+support, and causal claims that the available schema cannot justify.
 `verdict` adds an auditable Python-owned risk and momentum judgment without a redundant
 decorative chart; `trend` preserves quiet calendar days in a stacked sentiment timeline.
 `platforms` discloses volume ties and compares sentiment with engagement without

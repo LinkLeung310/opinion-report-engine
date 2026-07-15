@@ -137,6 +137,13 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 - FactSet 保留未四舍五入的四类份额和集中度，仅显示为评论+转发 35.6%、最高单篇 38.3%、前三篇 59.1%；前三篇 Evidence ID 为 `bili-007`、`bili-005`、`bili-010`。
 - SQL/事实小步第一次检查：Python 静态编译、恰好三个 SQL 绑定参数、`git diff --check` 以及 engagement 单元/真实数据库专属测试 8 项通过。
 - SQL/事实小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 154 项通过；`pip check` 无破损依赖。
+- `EngagementChartBuilder`、fault-isolated `EngagementSectionRunner`、确定性中英文 stub、运行时接线、专属图片 alt 和十章节评审示例已实现；正互动路径只调用一次 narrator，全零互动路径不生成图表、证据或模型成本。
+- 图表/runner 专属 17 项测试验证双面板 150 dpi 图表、四类精确计数与占比、最多五篇情感着色内容、最高值并列、Evidence ID/标题/四项计数验证、全零 complete，以及 query/calculation/chart/LLM 安全失败隔离；全部通过且无布局 warning。
+- 实际 CLI 产物为 10 章 complete、0 章 failed、8 张图表；互动正文准确披露总互动 26,170，赞/评/转/藏 15,460/4,705/4,620/1,385，评论+转发 9,325（35.6%），最高单篇 `bili-007` 10,020（38.3%），前三篇合计 59.1%，并按序引用 `bili-007`、`bili-005`、`bili-010` 的真实标题与计数。
+- 正文明确这些是跨平台存储的原始计数快照，缺少曝光量和独立用户分母，不代表互动率、真实触达或支持度；未引入 RAG、外部知识或 n8n。
+- PDF 经 Poppler 验证为 A4 七页。逐页和 engagement 图表原图视觉检查确认正文位于第 6 页、完整双面板图及方法说明位于第 7 页；无孤立章节标题、中文乱码、截断、重叠、图例遮挡或长标题裁切。第 7 页留白来自保持图表整体。
+- 图表/runner 小步第一次检查：Python 静态编译、十章节配置顺序、唯一 engagement narrator 调用点、`git diff --check` 和 runner/图表/CLI 聚焦 9 项测试通过。
+- 图表/runner 小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 160 项通过；`pip check` 无破损依赖，实际十章节 bundle 与七页 PDF 验收通过。
 
 ## M1 `keywords` 规格切片
 

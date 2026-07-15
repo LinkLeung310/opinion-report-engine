@@ -46,6 +46,10 @@
     {
       "id": "keywords",
       "enabled": true
+    },
+    {
+      "id": "engagement",
+      "enabled": true
     }
   ]
 }
