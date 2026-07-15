@@ -45,7 +45,10 @@ def test_media_social_sql_matches_the_seeded_fixture_scope() -> None:
     facts = snapshot.to_fact_set()
     assert facts.get("mediaNegativeShare").formatted_value == "33.3%"
     assert facts.get("socialNegativeShare").formatted_value == "66.7%"
-    assert facts.get("socialMinusMediaNegativeShare").formatted_value == "+33.3%"
+    assert (
+        facts.get("socialMinusMediaNegativeShare").formatted_value
+        == "+33.3 个百分点"
+    )
     assert snapshot.query_id == "media-social.v1"
 
 

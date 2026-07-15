@@ -136,9 +136,16 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 - 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 160 项通过；`pip check` 无破损依赖。
 - 固定 `media_social.sql`、`PostgresMediaSocialRepository`、`MediaSocialRow`、`MediaSocialSnapshot` 和可追溯 `FactSet` 已实现；查询无论有无数据都按固定顺序返回 `media`、`social` 两行，并校验行合计与查询总计一致。
 - Python 校验 source type、情感加总、平台覆盖和两行顺序；分别保留文章占比、组内情感占比、负面总体来源占比、量级并列和两组均有样本时的负面占比差。单组缺失时不生成该组情感百分比、差值或假赢家；两组零负面仍是合法可比较并列。
-- fixture 集成测试正式验证媒体/社交文章数 3/9、正面 1/1、中性 1/2、负面 1/6、平台数 1/3、组内负面 33.3%/66.7% 和差值 `+33.3%`；空话题仍返回两行显式零值并判定 `no_data`。
+- fixture 集成测试正式验证媒体/社交文章数 3/9、正面 1/1、中性 1/2、负面 1/6、平台数 1/3、组内负面 33.3%/66.7% 和差值 `+33.3 个百分点`；空话题仍返回两行显式零值并判定 `no_data`。
 - SQL/事实小步第一次检查：Python 静态编译、恰好三个 SQL 绑定参数、`git diff --check` 以及 media-social 单元/真实数据库专属测试 7 项通过。
 - SQL/事实小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 167 项通过；`pip check` 无破损依赖。
+- `MediaSocialChartBuilder`、fault-isolated `MediaSocialSectionRunner`、确定性中英文 stub、运行时接线、专属图片 alt 和十一章节评审示例已实现；本章不传文章证据，只执行一次 narrator 操作。
+- 图表/runner/CLI 聚焦 18 项测试验证双面板绝对量与 100% 组内构成、150 dpi、两组 `n`、单组无样本、叙述事实校验、no-data 跳过，以及 query/calculation/chart/LLM 安全失败隔离；全部通过且无布局 warning。
+- 实际 CLI 产物为 11 章 complete、0 章 failed、9 张图表；正文准确披露媒体/社交 3/9 篇与 25.0%/75.0%，组内负面 1/3（33.3%）与 6/9（66.7%），以及社交减媒体 `+33.3 个百分点`。
+- 正文明确分类直接来自数据库 `source_type`，结果只描述本次收录内容，不代表受众人群、差异原因或完整媒体生态；未引入 RAG、平台名推断、外部知识或 n8n。
+- 首次 PDF 为 A4 八页，但第 8 页只有通用方法说明，构成孤页；缩短新图表高度后重新生成，最终为 A4 七页。逐页与图表原图复核确认 media-social 正文、双面板图和方法说明完整位于第 7 页，无中文乱码、截断、重叠、图例遮挡、比例失真或孤页。
+- 图表/runner 小步第一次检查：Python 静态编译、十一章节配置顺序、唯一 media-social narrator 调用点、`git diff --check` 和聚焦 18 项测试通过。
+- 图表/runner 小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 175 项通过；`pip check` 无破损依赖，实际十一章节 bundle 与七页 PDF 验收通过。
 
 ## M1 `engagement` 阶段入口
 

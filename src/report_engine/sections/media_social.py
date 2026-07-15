@@ -258,7 +258,7 @@ class MediaSocialSnapshot:
                     Fact(
                         "socialMinusMediaNegativeShare",
                         delta,
-                        f"{delta:+.1%}",
+                        f"{delta * 100:+.1f} 个百分点",
                         "media-social.negative-share-delta.v1",
                     ),
                     Fact(

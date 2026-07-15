@@ -46,7 +46,10 @@ def test_media_social_facts_keep_volume_and_composition_denominators_separate() 
     assert facts.get("socialMinusMediaNegativeShare").raw_value.quantize(
         Decimal("0.0001")
     ) == Decimal("0.3333")
-    assert facts.get("socialMinusMediaNegativeShare").formatted_value == "+33.3%"
+    assert (
+        facts.get("socialMinusMediaNegativeShare").formatted_value
+        == "+33.3 个百分点"
+    )
     assert facts.get("volumeLeaders").formatted_value == "社交内容"
     assert facts.get("negativeShareLeaders").formatted_value == "社交内容"
     assert facts.get("sourceClassification").raw_value == "source_type"
@@ -75,7 +78,10 @@ def test_populated_zero_negative_groups_form_a_valid_tie() -> None:
     facts = snapshot.to_fact_set()
 
     assert snapshot.comparison_status == "comparable"
-    assert facts.get("socialMinusMediaNegativeShare").formatted_value == "+0.0%"
+    assert (
+        facts.get("socialMinusMediaNegativeShare").formatted_value
+        == "+0.0 个百分点"
+    )
     assert facts.get("negativeShareLeaders").formatted_value == "媒体内容、社交内容"
     assert facts.get("negativeShareLeaderCount").raw_value == 2
     assert facts.get("mediaNegativePopulationShare").formatted_value == "0.0%"

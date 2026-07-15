@@ -19,6 +19,59 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.MEDIA_SOCIAL:
+            comparable = values["comparisonStatus"] == "comparable"
+            if request.language is Language.EN:
+                volume = (
+                    f"Across {values['articles']} captured records, media contains "
+                    f"{values['mediaArticles']} ({values['mediaArticleShare']}) and "
+                    f"social contains {values['socialArticles']} "
+                    f"({values['socialArticleShare']})."
+                )
+                if comparable:
+                    comparison = (
+                        f"Media has {values['mediaNegativeArticles']} negative records "
+                        f"among {values['mediaArticles']} ({values['mediaNegativeShare']}), "
+                        f"while social has {values['socialNegativeArticles']} among "
+                        f"{values['socialArticles']} ({values['socialNegativeShare']}); "
+                        f"social minus media is "
+                        f"{values['socialMinusMediaNegativeShare']}."
+                    )
+                else:
+                    comparison = (
+                        "Only one stored source type has samples, so the cross-group "
+                        "sentiment comparison is unavailable."
+                    )
+                return (
+                    "## Media and social\n\n"
+                    f"{volume} {comparison}\n\nThe classification comes from the "
+                    "database source_type field. These captured records do not establish "
+                    "audience demographics, causes, or the full media ecosystem."
+                )
+            volume = (
+                f"监测期内共 {values['articles']} 篇收录内容：媒体内容 "
+                f"{values['mediaArticles']} 篇（{values['mediaArticleShare']}），"
+                f"社交内容 {values['socialArticles']} 篇（"
+                f"{values['socialArticleShare']}）。"
+            )
+            if comparable:
+                comparison = (
+                    f"媒体内容 {values['mediaArticles']} 篇中负面 "
+                    f"{values['mediaNegativeArticles']} 篇（"
+                    f"{values['mediaNegativeShare']}），社交内容 "
+                    f"{values['socialArticles']} 篇中负面 "
+                    f"{values['socialNegativeArticles']} 篇（"
+                    f"{values['socialNegativeShare']}）；社交减媒体为 "
+                    f"{values['socialMinusMediaNegativeShare']}。"
+                )
+            else:
+                comparison = "只有一种存储来源类型有样本，跨组情感不可比较。"
+            return (
+                "## 媒体与社媒对比\n\n"
+                f"{volume} {comparison}\n\n分类直接来自数据库 source_type 字段；"
+                "结论只描述本次收录内容，不代表受众人群、差异原因或完整媒体生态。"
+            )
+
         if request.section_id is SectionId.ENGAGEMENT:
             evidence_lines = []
             for index, evidence in enumerate(request.evidence.records, start=1):

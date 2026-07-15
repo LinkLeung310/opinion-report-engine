@@ -50,6 +50,10 @@
     {
       "id": "engagement",
       "enabled": true
+    },
+    {
+      "id": "media-social",
+      "enabled": true
     }
   ]
 }

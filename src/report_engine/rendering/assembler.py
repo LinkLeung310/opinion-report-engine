@@ -63,6 +63,8 @@ class ReportAssembler:
             return "重复短语覆盖与情感构成" if language is Language.ZH else "Recurring phrase coverage and sentiment"
         if section_id is SectionId.ENGAGEMENT:
             return "互动构成与高计数内容" if language is Language.ZH else "Engagement composition and high-count records"
+        if section_id is SectionId.MEDIA_SOCIAL:
+            return "媒体与社交内容的量级及情感构成" if language is Language.ZH else "Media and social volume and sentiment composition"
         if section_id is SectionId.PLATFORMS:
             return "平台量级、情感与互动对比" if language is Language.ZH else "Platform volume, sentiment, and engagement"
         if section_id is SectionId.SEVERITY:

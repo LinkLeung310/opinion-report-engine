@@ -12,6 +12,7 @@ from report_engine.application.service import ReportApplicationService
 from report_engine.charts.engagement import EngagementChartBuilder
 from report_engine.charts.metrics import MetricsChartBuilder
 from report_engine.charts.keywords import KeywordsChartBuilder
+from report_engine.charts.media_social import MediaSocialChartBuilder
 from report_engine.charts.platforms import PlatformsChartBuilder
 from report_engine.charts.risk import RiskChartBuilder
 from report_engine.charts.sentiment_evolution import SentimentEvolutionChartBuilder
@@ -21,6 +22,7 @@ from report_engine.config import SectionId
 from report_engine.data.postgres import (
     PostgresEngagementRepository,
     PostgresKeywordsRepository,
+    PostgresMediaSocialRepository,
     PostgresMetricsRepository,
     PostgresPlatformsRepository,
     PostgresRiskRepository,
@@ -35,6 +37,7 @@ from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
 from report_engine.sections.engagement_runner import EngagementSectionRunner
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.keywords_runner import KeywordsSectionRunner
+from report_engine.sections.media_social_runner import MediaSocialSectionRunner
 from report_engine.sections.platforms_runner import PlatformsSectionRunner
 from report_engine.sections.registry import default_registry
 from report_engine.sections.risk_runner import RiskSectionRunner
@@ -68,6 +71,11 @@ def build_report_service(
     keywords_runner = KeywordsSectionRunner(
         repository=PostgresKeywordsRepository(connection),
         chart_builder=KeywordsChartBuilder(),
+        narrator=narrator,
+    )
+    media_social_runner = MediaSocialSectionRunner(
+        repository=PostgresMediaSocialRepository(connection),
+        chart_builder=MediaSocialChartBuilder(),
         narrator=narrator,
     )
     verdict_runner = VerdictSectionRunner(
@@ -110,6 +118,7 @@ def build_report_service(
             SectionId.METRICS: metrics_runner,
             SectionId.ENGAGEMENT: engagement_runner,
             SectionId.KEYWORDS: keywords_runner,
+            SectionId.MEDIA_SOCIAL: media_social_runner,
             SectionId.TREND: trend_runner,
             SectionId.VIEWPOINTS: viewpoints_runner,
             SectionId.PLATFORMS: platforms_runner,
