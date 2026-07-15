@@ -39,6 +39,10 @@ def test_renders_a4_pdf_with_chinese_text_and_chart(tmp_path) -> None:
 
 监测期内共收集 12 篇内容，负面内容占比达到 58.3%。
 
+### 质疑/反对
+
+- [Evidence: bili-007] 真实标题：真实摘要。
+
 ![metrics chart](charts/sentiment-overview.png)
 
 _方法说明：所有数字由固定 SQL 与 Python 计算。_
@@ -56,6 +60,8 @@ _方法说明：所有数字由固定 SQL 与 Python 计算。_
     extracted_text = page.extract_text()
     assert "舆情分析报告" in extracted_text
     assert "负面内容占比达到 58.3%" in extracted_text
+    assert "质疑/反对" in extracted_text
+    assert "###" not in extracted_text
 
 
 def test_rejects_chart_paths_outside_the_bundle(tmp_path) -> None:

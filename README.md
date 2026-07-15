@@ -12,7 +12,8 @@ The `main` branch is kept runnable. Feature work is developed on `codex/*` branc
 
 ## Runnable slices
 
-The repository currently implements `verdict`, `metrics`, `trend`, `platforms`, `severity`, and `risk` through the same boundaries
+The repository currently implements all seven C-suite sections: `verdict`, `metrics`,
+`trend`, `viewpoints`, `platforms`, `severity`, and `risk`, through the same boundaries
 the full product will use: fixed PostgreSQL SQL, Python-owned facts, injected narration,
 a set of five meaningful 150 dpi charts, A4 Chinese PDF rendering, and atomic bundle publication.
 `verdict` adds an auditable Python-owned risk and momentum judgment without a redundant
@@ -23,6 +24,9 @@ letting one-item percentage outliers dominate the risk story.
 fixture records by Evidence ID without claiming RAG or semantic retrieval.
 `risk` exposes a five-signal non-probability diagnostic index and discloses schema gaps
 instead of guessing executive association or rumor status from text.
+`viewpoints` separates population sentiment shares from a deterministic, cross-platform
+evidence shortlist and validates every displayed Evidence ID plus the original source text;
+this baseline does not claim RAG or semantic retrieval.
 The remaining section IDs are registered but deliberately reported as visible failures
 until their own vertical slices are implemented.
 

@@ -19,6 +19,64 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.VIEWPOINTS:
+            labels = (
+                {
+                    "negative": "Concerns and opposition",
+                    "neutral": "Neutral explanations",
+                    "positive": "Support and easing signals",
+                }
+                if request.language is Language.EN
+                else {
+                    "negative": "质疑/反对",
+                    "neutral": "中性/解释",
+                    "positive": "支持/缓和",
+                }
+            )
+            blocks: list[str] = []
+            for sentiment in ("negative", "neutral", "positive"):
+                records = [
+                    record
+                    for record in request.evidence.records
+                    if record.sentiment == sentiment
+                ]
+                if not records:
+                    continue
+                lines = "\n".join(
+                    (
+                        f"- [Evidence: {record.record_id}] {record.title}: "
+                        f"{record.summary} ({record.platform})"
+                        if request.language is Language.EN
+                        else f"- [Evidence: {record.record_id}] {record.title}："
+                        f"{record.summary}（{record.platform}）"
+                    )
+                    for record in records
+                )
+                blocks.append(f"### {labels[sentiment]}\n\n{lines}")
+
+            body = "\n\n".join(blocks)
+            if request.language is Language.EN:
+                return (
+                    "## Main viewpoints\n\n"
+                    f"The scope contains {values['articleCount']} items: "
+                    f"{values['negativeArticles']} negative "
+                    f"({values['negativeShare']}), {values['neutralArticles']} neutral "
+                    f"({values['neutralShare']}), and {values['positiveArticles']} "
+                    f"positive ({values['positiveShare']}). The records below are "
+                    "representative source evidence, not a complete theme census or "
+                    "an estimate of viewpoint prevalence.\n\n"
+                    f"{body}"
+                )
+            return (
+                "## 主要观点\n\n"
+                f"监测期内共 {values['articleCount']} 篇内容：负面 "
+                f"{values['negativeArticles']} 篇（{values['negativeShare']}）、中性 "
+                f"{values['neutralArticles']} 篇（{values['neutralShare']}）、正面 "
+                f"{values['positiveArticles']} 篇（{values['positiveShare']}）。"
+                "以下为代表性原始证据，不是完整主题普查，也不用于估计观点流行度。\n\n"
+                f"{body}"
+            )
+
         if request.section_id is SectionId.RISK:
             if request.language is Language.EN:
                 band_en = {"低": "low", "中": "medium", "高": "high"}

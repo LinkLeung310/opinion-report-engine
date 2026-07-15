@@ -97,6 +97,17 @@ class ReportLabPdfRenderer:
                 keepWithNext=True,
                 wordWrap="CJK",
             ),
+            "subsection": ParagraphStyle(
+                "SubsectionHeading",
+                fontName=FONT_NAME,
+                fontSize=12,
+                leading=18,
+                textColor=colors.HexColor("#1F2937"),
+                spaceBefore=3 * mm,
+                spaceAfter=1.5 * mm,
+                keepWithNext=True,
+                wordWrap="CJK",
+            ),
             "body": ParagraphStyle(
                 "Body",
                 fontName=FONT_NAME,
@@ -158,6 +169,12 @@ class ReportLabPdfRenderer:
             if line.startswith("## "):
                 flush_paragraph()
                 story.append(Paragraph(escape(line[3:]), self._styles["section"]))
+                continue
+            if line.startswith("### "):
+                flush_paragraph()
+                story.append(
+                    Paragraph(escape(line[4:]), self._styles["subsection"])
+                )
                 continue
             if line.startswith("> "):
                 flush_paragraph()
