@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import matplotlib.pyplot as plt
+from matplotlib import rc_context
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
 
 from report_engine.charts.theme import ChartTheme
 from report_engine.sections.metrics import MetricsSnapshot
@@ -27,7 +29,7 @@ class MetricsChartBuilder:
         ]
         colors = [ChartTheme.POSITIVE, ChartTheme.NEUTRAL, ChartTheme.NEGATIVE]
 
-        with plt.rc_context(
+        with rc_context(
             {
                 "font.sans-serif": [
                     "Microsoft YaHei",
@@ -38,7 +40,9 @@ class MetricsChartBuilder:
                 "axes.unicode_minus": False,
             }
         ):
-            figure, axes = plt.subplots(figsize=(7.2, 4.2))
+            figure = Figure(figsize=(7.2, 4.2))
+            FigureCanvasAgg(figure)
+            axes = figure.subplots()
             ChartTheme.apply(figure, axes)
             bars = axes.bar(labels, values, color=colors, width=0.58)
             axes.bar_label(bars, labels=[f"{value:,}" for value in values], padding=4)
@@ -61,6 +65,6 @@ class MetricsChartBuilder:
                 facecolor=ChartTheme.BACKGROUND,
                 bbox_inches="tight",
             )
-            plt.close(figure)
+            figure.clear()
 
         return output_path
