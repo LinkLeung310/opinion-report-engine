@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opinion-report-engine"
+version = "0.1.0"
+description = "Configuration-driven public-opinion report generator"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "matplotlib>=3.10,<4",
+  "pydantic>=2.12,<3",
+  "psycopg[binary]>=3.2,<4",
+  "python-dotenv>=1.1,<2",
+  "reportlab>=4.4,<5",
+  "typer>=0.15,<1",
+]
+
+[project.scripts]
+report = "report_engine.cli:app"
+
+[project.optional-dependencies]
+dev = [
+  "pypdf>=6,<7",
+  "pytest>=8.3,<9",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/report_engine"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+markers = [
+  "integration: requires the local fixture PostgreSQL database",
+]

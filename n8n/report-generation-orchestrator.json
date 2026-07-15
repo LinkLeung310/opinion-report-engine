@@ -1,0 +1,214 @@
+{
+  "name": "Opinion Report - Generate and Monitor (Draft)",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1b78c169-6f88-4e18-8bdc-381fc9dfe531",
+      "name": "Start Demo",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-900, 80]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/reports",
+        "authentication": "none",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"reportType\": \"csuite\",\n  \"language\": \"zh\",\n  \"topic\": {\n    \"tag\": \"bilibili-dislike\",\n    \"displayName\": \"B站猜你不喜欢算法调整\",\n    \"eventTitle\": \"B站猜你不喜欢算法调整事件\"\n  },\n  \"dateRange\": {\n    \"from\": \"2026-03-17\",\n    \"to\": \"2026-03-23\"\n  },\n  \"sections\": [\n    {\"id\": \"verdict\", \"enabled\": true},\n    {\"id\": \"metrics\", \"enabled\": true},\n    {\"id\": \"trend\", \"enabled\": true},\n    {\"id\": \"viewpoints\", \"enabled\": true},\n    {\"id\": \"platforms\", \"enabled\": true},\n    {\"id\": \"severity\", \"enabled\": true},\n    {\"id\": \"risk\", \"enabled\": true}\n  ]\n}",
+        "options": {}
+      },
+      "id": "65bfce8c-c6df-4e6e-9017-a8549ab1d821",
+      "name": "Submit Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [-660, 80],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      },
+      "id": "70117e98-425d-46c4-a245-310dbdcb1f77",
+      "name": "Wait Before Poll",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [-390, 80],
+      "webhookId": "cf1cf59d-6f54-4751-92c2-870fa7517f29"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://127.0.0.1:8000/reports/{{ $('Submit Report').item.json.taskId }}/status",
+        "authentication": "none",
+        "options": {}
+      },
+      "id": "598a17d7-e7d7-42d3-9773-48b4906feaed",
+      "name": "Get Report Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [-120, 80],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b53bddf5-04b3-4115-9394-839a17b2b980",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1d8ed253-07a2-4d03-92d1-8e30f9aed43d",
+      "name": "Report Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [150, 80]
+    },
+    {
+      "parameters": {},
+      "id": "680ec536-35fd-444f-a054-282504fe6c65",
+      "name": "Report Ready",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [700, -80]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "626e80ac-8337-463f-a86c-3b6bb92ce026",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1b9b38f8-c960-42cd-a7fb-03eb8b66ccf6",
+      "name": "Report Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [420, 180]
+    },
+    {
+      "parameters": {},
+      "id": "fca385da-97bc-4c98-94b5-3a87fad6a8a5",
+      "name": "Report Failed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [700, 140]
+    },
+    {
+      "parameters": {},
+      "id": "2b0d9e55-8382-4875-9a6d-270ed4725f30",
+      "name": "API Error",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [-120, 340]
+    },
+    {
+      "parameters": {
+        "content": "## n8n is the orchestration view\n\nPython/FastAPI remains the source of truth for SQL, calculations, charts, narration, and report files. This workflow only submits and monitors jobs.",
+        "height": 190,
+        "width": 460,
+        "color": 5
+      },
+      "id": "916a817e-dcb9-46a8-b1a7-f8633e52492a",
+      "name": "Architecture Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-900, -240]
+    },
+    {
+      "parameters": {
+        "content": "## Draft until M3\n\nThe status loop becomes executable after POST /reports and GET /reports/{taskId}/status are implemented. Keep this workflow inactive until then.",
+        "height": 190,
+        "width": 430,
+        "color": 3
+      },
+      "id": "0689d7d3-a9a9-418a-8838-78d02533fd0d",
+      "name": "Activation Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [190, -240]
+    }
+  ],
+  "connections": {
+    "Start Demo": {
+      "main": [[{"node": "Submit Report", "type": "main", "index": 0}]]
+    },
+    "Submit Report": {
+      "main": [
+        [{"node": "Wait Before Poll", "type": "main", "index": 0}],
+        [{"node": "API Error", "type": "main", "index": 0}]
+      ]
+    },
+    "Wait Before Poll": {
+      "main": [[{"node": "Get Report Status", "type": "main", "index": 0}]]
+    },
+    "Get Report Status": {
+      "main": [
+        [{"node": "Report Complete?", "type": "main", "index": 0}],
+        [{"node": "API Error", "type": "main", "index": 0}]
+      ]
+    },
+    "Report Complete?": {
+      "main": [
+        [{"node": "Report Ready", "type": "main", "index": 0}],
+        [{"node": "Report Failed?", "type": "main", "index": 0}]
+      ]
+    },
+    "Report Failed?": {
+      "main": [
+        [{"node": "Report Failed", "type": "main", "index": 0}],
+        [{"node": "Wait Before Poll", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

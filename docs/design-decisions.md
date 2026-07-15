@@ -1,0 +1,26 @@
+# Product and Architecture Decisions
+
+The assignment's fixed contracts remain binding. Everything not specified by those
+contracts is treated as product-design space owned by this project.
+
+| ID | Decision | User-facing outcome |
+|---|---|---|
+| D-01 | Preset-first section builder with custom selection and ordering | Users start from C-suite/PR defaults without losing control |
+| D-02 | Section status is `complete`, `no_data`, or `failed` | A real absence of data is not presented as a system error |
+| D-03 | Show chapter progress and current stage | Users know what the generator is doing and how much remains |
+| D-04 | One narrator operation with at most one bounded transport retry | Temporary failures recover without unbounded cost or waiting |
+| D-05 | Add `generation` and safe `failures` metadata | The UI can show partial success without exposing technical secrets |
+| D-06 | Separate UUID task IDs from versioned human-readable report IDs | Concurrent and repeated reports never overwrite each other |
+| D-07 | Include the entire end date and disclose report timezone | Date-picker behavior matches user expectations |
+| D-08 | Tag/date are hard filters; brand is optional context | The fixed input contract is preserved without inventing a brand field |
+| D-09 | Internal FactSet plus concise methodology notes | Reports stay readable while every number remains auditable |
+| D-10 | English narrative with preserved proper nouns and bilingual key quotes | Translation improves access without corrupting source evidence |
+| D-11 | PDF is primary; ZIP bundle is secondary | Executives get one-click reading and reviewers retain full artifacts |
+| D-12 | CatalogPublisher atomically updates `index.json` after bundle publication | A completed report immediately appears in report history |
+| D-13 | n8n visualizes API submission, polling, and completion | Workflow observability improves without replacing required code |
+| D-14 | Fixture timestamps and report day boundaries use `Asia/Shanghai` | Chinese event dates include the complete calendar day consistently |
+| D-15 | The repository supplies a synthetic, deterministic fixture dataset | Reviewers can verify every number without exposing production or claiming fabricated records are real |
+| D-16 | ReportLab renders the first A4 PDF bundle with an embedded Noto Sans SC font | Reviewers get reproducible Chinese PDFs without installing a browser or system font |
+
+The repository itself will define the 19-section specification, fixtures, examples,
+gold-report visual baseline, metadata extensions, and catalog publishing behavior.
