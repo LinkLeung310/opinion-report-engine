@@ -49,7 +49,7 @@
 
 ## 当前范围约束
 
-context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-section` 只定义 M1 `trend` 章节规格；尚未新增 trend SQL、Python、图表或 runner。用户要求暂不开始 RAG，因此本阶段没有新增 embedding、vector store、retriever 或 n8n 节点。
+context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-section` 已定义 M1 `trend` 规格，并实现完整日期序列 SQL、PostgreSQL repository 和确定性 Python 事实；尚未新增 trend 图表或 runner。用户要求暂不开始 RAG，因此本阶段没有新增 embedding、vector store、retriever 或 n8n 节点。
 
 ## 治理切片验证
 
@@ -89,7 +89,7 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 
 ## 当前阶段与下一步
 
-- 当前分支先小步提交 `trend` 规格；下一小步依据规格实现完整日期序列 SQL、确定性 Python 事实和真实 fixture 集成测试。
+- 当前分支已小步提交 `trend` 规格，并完成完整日期序列 SQL、确定性 Python 事实和真实 fixture 集成测试；下一小步实现堆叠图表与 fault-isolated runner。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
 - RAG 继续延期，不在当前 M1 `trend` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
@@ -99,4 +99,8 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 - D-19 记录零文章日期必须保留，避免时间轴压缩造成传播节奏误读。
 - 第一次检查（静态规格）：必需规格字段、长范围标签规则和 `git diff --check` 通过。
 - 第二次检查（可执行回归）：健康的 fixture PostgreSQL 下完整 pytest 为 64 项通过；`pip check` 无破损依赖。
-- 当前只完成规格；`trend.sql`、Python snapshot、图表 builder、runner 和测试仍未实现。
+- 固定 `trend.sql`、`PostgresTrendRepository`、完整日历 `TrendSnapshot` 和可追溯 `FactSet` 已实现。
+- SQL/计算小步第一次检查：Python 静态编译、SQL 六个绑定参数和 `git diff --check` 通过。
+- SQL/计算小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 70 项通过；`pip check` 无破损依赖。
+- fixture 集成测试验证七日文章量 `[2, 2, 2, 3, 1, 1, 1]`、3/20 峰值、25.0% 峰值占比和空话题七个显式零值日。
+- 当前数据与计算层完成；图表 builder、fault-isolated runner、stub 叙述、应用接线和 CLI bundle 验收仍未实现。

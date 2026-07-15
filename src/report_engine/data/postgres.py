@@ -10,6 +10,7 @@ from psycopg.rows import dict_row
 
 from report_engine.domain.scope import AnalysisScope
 from report_engine.sections.metrics import MetricsSnapshot
+from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
 from report_engine.sections.verdict import VerdictSnapshot
 
 
@@ -20,6 +21,10 @@ METRICS_SQL = (
 VERDICT_QUERY_ID = "verdict.v1"
 VERDICT_SQL = (
     files("report_engine.data.queries").joinpath("verdict.sql").read_text(encoding="utf-8")
+)
+TREND_QUERY_ID = "trend.v1"
+TREND_SQL = (
+    files("report_engine.data.queries").joinpath("trend.sql").read_text(encoding="utf-8")
 )
 
 
@@ -85,4 +90,36 @@ class PostgresVerdictRepository:
             peak_article_count=row["peak_article_count"],
             final_day_article_count=row["final_day_article_count"],
             query_id=VERDICT_QUERY_ID,
+        )
+
+
+class PostgresTrendRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> TrendSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_date": scope.from_date,
+            "to_date": scope.to_date,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+            "timezone_name": scope.timezone_name,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(TREND_SQL, parameters)
+            rows = cursor.fetchall()
+
+        return TrendSnapshot(
+            points=tuple(
+                DailyTrendPoint(
+                    day=row["article_day"],
+                    article_count=row["article_count"],
+                    positive_articles=row["positive_articles"],
+                    neutral_articles=row["neutral_articles"],
+                    negative_articles=row["negative_articles"],
+                )
+                for row in rows
+            ),
+            query_id=TREND_QUERY_ID,
         )
