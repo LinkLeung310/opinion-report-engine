@@ -23,6 +23,7 @@ contracts is treated as product-design space owned by this project.
 | D-16 | ReportLab renders the first A4 PDF bundle with an embedded Noto Sans SC font | Reviewers get reproducible Chinese PDFs without installing a browser or system font |
 | D-17 | Evidence-heavy sections may use Python-owned hybrid RAG after fixed SQL scope filtering, with validated Evidence ID citations | Qualitative findings remain relevant, diverse, testable, and traceable to real source records |
 | D-18 | The `verdict` risk level and momentum use explicit Python thresholds, and the section has no redundant standalone chart | Executives get a stable, auditable opening judgment without model guesswork or decorative duplication |
+| D-19 | The `trend` timeline includes zero-volume calendar days and stacks daily sentiment counts | Readers see real quiet periods and sentiment shifts instead of a compressed, misleading timeline |
 
 The repository itself will define the 19-section specification, fixtures, examples,
 gold-report visual baseline, metadata extensions, and catalog publishing behavior.

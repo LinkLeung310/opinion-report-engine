@@ -102,6 +102,63 @@ absence message, and performs no narrator or chart operation. A query, calculati
 or narration error returns `failed` with a safe stage-specific message while later
 sections continue.
 
+## `trend` — 热度趋势
+
+Purpose: show how discussion volume and sentiment composition change across the full
+selected calendar range, including quiet days that would otherwise disappear from the
+timeline.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`trend.v1`):
+
+- generate every Asia/Shanghai calendar day from `dateRange.from` through
+  `dateRange.to`;
+- hard-filter articles with the shared tag and half-open timestamp scope;
+- left-join daily article counts onto the complete calendar series;
+- return total, positive, neutral, and negative counts for every day, with explicit
+  zeros for days without matching articles;
+- use bound `topic_tag`, timestamp boundaries, calendar boundaries, and timezone only;
+  the query will live at `src/report_engine/data/queries/trend.sql`.
+
+Derived in Python:
+
+- `articles` = sum of all daily totals;
+- `activeDays` = calendar days with at least one matching article;
+- `peakDay` and `peakArticles`, with the earliest day winning an equal-count tie;
+- `peakShare` = peak-day articles / all articles;
+- `finalDayArticles` and `finalVsPeakRatio` = final selected day / peak day;
+- display-ready daily labels and chart-title facts. Ratios use unrounded decimals and
+  are formatted only after calculation.
+
+Every aggregate and displayed number is a `FactSet` value sourced from `trend.v1` or a
+named Python calculation. Daily rows remain deterministic chart data and retain the
+query identifier.
+
+Evidence: none. This section describes measured volume and sentiment composition only;
+it must not infer causes or quote article-level claims.
+
+Charts: one `daily-sentiment-trend.png` stacked bar chart. Each calendar day shows
+positive, neutral, and negative counts using the required sentiment colors. The title
+states the computed peak insight (for example, `3/20 达峰，单日 3 篇内容`), the y-axis is
+article count, and long ranges thin x-axis labels to at most ten readable ticks without
+dropping data points. The chart uses the shared white-background, 150 dpi theme and
+embedded Chinese font.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, and charting;
+- Chinese heading `热度趋势` and one concise paragraph covering the peak, peak share,
+  active-day coverage, and final-day change;
+- only approved facts may appear; no new number, event cause, recommendation, or
+  article claim is allowed;
+- the deterministic stub renders the same facts and structure in automated tests.
+
+No-data rule: an all-zero calendar series returns `no_data`, renders a visible Chinese
+absence message, and performs no chart or narrator operation. Query, calculation,
+chart, or narration errors return `failed` with a safe stage-specific message while
+later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in
