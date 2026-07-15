@@ -28,7 +28,7 @@ def test_metrics_sql_matches_the_seeded_fixture_scope() -> None:
     }
     plan = ReportPlanner(default_registry()).build(ReportConfig.model_validate(raw))
 
-    with psycopg.connect(dsn) as connection:
+    with psycopg.connect(dsn, connect_timeout=5) as connection:
         snapshot = PostgresMetricsRepository(connection).fetch(plan.scope)
 
     assert snapshot.article_count == 12
