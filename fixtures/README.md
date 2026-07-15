@@ -3,7 +3,7 @@
 The fixture database is synthetic, deterministic, and safe to publish. Start it with:
 
 ```powershell
-docker compose up -d --wait
+docker compose -f fixtures\docker-compose.yml up -d --wait
 ```
 
 Run the integration tests from the repository root:
@@ -16,6 +16,6 @@ $env:PG_DSN='postgresql://report:report_local_only@localhost:55432/opinion_fixtu
 To re-import the seed files after changing them:
 
 ```powershell
-docker compose down -v
-docker compose up -d --wait
+docker compose -f fixtures\docker-compose.yml down -v
+docker compose -f fixtures\docker-compose.yml up -d --wait
 ```
