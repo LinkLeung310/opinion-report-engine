@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from report_engine.config import ReportConfig, SectionId
+from report_engine.config import Language, ReportConfig, SectionId
 from report_engine.domain.results import ReportResult, SectionResult, SectionStatus
 
 
@@ -44,14 +44,18 @@ class ReportAssembler:
         ]
         for section in sections:
             parts.append(section.markdown.strip())
-            parts.extend(
-                f"![{section.section_id.value} chart](charts/{chart})"
-                for chart in section.charts
-            )
+            chart_alt = ReportAssembler._chart_alt(section.section_id, config.language)
+            parts.extend(f"![{chart_alt}](charts/{chart})" for chart in section.charts)
         parts.append(
             "_方法说明：报告数字由固定 SQL 与 Python 计算；模型仅基于批准的事实与证据撰写文字。_"
         )
         return "\n\n".join(parts) + "\n"
+
+    @staticmethod
+    def _chart_alt(section_id: SectionId, language: Language) -> str:
+        if section_id is SectionId.METRICS:
+            return "情感分布概览" if language is Language.ZH else "Sentiment overview"
+        return f"{section_id.value} chart"
 
     def _meta(
         self,

@@ -70,6 +70,8 @@ def test_success_calls_the_narrator_once_with_approved_facts() -> None:
     assert result.charts == ("sentiment-overview.png",)
     assert narrator.requests[0].facts.get("negativeRatio").formatted_value == "58.3%"
     assert "58.3%" in result.markdown
+    assert "全网数据概览" in result.markdown
+    assert "negativeRatio" not in result.markdown
 
 
 def test_no_data_is_visible_and_does_not_call_the_narrator() -> None:

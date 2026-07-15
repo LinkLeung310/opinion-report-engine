@@ -78,6 +78,7 @@ def test_markdown_preserves_section_order_and_chart_references() -> None:
     assert result.markdown.index("全网数据概览") < result.markdown.index("热度趋势")
     assert result.markdown.index("热度趋势") < result.markdown.index("主要观点")
     assert "charts/sentiment-overview.png" in result.markdown
+    assert "![情感分布概览]" in result.markdown
     assert "Asia/Shanghai" in result.markdown
 
 
