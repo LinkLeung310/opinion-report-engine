@@ -14,7 +14,7 @@
 | R-08 | 主要观点来自真实摘要、标题 | `EvidenceSet` 保留文章 ID、标题、摘要和平台；prompt 只接收这些证据 | Stub prompt 测试及证据引用测试 | 已设计 |
 | R-09 | SQL 空结果/LLM 超时只影响该章节，章节标注缺失，失败写入 meta | 区分 `no_data` 与 `failed`；两者均显示说明，失败写入安全 metadata | 故障注入测试：其它章节仍生成，meta 有失败记录 | 已决策 |
 | R-10 | `.env` 提供 PG/LLM 全部配置，仓库无真实凭据 | `Settings` 仅读取 `PG_DSN`、`LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL`；提交 `.env.example` | secret 扫描、缺配置启动错误测试 | 已设计 |
-| R-11 | PDF 跨平台、A4、中文、分页参照 gold report | 根据参考 PDF 创建 HTML/CSS 基准；Playwright + 项目内 CJK 字体 | Linux/Windows 渲染冒烟、页图视觉检查 | 已决策 |
+| R-11 | PDF 跨平台、A4、中文、分页参照 gold report | ReportLab + 项目内 Noto Sans SC 字体；参考 PDF 作为视觉基准 | A4 尺寸断言、字体嵌入、页图视觉检查、跨平台冒烟 | 实现中 |
 | R-12 | 图表 150 dpi、指定情感颜色、白底、隐藏上/右框、标题表达洞察 | `ChartTheme` 作为唯一图表入口 | 图表元数据/像素检查和视觉金样检查 | 已设计 |
 | R-13 | M1：一条 CLI 命令；csuite 7 章和 pr 11 章中文报告 | 项目创建默认示例配置；Typer 调用同一 `ReportApplicationService` | 两份 examples 配置的完整端到端测试 | 已决策 |
 | R-14 | M2：19 章节、三类额外输入、英文、任意组合 | 项目定义 19 章、专属输入和中英文策略 | 参数化组合和英文 fixture 测试 | 已决策 |

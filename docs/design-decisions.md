@@ -20,6 +20,7 @@ contracts is treated as product-design space owned by this project.
 | D-13 | n8n visualizes API submission, polling, and completion | Workflow observability improves without replacing required code |
 | D-14 | Fixture timestamps and report day boundaries use `Asia/Shanghai` | Chinese event dates include the complete calendar day consistently |
 | D-15 | The repository supplies a synthetic, deterministic fixture dataset | Reviewers can verify every number without exposing production or claiming fabricated records are real |
+| D-16 | ReportLab renders the first A4 PDF bundle with an embedded Noto Sans SC font | Reviewers get reproducible Chinese PDFs without installing a browser or system font |
 
 The repository itself will define the 19-section specification, fixtures, examples,
-gold-report HTML/CSS, metadata extensions, and catalog publishing behavior.
+gold-report visual baseline, metadata extensions, and catalog publishing behavior.

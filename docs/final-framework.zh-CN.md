@@ -326,14 +326,13 @@ LLM_MODEL
 
 ```text
 report.md
-  → Markdown/结构化章节
-  → Jinja2 HTML
-  → 我们基于参考 PDF 制作的 report CSS
-  → Playwright Chromium
+  → 受控 Markdown/结构化章节
+  → ReportLab 流式排版
+  → 项目内嵌 Noto Sans SC 字体
   → A4 report.pdf
 ```
 
-同一 CJK 字体同时通过 matplotlib 和 `@font-face` 注册，避免图表正常但 PDF 乱码。我们根据参考 PDF 创建 `examples/gold-report/report.html` 和可复用 CSS，作为自己的视觉回归基准。
+同一 CJK 字体同时注册到 matplotlib 和 ReportLab，避免图表正常但 PDF 乱码。参考 PDF 用作视觉基准；渲染器自身控制 A4 页边距、分页、页眉页脚、章节样式和图表缩放，不依赖评审机器安装浏览器或字体。
 
 ## 11. 配置与安全
 
@@ -458,7 +457,7 @@ n8n 演示集成能力，但不替代 CLI、FastAPI、fixtures 集成测试或 P
 ### 图表/PDF 测试
 
 - PNG 为 150 dpi，颜色和字体正确；
-- 所有 Markdown/HTML 图片引用存在；
+- 所有 Markdown 图片引用存在；
 - PDF 为 A4；
 - 中文无乱码、表格不截断、章节分页合理；
 - 将渲染页与 gold report 做人工/视觉烟测。
@@ -477,7 +476,7 @@ n8n 演示集成能力，但不替代 CLI、FastAPI、fixtures 集成测试或 P
 2. 一个纯统计章节；
 3. 一个基于真实摘要的观点章节；
 4. 一个带图表的趋势章节；
-5. Markdown/HTML/PDF bundle；
+5. Markdown/PDF bundle；
 6. 章节级故障隔离；
 7. csuite 7 章与 pr 11 章完整生成。
 
@@ -510,7 +509,7 @@ n8n 演示集成能力，但不替代 CLI、FastAPI、fixtures 集成测试或 P
 1. `docs/02-report-spec.md`：上述 19 章的输入、SQL、事实、图表、叙述和无数据规则；
 2. `fixtures/`：可启动的 PostgreSQL schema、种子数据和 Docker Compose；
 3. `examples/report-config.csuite.json` 与 `examples/report-config.pr.json`；
-4. `examples/gold-report/`：根据参考 PDF 创建的 HTML/CSS 和视觉基准；
+4. `examples/gold-report/`：根据参考 PDF 创建的视觉基准；
 5. `ReportMeta` 扩展：`generation`、`failures` 和版本信息；
 6. `CatalogPublisher`：原子维护 `index.json`；
 7. 中英文模板：英文叙述、专有名词保留、关键引用可双语展示。

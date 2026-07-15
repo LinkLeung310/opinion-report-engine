@@ -42,7 +42,7 @@ FastAPI ──> ReportApplicationService ──> ReportEngine
                  v                            v                          v
           PostgreSQL adapter            LLM adapter              PDF renderer
                  |                            |                          |
-             fixed SQL              real client / stub          HTML + Chromium
+             fixed SQL              real client / stub          ReportLab + CJK font
 
 n8n (optional) -> FastAPI submit/status/download endpoints
 ```
@@ -84,7 +84,7 @@ are rendered or their configured order.
 
 1. Assemble complete, no-data, and visible-failed section fragments in config order.
 2. Render deterministic report metadata and data-quality notes.
-3. Produce Markdown, HTML, A4 PDF, charts, and `meta.json` in a temporary directory.
+3. Produce Markdown, A4 PDF, charts, and `meta.json` in a temporary directory.
 4. Write visible no-data/failed fragments and failure metadata for section failures.
 5. Atomically rename the temporary directory to `out/{id}` only after required bundle
    files exist.
@@ -199,15 +199,15 @@ Technology choices:
 - Typer for the `report generate` CLI
 - psycopg for parameterized fixed SQL
 - matplotlib with a bundled CJK font for charts
-- Jinja2 + Markdown-to-HTML templates
-- Playwright Chromium for cross-platform A4 PDF output
+- ReportLab for cross-platform A4 PDF output
 - FastAPI with an in-process executor for M3
 - pytest, with PostgreSQL fixture integration tests and an LLM stub
 
-The bundled CJK font must be registered both by matplotlib and by the report CSS; a
-browser-installed font is not a cross-platform guarantee. The synchronous engine remains
-framework-independent. M3 can run generation jobs in a bounded thread/process executor
-without rewriting section code as async code.
+The bundled CJK font is registered by both matplotlib and ReportLab; a system-installed
+font is not a cross-platform guarantee. ReportLab keeps the first milestone independent
+of a browser runtime while still embedding the Chinese font in the PDF. The synchronous
+engine remains framework-independent. M3 can run generation jobs in a bounded
+thread/process executor without rewriting section code as async code.
 
 ## 9. Proposed package boundaries
 
