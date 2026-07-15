@@ -61,6 +61,8 @@ class ReportAssembler:
             return "平台量级、情感与互动对比" if language is Language.ZH else "Platform volume, sentiment, and engagement"
         if section_id is SectionId.SEVERITY:
             return "负面严重程度与分数分布" if language is Language.ZH else "Negative severity and score distribution"
+        if section_id is SectionId.RISK:
+            return "结构化风险信号指数" if language is Language.ZH else "Structured risk signal index"
         return f"{section_id.value} chart"
 
     def _meta(

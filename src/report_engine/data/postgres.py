@@ -11,6 +11,7 @@ from psycopg.rows import dict_row
 from report_engine.domain.scope import AnalysisScope
 from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
+from report_engine.sections.risk import RiskSnapshot
 from report_engine.sections.severity import SeverityEvidenceRecord, SeveritySnapshot
 from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
 from report_engine.sections.verdict import VerdictSnapshot
@@ -39,6 +40,10 @@ SEVERITY_SQL = (
     files("report_engine.data.queries")
     .joinpath("severity.sql")
     .read_text(encoding="utf-8")
+)
+RISK_QUERY_ID = "risk.v1"
+RISK_SQL = (
+    files("report_engine.data.queries").joinpath("risk.sql").read_text(encoding="utf-8")
 )
 
 
@@ -241,4 +246,38 @@ class PostgresSeverityRepository:
                 for row in rows
             ),
             query_id=SEVERITY_QUERY_ID,
+        )
+
+
+class PostgresRiskRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> RiskSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+            "timezone_name": scope.timezone_name,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(RISK_SQL, parameters)
+            row = cursor.fetchone()
+
+        if row is None:  # The aggregate query should always yield exactly one row.
+            raise RuntimeError("risk query returned no aggregate row")
+
+        return RiskSnapshot(
+            article_count=row["article_count"],
+            negative_articles=row["negative_articles"],
+            high_critical_negative_articles=row[
+                "high_critical_negative_articles"
+            ],
+            platform_count=row["platform_count"],
+            negative_platform_count=row["negative_platform_count"],
+            calendar_days=(scope.to_date - scope.from_date).days + 1,
+            negative_active_days=row["negative_active_days"],
+            total_engagement=row["total_engagement"],
+            negative_engagement=row["negative_engagement"],
+            query_id=RISK_QUERY_ID,
         )

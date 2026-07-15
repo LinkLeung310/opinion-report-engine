@@ -19,6 +19,46 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.RISK:
+            if request.language is Language.EN:
+                band_en = {"低": "low", "中": "medium", "高": "high"}
+                return (
+                    "## Risk assessment\n\n"
+                    f"The {values['evaluatedSignalCount']} equally weighted structured "
+                    f"signals produce a {values['riskSignalIndex']} diagnostic index, "
+                    f"classified as {band_en[values['riskLevel']]}. This is a "
+                    "non-probability diagnostic, not an event probability or forecast.\n\n"
+                    f"- Sentiment pressure is {values['sentimentPressure']} "
+                    f"({band_en[values['sentimentPressureBand']]}), while severity "
+                    f"pressure is {values['severityPressure']} "
+                    f"({band_en[values['severityPressureBand']]}).\n"
+                    f"- Spread pressure is {values['spreadPressure']} "
+                    f"({band_en[values['spreadPressureBand']]}), while persistence "
+                    f"pressure is {values['persistencePressure']} "
+                    f"({band_en[values['persistencePressureBand']]}).\n"
+                    f"- Amplification pressure is {values['amplificationPressure']} "
+                    f"({band_en[values['amplificationPressureBand']]}).\n\n"
+                    "Data capability boundary: executive association and rumor "
+                    "verification fields are unavailable and excluded from the index."
+                )
+            return (
+                "## 风险评估\n\n"
+                f"{values['evaluatedSignalCount']} 项结构化信号的等权诊断指数为 "
+                f"{values['riskSignalIndex']}，档位为{values['riskLevel']}。这是"
+                f"{values['diagnosticKind']}，用于比较监测数据中的信号强度，不代表"
+                "事件发生概率或趋势预测。\n\n"
+                f"- 负面情绪压力为 {values['sentimentPressure']}（"
+                f"{values['sentimentPressureBand']}），高危程度压力为 "
+                f"{values['severityPressure']}（{values['severityPressureBand']}）。\n"
+                f"- 平台扩散压力为 {values['spreadPressure']}（"
+                f"{values['spreadPressureBand']}），持续覆盖压力为 "
+                f"{values['persistencePressure']}（{values['persistencePressureBand']}）。\n"
+                f"- 互动放大压力为 {values['amplificationPressure']}（"
+                f"{values['amplificationPressureBand']}）。\n\n"
+                f"数据能力边界：当前数据源未提供{values['unavailableDimensions']}"
+                "结构化字段，这些维度未纳入指数。"
+            )
+
         if request.section_id is SectionId.SEVERITY:
             evidence_lines = "\n".join(
                 (
