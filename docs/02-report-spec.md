@@ -159,6 +159,76 @@ absence message, and performs no chart or narrator operation. Query, calculation
 chart, or narration errors return `failed` with a safe stage-specific message while
 later sections continue.
 
+## `viewpoints` — 主要观点
+
+Purpose: present the strongest observed concerns, neutral explanations, and
+supportive/easing views from real source records without turning a small evidence
+sample into a population estimate. The section groups representative records; it does
+not claim that the selected examples are exhaustive themes or audience segments.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`viewpoints.v1`):
+
+- hard-filter articles with the shared tag and complete half-open timestamp scope;
+- return total positive, neutral, and negative article counts alongside candidate
+  records carrying real external ID, title, summary, platform, timestamp, sentiment,
+  and total engagement;
+- within each sentiment, rank candidates by total engagement descending,
+  `published_at` descending, then `external_id` ascending;
+- select the highest-ranked record first, then prefer the highest-ranked record from
+  a different platform for the second slot when one exists; otherwise use the next
+  record from the same platform;
+- return at most two records per sentiment and six records overall, ordered as
+  negative, neutral, positive and then by the deterministic within-category rank;
+- use only bound `topic_tag` and timestamp boundaries. The query will live at
+  `src/report_engine/data/queries/viewpoints.sql`; it does not use generated SQL,
+  embeddings, a vector store, a reranker, RAG, or n8n.
+
+Derived in Python:
+
+- `articles`, the three sentiment counts, and their unrounded shares;
+- `evidenceCount`, selected count by sentiment, and selected platform count;
+- the display category labels `质疑/反对`, `中性/解释`, and `支持/缓和`;
+- one `EvidenceSet` containing the selected records in the fixed display order.
+
+Every count and percentage is a `FactSet` value sourced from `viewpoints.v1` or a named
+Python calculation. `evidenceCount` carries every selected source record ID. Evidence
+selection is deliberately not used to estimate viewpoint prevalence; population
+sentiment counts and shares remain separate facts.
+
+Evidence: required. Each record preserves its real external ID, title, summary,
+platform, timestamp, and sentiment. The narrator may only group or describe these
+records. Every evidence bullet must show `[Evidence: <id>]` and preserve the approved
+title and summary verbatim. Missing, duplicate, reordered, or unknown citations, or
+modified source text, cause the section to fail safely. This deterministic selector is
+the non-RAG M1 baseline; any future D-17 retriever must keep the same EvidenceSet and
+citation-validation boundary and requires explicit approval.
+
+Charts: none. The existing metrics chart already quantifies sentiment distribution;
+adding another sentiment chart would duplicate information. `viewpoints` is a compact,
+evidence-first text section.
+
+Narration contract:
+
+- at most one narrator operation after successful query and fact/evidence construction;
+- Chinese heading `主要观点`, followed by available category blocks in the fixed
+  negative, neutral, positive order and at most two evidence bullets per block;
+- each bullet contains one approved citation, original title, original summary, and
+  platform; it may use the category heading as framing but may not add an uncited
+  cause, demographic, recommendation, background fact, or new number;
+- the opening sentence may state the approved total and sentiment counts/shares, but
+  must disclose that selected records are representative evidence rather than a
+  complete theme census;
+- the deterministic stub renders the same facts, category order, exact source text,
+  and citations in automated tests.
+
+No-data rule: zero scoped articles returns `no_data`, renders a visible Chinese absence
+message, and performs no narrator operation. A scoped article with unusable blank
+title/summary is a data/calculation failure rather than no data. Query, calculation,
+evidence validation, or narration errors return `failed` with a safe stage-specific
+message while later sections continue.
+
 ## `platforms` — 平台表现
 
 Purpose: compare where discussion volume, negative content, and audience interaction
