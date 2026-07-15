@@ -89,3 +89,39 @@ def test_cli_generates_verdict_before_metrics_in_configured_order(
         "failed": 0,
     }
     assert meta["charts"] == 1
+
+
+def test_cli_generates_trend_after_metrics_with_a_second_chart(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.m1-slices.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    config = tmp_path / "report-config.trend.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert markdown.index("## 全网数据概览") < markdown.index("## 热度趋势")
+    assert (target / "charts" / "daily-sentiment-trend.png").is_file()
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"]["complete"] == 3
+    assert meta["generation"]["failed"] == 0
+    assert meta["charts"] == 2

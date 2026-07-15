@@ -19,6 +19,26 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.TREND:
+            if request.language is Language.EN:
+                return (
+                    "## Heat trend\n\n"
+                    f"Discussion peaks on {values['peakDay']} with {values['peakArticles']} "
+                    f"items, representing {values['peakShare']} of all coverage. "
+                    f"Activity appears on {values['activeDays']} of {values['calendarDays']} "
+                    f"calendar days. The final day records {values['finalDayArticles']} "
+                    f"items, or {values['finalVsPeakRatio']} of the peak."
+                )
+            return (
+                "## 热度趋势\n\n"
+                f"讨论于 {values['peakDay']} 达峰，峰值日共有 "
+                f"{values['peakArticles']} 篇内容，占监测期总量的 "
+                f"{values['peakShare']}。{values['calendarDays']} 个日历日中有 "
+                f"{values['activeDays']} 日出现相关内容；截止日共有 "
+                f"{values['finalDayArticles']} 篇，为峰值的 "
+                f"{values['finalVsPeakRatio']}。"
+            )
+
         if request.section_id is SectionId.VERDICT:
             if request.language is Language.EN:
                 risk = {"low": "low", "medium": "medium", "high": "high"}[

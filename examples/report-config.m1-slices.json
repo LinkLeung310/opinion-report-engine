@@ -18,6 +18,10 @@
     {
       "id": "metrics",
       "enabled": true
+    },
+    {
+      "id": "trend",
+      "enabled": true
     }
   ]
 }
