@@ -38,6 +38,10 @@
     {
       "id": "risk",
       "enabled": true
+    },
+    {
+      "id": "sentiment-evolution",
+      "enabled": true
     }
   ]
 }

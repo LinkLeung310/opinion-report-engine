@@ -100,7 +100,7 @@ context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支
 ## 当前阶段与下一步
 
 - PR #8 已合并，`main@7ca8f00` 的独立 CI 已通过 121 项测试；当前分支 `codex/m1-sentiment-evolution-section` 已从该绿色基线创建。
-- 中文 csuite 七章纵向报告已经完整合并；`sentiment-evolution` 规格与 SQL/事实层已经实现，下一小步接入 100% 堆叠图、fault-isolated runner、stub narrator、运行时与 PR 版 CLI/PDF 产物。
+- 中文 csuite 七章纵向报告已经完整合并；`sentiment-evolution` 规格、SQL/事实层、100% 堆叠图、fault-isolated runner、stub narrator、运行时与 PR 版 CLI/PDF 产物已经接通，下一步是提交本小步并进入分支 PR 验收。
 - 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #8、章节边界与 RAG 延期声明一致，`git diff --check` 通过。
 - 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 121 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -120,6 +120,13 @@ context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支
 - SQL/事实小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 128 项通过；`pip check` 无破损依赖。
 - fixture 集成测试正式验证阶段日数 `[3, 2, 2]`、样本量 `[6, 4, 2]`、正/中/负计数 `[(1,2,3), (1,1,2), (0,0,2)]`，以及负面占比变化 `+50.0 个百分点`。
 - FactSet 同时携带每阶段日期范围、样本量、三类计数/占比、首末有效阶段、未四舍五入差值和“负面占比上升”方向，避免把后期 2 篇的 100.0% 误读为绝对热度上升。
+- `SentimentEvolutionChartBuilder`、fault-isolated `SentimentEvolutionSectionRunner`、确定性中英文 stub、运行时接线、专属图片 alt 和八章节评审示例已实现；本章使用空 `EvidenceSet`，只执行一次 narrator 操作。
+- 图表/runner 专属 16 项检查验证 150 dpi、规定情感颜色、阶段日期与样本量、全零 no-data 跳过、单有效阶段不虚构比较，以及 query/calculation/chart/LLM 安全失败隔离。
+- 纵向接线后真实 fixture PostgreSQL 下完整 pytest 为 134 项通过；`pip check` 无破损依赖。
+- 真实 CLI 产物为 8 章 complete、0 章 failed、6 张图表；情感演变正文准确显示前期 6 篇/负面 50.0%、后期 2 篇/负面 100.0%、变化 `+50.0 个百分点`，并明确构成变化不等于讨论量上升或热度回升。
+- PDF 经 Poppler 验证为 A4 五页。首次页图检查发现新图表图例压在红色柱体上；移至图外并将日期范围统一为 ASCII 连字符后重新生成，前四页逐像素未变化，第五页与图表原图复核无中文乱码、截断、重叠、图例遮挡或孤立标题。
+- 图表/runner 小步第一次检查：Python 静态编译、`git diff --check`、唯一 narrator 操作和专属 16 项测试通过。
+- 图表/runner 小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 134 项通过，`pip check` 无破损依赖，实际 8 章节 bundle 与五页 PDF 视觉验收通过。
 
 ## M1 `viewpoints` 规格切片
 

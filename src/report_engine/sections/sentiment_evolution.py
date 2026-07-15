@@ -79,7 +79,7 @@ class SentimentPhase:
     def date_range_label(self) -> str:
         start = f"{self.start_day.month}/{self.start_day.day}"
         end = f"{self.end_day.month}/{self.end_day.day}"
-        return start if self.start_day == self.end_day else f"{start}–{end}"
+        return start if self.start_day == self.end_day else f"{start}-{end}"
 
     def share(self, sentiment: str) -> Decimal:
         counts = {

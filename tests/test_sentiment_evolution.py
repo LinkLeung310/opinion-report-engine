@@ -63,7 +63,7 @@ def test_balanced_phases_preserve_calendar_and_sentiment_totals() -> None:
         )
         for phase in phases
     ] == [(1, 2, 3), (1, 1, 2), (0, 0, 2)]
-    assert phases[0].date_range_label == "3/17–3/19"
+    assert phases[0].date_range_label == "3/17-3/19"
     assert phases[-1].share("negative") == Decimal(1)
 
 
