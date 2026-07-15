@@ -55,6 +55,8 @@ class ReportAssembler:
     def _chart_alt(section_id: SectionId, language: Language) -> str:
         if section_id is SectionId.METRICS:
             return "情感分布概览" if language is Language.ZH else "Sentiment overview"
+        if section_id is SectionId.TREND:
+            return "每日情感趋势" if language is Language.ZH else "Daily sentiment trend"
         return f"{section_id.value} chart"
 
     def _meta(

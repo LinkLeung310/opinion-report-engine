@@ -10,15 +10,18 @@ from psycopg import Connection
 from report_engine.application.planner import ReportPlanner
 from report_engine.application.service import ReportApplicationService
 from report_engine.charts.metrics import MetricsChartBuilder
+from report_engine.charts.trend import TrendChartBuilder
 from report_engine.config import SectionId
 from report_engine.data.postgres import (
     PostgresMetricsRepository,
+    PostgresTrendRepository,
     PostgresVerdictRepository,
 )
 from report_engine.llm.protocol import Narrator
 from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.registry import default_registry
+from report_engine.sections.trend_runner import TrendSectionRunner
 from report_engine.sections.verdict_runner import VerdictSectionRunner
 from report_engine.storage.bundle import BundlePublisher
 
@@ -39,11 +42,17 @@ def build_report_service(
         repository=PostgresVerdictRepository(connection),
         narrator=narrator,
     )
+    trend_runner = TrendSectionRunner(
+        repository=PostgresTrendRepository(connection),
+        chart_builder=TrendChartBuilder(),
+        narrator=narrator,
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
         section_runners={
             SectionId.VERDICT: verdict_runner,
             SectionId.METRICS: metrics_runner,
+            SectionId.TREND: trend_runner,
         },
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),

@@ -8,7 +8,7 @@
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；目前 `verdict` 与 `metrics` 两章完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；目前 `verdict`、`metrics` 与 `trend` 三章完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -49,7 +49,7 @@
 
 ## 当前范围约束
 
-context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-section` 已定义 M1 `trend` 规格，并实现完整日期序列 SQL、PostgreSQL repository 和确定性 Python 事实；尚未新增 trend 图表或 runner。用户要求暂不开始 RAG，因此本阶段没有新增 embedding、vector store、retriever 或 n8n 节点。
+context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-section` 已接通 M1 `trend` 的完整日期序列 SQL、确定性 Python 事实、堆叠图表、fault-isolated runner、stub narrator、CLI 和 bundle 流水线。用户要求暂不开始 RAG，因此本阶段没有新增 embedding、vector store、retriever 或 n8n 节点。
 
 ## 治理切片验证
 
@@ -89,7 +89,7 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 
 ## 当前阶段与下一步
 
-- 当前分支已小步提交 `trend` 规格，并完成完整日期序列 SQL、确定性 Python 事实和真实 fixture 集成测试；下一小步实现堆叠图表与 fault-isolated runner。
+- 当前分支已小步提交 `trend` 规格与数据/计算层，并完成堆叠图表、fault-isolated runner、stub narrator 和应用接线；下一步执行真实 CLI/PDF 视觉验收后发布 PR。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
 - RAG 继续延期，不在当前 M1 `trend` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
@@ -103,4 +103,8 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 - SQL/计算小步第一次检查：Python 静态编译、SQL 六个绑定参数和 `git diff --check` 通过。
 - SQL/计算小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 70 项通过；`pip check` 无破损依赖。
 - fixture 集成测试验证七日文章量 `[2, 2, 2, 3, 1, 1, 1]`、3/20 峰值、25.0% 峰值占比和空话题七个显式零值日。
-- 当前数据与计算层完成；图表 builder、fault-isolated runner、stub 叙述、应用接线和 CLI bundle 验收仍未实现。
+- `TrendChartBuilder`、fault-isolated `TrendSectionRunner`、确定性中英文 stub 文本、运行时接线和专属图片 alt 已实现。
+- 图表/runner 小步第一次检查：Python 静态编译、最多十个日期标签、唯一 narrator 操作和 `git diff --check` 通过。
+- 图表/runner 小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
+- CLI 集成测试验证 `verdict`、`metrics`、`trend` 严格按配置顺序渲染，3 章 complete、0 章 failed，并生成 2 张有效图表。
+- 当前 stub 模式纵向切片已接通；真实 CLI/PDF 页图验收和分支 PR 尚未完成。
