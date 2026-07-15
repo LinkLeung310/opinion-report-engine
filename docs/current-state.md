@@ -1,14 +1,14 @@
 # Current Project State
 
 最后核对日期：2026-07-15  
-最后实现基线：`main@9e157c5`（PR #11，auditable engagement analysis）
+最后实现基线：`main@3448aa3`（PR #12，auditable media-social analysis）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，以及 PR 版新增的 `sentiment-evolution`、`keywords`、`engagement` 已完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，以及 PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social` 已完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -31,8 +31,10 @@
 - PR #9 的 sentiment-evolution slice 已用 merge commit 合并：`13663e3`。
 - PR #10 的 keywords slice 已用 merge commit 合并：`1ee06f4`。
 - PR #11 的 engagement slice 已用 merge commit 合并：`9e157c5`。
+- PR #12 的 media-social slice 已用 merge commit 合并：`3448aa3`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
+- `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -43,13 +45,14 @@
 - PR #9 本地真实 CLI 验收得到 csuite 7 章 + `sentiment-evolution` 共 8 章 complete、0 章 failed、6 张图表的 A4 五页 bundle；`generatedAt` 为 `+08:00`。
 - PR #10 本地真实 CLI 验收得到前述 8 章 + `keywords` 共 9 章 complete、0 章 failed、7 张图表的 A4 六页 bundle；`generatedAt` 为 `+08:00`。
 - PR #11 本地真实 CLI 验收得到前述 9 章 + `engagement` 共 10 章 complete、0 章 failed、8 张图表的 A4 七页 bundle；`generatedAt` 为 `+08:00`。
+- PR #12 本地真实 CLI 验收得到完整 PR 11 章 complete、0 章 failed、9 张图表的 A4 七页 bundle；`generatedAt` 为 `+08:00`。
 - wheel 已确认包含 CLI、PDF renderer 和中文字体。
 
 测试数量会随实现增长；恢复工作时必须重新运行并记录最新结果，不得把 47 当成永久常量。
 
 ## 明确未完成
 
-- M1 未完成：中文 csuite 7 章与 PR 新增 4 章中的 `sentiment-evolution`、`keywords`、`engagement` 已能生成；仍缺 `media-social` 及两份标准默认配置。
+- M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
 - M2 未开始：其余章节、3 类章节专属输入的完整行为、英文和任意组合未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
@@ -66,7 +69,7 @@
 
 ## 当前范围约束
 
-context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、`keywords`、`engagement` slice 已经合并。当前分支 `codex/m1-media-social-section` 从绿色 `main@9e157c5` 创建；下一切片实现 PR 版新增的媒体与社媒对比章节。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、`keywords`、`engagement`、`media-social` slice 已经合并。当前分支 `codex/m1-default-configs` 从绿色 `main@3448aa3` 创建；下一阶段交付任务书指定文件名的两份标准默认配置并执行 M1 精确命令验收。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## Context recovery 规则强化小步
 
@@ -116,12 +119,24 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 
 ## 当前阶段与下一步
 
-- PR #11 已合并，`main@9e157c5` 的独立 CI 已通过 160 项测试；当前分支 `codex/m1-media-social-section` 已从该绿色基线创建。
-- 中文 csuite 七章与 PR 版 `sentiment-evolution`、`keywords`、`engagement` 已完整合并；下一小步先核对 schema/fixtures 并为 `media-social` 写完整项目自主规格，不先写实现。
-- 新分支第一次检查：分支与 `main@9e157c5` 基线、PR #11、19 章注册表、`media-social` 的 PR 默认位置、RAG 延期和 n8n Draft 边界一致，`git diff --check` 通过；工作区只修改本状态文件。
-- 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 160 项通过；`pip check` 无破损依赖。
+- PR #12 已合并，`main@3448aa3` 的独立 CI 已通过 175 项测试；当前分支 `codex/m1-default-configs` 已从该绿色基线创建。
+- 中文 csuite 七章与 PR 十一章的纵向实现均已合并；下一小步创建 `examples/report-config.csuite.json` 与 `examples/report-config.pr.json`，并围绕任务书原命令增加端到端验收。
+- 新分支第一次检查：分支与 `main@3448aa3` 基线、PR #12、175 项 main CI、两份固定配置文件名、RAG 延期和 n8n Draft 边界一致，`git diff --check` 通过；工作区只修改本状态文件。
+- 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 175 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 M1 `media-social` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 M1 默认配置阶段实现；n8n 保持 Draft，等待 M3 API。
+
+## M1 标准默认配置阶段入口
+
+- 任务书明确要求 `examples/report-config.csuite.json` 一条命令生成中文 csuite 七章报告，并要求 csuite 7 章与 pr 11 章两种默认配置均可生成；这两份文件名和章节数是本阶段的固定验收目标。
+- 两份配置必须使用同一公共 `ReportConfig` 契约和相同 fixture 话题/日期，不复制引擎代码；章节顺序采用已经记录的 csuite 七章与 PR 在其后追加四章的项目自主默认组合。
+- 本阶段只补配置、回归测试、README/追踪证据与真实 stub CLI/PDF 验收，不开始 M2、RAG、M3、真实模型调用或 n8n 修改。
+- `examples/report-config.csuite.json` 与 `examples/report-config.pr.json` 已创建；两份均保留完整 19 章及三个禁用专属输入形状，只分别启用严格有序的 7/11 章，`reportType` 分别为 `csuite`/`pr`。
+- 默认配置聚焦 5 项测试验证公共契约解析、19 ID 顺序、7/11 enabled 计划、三个禁用输入形状，以及两份配置各自生成完整有序 bundle；全部通过。
+- 实际标准 CLI 的 csuite 产物为 7 章 complete、0 章 failed、5 张图、A4 四页；PR 产物为 11 章 complete、0 章 failed、9 张图、A4 七页。两者 `meta.reportType`、章节数、图表文件数和 PDF 文件均与配置一致。
+- PR 默认产物 7 页与已逐页验收的 media-social 最终产物逐像素一致；csuite 前 3 页与同源 PR 前缀一致，第 4 页因报告在 risk 后结束而包含方法说明，单独复核无中文乱码、截断、重叠、图例遮挡或孤页。
+- 默认配置小步第一次检查：两份 JSON 可解析、各含完整 19 ID、执行计划严格为 7/11 章、`git diff --check` 和聚焦 5 项测试通过。
+- 默认配置小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 180 项通过；`pip check` 无破损依赖，两条标准 stub CLI 与 PDF 视觉验收通过。
 
 ## M1 `media-social` 阶段入口
 

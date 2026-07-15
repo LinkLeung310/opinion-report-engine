@@ -169,3 +169,85 @@ def test_cli_generates_all_review_slices_in_configured_order(
     assert meta["generation"]["complete"] == 11
     assert meta["generation"]["failed"] == 0
     assert meta["charts"] == 9
+
+
+@pytest.mark.parametrize(
+    ("filename", "report_type", "headings", "charts"),
+    (
+        (
+            "report-config.csuite.json",
+            "csuite",
+            (
+                "## 核心结论",
+                "## 全网数据概览",
+                "## 热度趋势",
+                "## 主要观点",
+                "## 平台表现",
+                "## 负面严重程度",
+                "## 风险评估",
+            ),
+            5,
+        ),
+        (
+            "report-config.pr.json",
+            "pr",
+            (
+                "## 核心结论",
+                "## 全网数据概览",
+                "## 热度趋势",
+                "## 主要观点",
+                "## 平台表现",
+                "## 负面严重程度",
+                "## 风险评估",
+                "## 情感演变",
+                "## 关键词与话题",
+                "## 互动传播",
+                "## 媒体与社媒对比",
+            ),
+            9,
+        ),
+    ),
+)
+def test_assignment_default_configs_generate_complete_ordered_bundles(
+    tmp_path,
+    monkeypatch,
+    filename: str,
+    report_type: str,
+    headings: tuple[str, ...],
+    charts: int,
+) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    config = Path(__file__).parents[2] / "examples" / filename
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    positions = tuple(markdown.index(heading) for heading in headings)
+    assert positions == tuple(sorted(positions))
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["reportType"] == report_type
+    assert meta["sections"] == len(headings)
+    assert meta["generation"] == {
+        "requested": len(headings),
+        "complete": len(headings),
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == charts
+    assert len(list((target / "charts").glob("*.png"))) == charts
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")

@@ -52,13 +52,19 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 docker compose -f fixtures\docker-compose.yml up -d --wait
 $env:PG_DSN='postgresql://report:report_local_only@localhost:55432/opinion_fixture'
-.\.venv\Scripts\report.exe generate --config examples\report-config.m1-slices.json --out out --stub-llm
+.\.venv\Scripts\report.exe generate --config examples\report-config.csuite.json --out out --stub-llm
 ```
 
 The command prints the created `out/{id}` directory. It contains `report.md`,
 `report.pdf`, `charts/*.png`, and `meta.json`. `--stub-llm` is an explicit offline mode
 for deterministic review. Development and CI stay on the injectable stub; the real
 OpenAI-compatible model is reserved for a final credential-gated smoke test.
+
+The complete eleven-section PR default uses the same engine and fixture scope:
+
+```powershell
+.\.venv\Scripts\report.exe generate --config examples\report-config.pr.json --out out --stub-llm
+```
 
 Run all tests, including the real fixture SQL and CLI integration test:
 
