@@ -128,6 +128,7 @@ def test_cli_generates_all_review_slices_in_configured_order(
         < markdown.index("## 风险评估")
         < markdown.index("## 情感演变")
         < markdown.index("## 关键词与话题")
+        < markdown.index("## 互动传播")
     )
     assert (target / "charts" / "daily-sentiment-trend.png").is_file()
     assert (target / "charts" / "platform-performance.png").is_file()
@@ -135,6 +136,7 @@ def test_cli_generates_all_review_slices_in_configured_order(
     assert (target / "charts" / "risk-signal-index.png").is_file()
     assert (target / "charts" / "sentiment-evolution.png").is_file()
     assert (target / "charts" / "keyword-coverage.png").is_file()
+    assert (target / "charts" / "engagement-composition.png").is_file()
     assert "高/危内容 4 篇，占 57.1%" in markdown
     assert "不是完整主题普查" in markdown
     assert "[Evidence: bili-001]" in markdown
@@ -152,7 +154,12 @@ def test_cli_generates_all_review_slices_in_configured_order(
     assert "情感构成变化不等于讨论量上升或热度回升" in markdown
     assert "6 项并列最高，均覆盖 2 篇" in markdown
     assert "不等同于语义主题聚类或公众支持度" in markdown
+    assert "共记录原始互动 26,170" in markdown
+    assert "评论与转发合计 9,325（35.6%）" in markdown
+    assert "bili-007 单篇最高，为 10,020，占总互动的 38.3%" in markdown
+    assert "前 3 篇合计占 59.1%" in markdown
+    assert "不代表互动率、真实触达或支持度" in markdown
     meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
-    assert meta["generation"]["complete"] == 9
+    assert meta["generation"]["complete"] == 10
     assert meta["generation"]["failed"] == 0
-    assert meta["charts"] == 7
+    assert meta["charts"] == 8

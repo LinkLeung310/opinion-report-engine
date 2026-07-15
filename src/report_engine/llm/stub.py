@@ -19,6 +19,83 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.ENGAGEMENT:
+            evidence_lines = []
+            for index, evidence in enumerate(request.evidence.records, start=1):
+                prefix = f"record{index}"
+                if request.language is Language.EN:
+                    evidence_lines.append(
+                        f"- [Evidence: {evidence.record_id}] {evidence.title} "
+                        f"({values[f'{prefix}Platform']}, "
+                        f"{values[f'{prefix}Sentiment']}): "
+                        f"{values[f'{prefix}Total']} interactions "
+                        f"(likes {values[f'{prefix}Likes']}, comments "
+                        f"{values[f'{prefix}Comments']}, shares "
+                        f"{values[f'{prefix}Shares']}, favorites "
+                        f"{values[f'{prefix}Favorites']})."
+                    )
+                else:
+                    evidence_lines.append(
+                        f"- [Evidence: {evidence.record_id}] {evidence.title}（"
+                        f"{values[f'{prefix}Platform']}，"
+                        f"{values[f'{prefix}Sentiment']}）：总互动 "
+                        f"{values[f'{prefix}Total']}（赞 "
+                        f"{values[f'{prefix}Likes']}、评 "
+                        f"{values[f'{prefix}Comments']}、转 "
+                        f"{values[f'{prefix}Shares']}、藏 "
+                        f"{values[f'{prefix}Favorites']}）。"
+                    )
+            lines = "\n".join(evidence_lines)
+            tied = int(values["leadingRecordCount"].replace(",", "")) > 1
+            if request.language is Language.EN:
+                concentration = (
+                    f"{values['leadingRecordCount']} records tie at "
+                    f"{values['leadingRecordTotal']} interactions; the first "
+                    f"{values['topThreeRecordCount']} records represent "
+                    f"{values['topThreeRecordsShare']} of the total."
+                    if tied
+                    else f"{values['leadingRecordId']} is the highest-count record at "
+                    f"{values['leadingRecordTotal']} interactions "
+                    f"({values['topRecordShare']} of the total); the first "
+                    f"{values['topThreeRecordCount']} records represent "
+                    f"{values['topThreeRecordsShare']}."
+                )
+                return (
+                    "## Engagement\n\n"
+                    f"Across {values['articles']} records, the stored counters total "
+                    f"{values['totalEngagement']}: {values['likes']} likes, "
+                    f"{values['comments']} comments, {values['shares']} shares, and "
+                    f"{values['favorites']} favorites. Comments plus shares total "
+                    f"{values['commentsAndShares']} "
+                    f"({values['commentsAndSharesShare']}). {concentration}\n\n"
+                    f"{lines}\n\nThese are raw stored counters whose definitions "
+                    "may differ by platform. Without impression or unique-user "
+                    "denominators, they are not engagement rate, reach, or support."
+                )
+            concentration = (
+                f"{values['leadingRecordCount']} 篇内容并列最高，单篇均为 "
+                f"{values['leadingRecordTotal']}；前 "
+                f"{values['topThreeRecordCount']} 篇占总互动的 "
+                f"{values['topThreeRecordsShare']}。"
+                if tied
+                else f"{values['leadingRecordId']} 单篇最高，为 "
+                f"{values['leadingRecordTotal']}，占总互动的 "
+                f"{values['topRecordShare']}；前 "
+                f"{values['topThreeRecordCount']} 篇合计占 "
+                f"{values['topThreeRecordsShare']}。"
+            )
+            return (
+                "## 互动传播\n\n"
+                f"监测期内 {values['articles']} 篇内容共记录原始互动 "
+                f"{values['totalEngagement']}：点赞 {values['likes']}、评论 "
+                f"{values['comments']}、转发 {values['shares']}、收藏 "
+                f"{values['favorites']}；评论与转发合计 "
+                f"{values['commentsAndShares']}（"
+                f"{values['commentsAndSharesShare']}）。{concentration}\n\n"
+                f"{lines}\n\n以上为不同平台存储的原始计数快照，口径可能不同；"
+                "缺少曝光量和独立用户分母，不代表互动率、真实触达或支持度。"
+            )
+
         if request.section_id is SectionId.KEYWORDS:
             display_count = int(values["displayPhraseCount"].replace(",", ""))
             lines = []

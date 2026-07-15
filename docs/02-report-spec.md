@@ -606,6 +606,103 @@ both paths skip charting and narration. Query, extraction/calculation, chart, or
 narration errors return `failed` with a safe stage-specific message while later
 sections continue.
 
+## `engagement` — 互动传播
+
+Purpose: explain the composition and concentration of the stored interaction counters
+without mistaking heterogeneous platform counters for unique people, reach, support,
+or a time series of when interactions occurred. This section expands the single total
+shown by `metrics`; it does not replace the later, evidence-focused `top-content`
+section.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`engagement.v1`):
+
+- hard-filter articles with the shared topic tag and complete half-open timestamp
+  scope;
+- for every scoped record, calculate `total_engagement` as the stored sum of likes,
+  comments, shares, and favorites. The sum is an operational counter total, not a
+  deduplicated audience size;
+- return one aggregate snapshot containing article count, positive-total-engagement
+  article count, zero-interaction article count, and summed likes, comments, shares,
+  favorites, and total engagement;
+- rank records with positive total engagement by total engagement descending,
+  `published_at` descending, then `external_id` ascending. Return at most five ranked
+  records with real external ID, title, summary, platform, publication time, sentiment,
+  all four component counters, and total engagement;
+- return the count of all records tied at the positive maximum so a tie beyond the
+  five displayed records cannot be presented as one winner;
+- use only bound `topic_tag`, `from_inclusive`, and `to_exclusive`. The query will live
+  at `src/report_engine/data/queries/engagement.sql`; it does not generate SQL, infer
+  missing counters, use RAG/embeddings, call an LLM, or use n8n.
+
+Derived in Python:
+
+- `totalEngagement` is the sum of the four stored action totals. Each action receives
+  an unrounded share of that total; an all-zero total retains explicit zero shares;
+- `commentsAndShares` and `commentsAndSharesShare` show the combined count and share
+  of comment/redistribution actions. The label must not be shortened to reach,
+  amplification, or conversation rate;
+- `engagementPerArticle` is total engagement / scoped articles. It is a raw arithmetic
+  mean and is not an engagement rate because the schema has no impression, follower,
+  or unique-user denominator;
+- `leadingRecordCount` preserves every positive maximum tie. When a unique leader
+  exists, expose its real ID and total; when several records tie, narration and the
+  chart title disclose the tie rather than naming a false winner;
+- `topRecordShare` and `topThreeRecordsShare` divide the first one and first up-to-three
+  positive ranked-record totals by all engagement. `topThreeRecordCount` discloses the
+  actual numerator population when fewer than three positive records exist;
+- the first five positive ranked records become display rows. The first up to three
+  become the evidence shortlist. Ranking measures stored counter concentration only;
+  it is not an influence, quality, impact, or importance score;
+- every aggregate, ratio, tie, rank, and displayed record counter is carried by
+  `FactSet` with `engagement.v1` or a named `engagement.*.v1` calculation identifier.
+  Record facts retain their exact source record IDs.
+
+Evidence: the first up to three positive ranked records form one deterministic
+`EvidenceSet`. Each preserves its real external ID, title, summary, platform,
+publication time, and sentiment. The narrator may identify the record only by its
+approved ID and exact title and may repeat its approved platform, sentiment, and
+interaction counters. It may not infer why it received interactions, describe the
+audience, treat likes as support, claim real-world reach, quote unseen content, or
+introduce a new article. This is a fixed ranking, not semantic retrieval or RAG.
+
+Charts: one `engagement-composition.png` two-panel chart when total engagement is
+positive. The left panel shows likes, comments, shares, and favorites as four labelled
+horizontal bars with their exact counts and shares. The right panel shows total
+engagement for at most five ranked records; each bar uses the required positive,
+neutral, or negative sentiment color and displays the total. Y-axis labels include the
+real source record ID and a legible title, not an invented topic label. The insight
+title states the computed top-record and top-three concentration, or the positive maximum
+tie when one exists. Use the shared white background, hidden top/right spines,
+150 dpi theme, and embedded Chinese font. Do not draw a publication-date engagement
+trend: the schema stores article publication time, not when its interactions occurred.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, evidence
+  construction, and, when applicable, charting;
+- Chinese heading `互动传播`, followed by one concise paragraph covering the four
+  counter totals and comment-plus-share share, then one concentration sentence and no
+  more than three ranked-record bullets;
+- each record bullet shows `[Evidence: <id>]`, the exact approved title, total
+  engagement, and the four approved component counters. It may state platform and
+  sentiment but may not add an interpretation of why the record ranked highly;
+- disclose that the figures are stored raw counters whose definitions can vary by
+  platform and that no impression/unique-user denominator is available;
+- every count, percentage, rank, tie, ID, title, platform, and sentiment comes from
+  approved facts/evidence. No cause, recommendation, audience claim, support claim,
+  reach claim, engagement-rate claim, or new number is allowed;
+- the deterministic stub renders the same facts, evidence order, and limitation
+  disclosure in automated tests.
+
+No-data rule: zero scoped articles returns `no_data`, renders a visible Chinese absence
+message, and performs no chart or narrator operation. A non-empty scope with zero total
+engagement remains `complete` and renders a deterministic zero-counter finding plus the
+denominator limitation without charting, evidence selection, or narrator cost. Query,
+calculation, evidence, chart, or narration errors return `failed` with a safe
+stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in

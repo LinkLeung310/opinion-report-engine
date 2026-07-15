@@ -9,6 +9,7 @@ from psycopg import Connection
 
 from report_engine.application.planner import ReportPlanner
 from report_engine.application.service import ReportApplicationService
+from report_engine.charts.engagement import EngagementChartBuilder
 from report_engine.charts.metrics import MetricsChartBuilder
 from report_engine.charts.keywords import KeywordsChartBuilder
 from report_engine.charts.platforms import PlatformsChartBuilder
@@ -18,6 +19,7 @@ from report_engine.charts.severity import SeverityChartBuilder
 from report_engine.charts.trend import TrendChartBuilder
 from report_engine.config import SectionId
 from report_engine.data.postgres import (
+    PostgresEngagementRepository,
     PostgresKeywordsRepository,
     PostgresMetricsRepository,
     PostgresPlatformsRepository,
@@ -30,6 +32,7 @@ from report_engine.data.postgres import (
 )
 from report_engine.llm.protocol import Narrator
 from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
+from report_engine.sections.engagement_runner import EngagementSectionRunner
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.keywords_runner import KeywordsSectionRunner
 from report_engine.sections.platforms_runner import PlatformsSectionRunner
@@ -52,6 +55,11 @@ def build_report_service(
     connection: Connection,
     narrator: Narrator,
 ) -> ReportApplicationService:
+    engagement_runner = EngagementSectionRunner(
+        repository=PostgresEngagementRepository(connection),
+        chart_builder=EngagementChartBuilder(),
+        narrator=narrator,
+    )
     metrics_runner = MetricsSectionRunner(
         repository=PostgresMetricsRepository(connection),
         chart_builder=MetricsChartBuilder(),
@@ -100,6 +108,7 @@ def build_report_service(
         section_runners={
             SectionId.VERDICT: verdict_runner,
             SectionId.METRICS: metrics_runner,
+            SectionId.ENGAGEMENT: engagement_runner,
             SectionId.KEYWORDS: keywords_runner,
             SectionId.TREND: trend_runner,
             SectionId.VIEWPOINTS: viewpoints_runner,
