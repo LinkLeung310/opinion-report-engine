@@ -1,14 +1,14 @@
 # Current Project State
 
 最后核对日期：2026-07-15  
-最后实现基线：`main@7ca8f00`（PR #8，auditable viewpoints section）
+最后实现基线：`main@13663e3`（PR #9，auditable sentiment evolution section）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；目前中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，以及 PR 版新增的 `sentiment-evolution` 已完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -28,7 +28,8 @@
 - PR #6 的 severity slice 已用 merge commit 合并：`01b0cef`。
 - PR #7 的 risk slice 已用 merge commit 合并：`9d14725`。
 - PR #8 的 viewpoints slice 已用 merge commit 合并：`7ca8f00`。
-- `main@7ca8f00` 的 GitHub CI：121 项测试通过。
+- PR #9 的 sentiment-evolution slice 已用 merge commit 合并：`13663e3`。
+- `main@13663e3` 的 GitHub CI：134 项测试通过。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -36,6 +37,7 @@
 - PR #6 本地真实 CLI 验收得到前述 4 章 + `severity` 共 5 章 complete、0 章 failed、4 张图表的完整 A4 三页 bundle；`generatedAt` 为 `+08:00`。
 - 当前 `codex/m1-risk-section` 本地真实 CLI 验收得到前述 5 章 + `risk` 共 6 章 complete、0 章 failed、5 张图表的完整 A4 四页 bundle；`generatedAt` 为 `+08:00`。
 - 当前 `codex/m1-viewpoints-section` 本地真实 CLI 验收得到完整 csuite 7 章 complete、0 章 failed、5 张图表的 A4 四页 bundle；`generatedAt` 为 `+08:00`。
+- PR #9 本地真实 CLI 验收得到 csuite 7 章 + `sentiment-evolution` 共 8 章 complete、0 章 failed、6 张图表的 A4 五页 bundle；`generatedAt` 为 `+08:00`。
 - wheel 已确认包含 CLI、PDF renderer 和中文字体。
 
 测试数量会随实现增长；恢复工作时必须重新运行并记录最新结果，不得把 47 当成永久常量。
@@ -59,7 +61,7 @@
 
 ## 当前范围约束
 
-context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支 `codex/m1-sentiment-evolution-section` 从绿色 `main@7ca8f00` 创建；下一切片实现 PR 版新增的结构化情感演变章节。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution` slice 已经合并。当前分支 `codex/m1-keywords-section` 从绿色 `main@13663e3` 创建；下一切片实现 PR 版新增的关键词与话题章节。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## 治理切片验证
 
@@ -99,12 +101,12 @@ context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支
 
 ## 当前阶段与下一步
 
-- PR #8 已合并，`main@7ca8f00` 的独立 CI 已通过 121 项测试；当前分支 `codex/m1-sentiment-evolution-section` 已从该绿色基线创建。
-- 中文 csuite 七章纵向报告已经完整合并；`sentiment-evolution` 规格、SQL/事实层、100% 堆叠图、fault-isolated runner、stub narrator、运行时与 PR 版 CLI/PDF 产物已经接通，下一步是提交本小步并进入分支 PR 验收。
-- 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #8、章节边界与 RAG 延期声明一致，`git diff --check` 通过。
-- 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 121 项通过；`pip check` 无破损依赖。
+- PR #9 已合并，`main@13663e3` 的独立 CI 已通过 134 项测试；当前分支 `codex/m1-keywords-section` 已从该绿色基线创建。
+- 中文 csuite 七章与 `sentiment-evolution` 已完整合并；下一小步先定义 `keywords` 的输入、固定 SQL、Python 事实、证据、图表、一次 narrator 与 no-data/failed 规则，再开始代码实现。
+- 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #9、19 章注册表、PR 默认组合与 RAG 延期声明一致，`git diff --check` 通过。
+- 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 134 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 M1 `sentiment-evolution` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 M1 `keywords` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
 ## M1 `sentiment-evolution` 规格切片
 
