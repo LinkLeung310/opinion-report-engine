@@ -11,12 +11,14 @@ from report_engine.application.planner import ReportPlanner
 from report_engine.application.service import ReportApplicationService
 from report_engine.charts.metrics import MetricsChartBuilder
 from report_engine.charts.platforms import PlatformsChartBuilder
+from report_engine.charts.risk import RiskChartBuilder
 from report_engine.charts.severity import SeverityChartBuilder
 from report_engine.charts.trend import TrendChartBuilder
 from report_engine.config import SectionId
 from report_engine.data.postgres import (
     PostgresMetricsRepository,
     PostgresPlatformsRepository,
+    PostgresRiskRepository,
     PostgresSeverityRepository,
     PostgresTrendRepository,
     PostgresVerdictRepository,
@@ -26,6 +28,7 @@ from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.platforms_runner import PlatformsSectionRunner
 from report_engine.sections.registry import default_registry
+from report_engine.sections.risk_runner import RiskSectionRunner
 from report_engine.sections.severity_runner import SeveritySectionRunner
 from report_engine.sections.trend_runner import TrendSectionRunner
 from report_engine.sections.verdict_runner import VerdictSectionRunner
@@ -63,6 +66,11 @@ def build_report_service(
         chart_builder=SeverityChartBuilder(),
         narrator=narrator,
     )
+    risk_runner = RiskSectionRunner(
+        repository=PostgresRiskRepository(connection),
+        chart_builder=RiskChartBuilder(),
+        narrator=narrator,
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
         section_runners={
@@ -71,6 +79,7 @@ def build_report_service(
             SectionId.TREND: trend_runner,
             SectionId.PLATFORMS: platforms_runner,
             SectionId.SEVERITY: severity_runner,
+            SectionId.RISK: risk_runner,
         },
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),

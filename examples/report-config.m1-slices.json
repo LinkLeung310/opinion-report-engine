@@ -30,6 +30,10 @@
     {
       "id": "severity",
       "enabled": true
+    },
+    {
+      "id": "risk",
+      "enabled": true
     }
   ]
 }
