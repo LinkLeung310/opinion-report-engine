@@ -99,9 +99,8 @@ def test_cli_generates_trend_after_metrics_with_a_second_chart(
     if not dsn:
         pytest.skip("PG_DSN is required for fixture integration tests")
     monkeypatch.setenv("PG_DSN", dsn)
-    source = Path(__file__).parents[2] / "examples" / "report-config.verdict-metrics.json"
+    source = Path(__file__).parents[2] / "examples" / "report-config.m1-slices.json"
     raw = json.loads(source.read_text(encoding="utf-8"))
-    raw["sections"].append({"id": "trend", "enabled": True})
     config = tmp_path / "report-config.trend.json"
     config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
 

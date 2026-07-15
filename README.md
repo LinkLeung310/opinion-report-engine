@@ -12,12 +12,13 @@ The `main` branch is kept runnable. Feature work is developed on `codex/*` branc
 
 ## Runnable slices
 
-The repository currently implements `verdict` and `metrics` through the same boundaries
+The repository currently implements `verdict`, `metrics`, and `trend` through the same boundaries
 the full product will use: fixed PostgreSQL SQL, Python-owned facts, injected narration,
-a meaningful 150 dpi chart, A4 Chinese PDF rendering, and atomic bundle publication.
+a pair of meaningful 150 dpi charts, A4 Chinese PDF rendering, and atomic bundle publication.
 `verdict` adds an auditable Python-owned risk and momentum judgment without a redundant
-decorative chart. The remaining section IDs are registered but deliberately reported as
-visible failures until their own vertical slices are implemented.
+decorative chart; `trend` preserves quiet calendar days in a stacked sentiment timeline.
+The remaining section IDs are registered but deliberately reported as visible failures
+until their own vertical slices are implemented.
 
 From the repository root:
 
@@ -26,7 +27,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 docker compose -f fixtures\docker-compose.yml up -d --wait
 $env:PG_DSN='postgresql://report:report_local_only@localhost:55432/opinion_fixture'
-.\.venv\Scripts\report.exe generate --config examples\report-config.verdict-metrics.json --out out --stub-llm
+.\.venv\Scripts\report.exe generate --config examples\report-config.m1-slices.json --out out --stub-llm
 ```
 
 The command prints the created `out/{id}` directory. It contains `report.md`,

@@ -72,7 +72,7 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 - runner 小步第一次检查：Python 静态编译、唯一 narrator 操作和 `git diff --check` 通过。
 - runner 小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 64 项通过；`pip check` 无破损依赖。
 - CLI 集成测试验证 `verdict`、`metrics` 严格按配置顺序渲染，2 章 complete、0 章 failed，并只统计 metrics 的 1 张有效图表。
-- 新增 `examples/report-config.verdict-metrics.json` 和 README 一命令复现路径；示例配置通过公共 `ReportConfig` 契约解析。
+- 新增的评审示例现已演进为 `examples/report-config.m1-slices.json`；README 提供三章节一命令复现路径，示例通过公共 `ReportConfig` 契约解析。
 - 实际 CLI 产物的 `meta.json` 为 12 篇、负面占比 58.3%、2 章 complete、0 章 failed，并按 D-14 修正为 Asia/Shanghai `+08:00` 生成时间。
 - PDF 通过 Poppler 检查为 A4 单页；最新页图人工复核无中文乱码、截断、重叠或图表颜色异常。
 - 分支最终第一次检查：示例配置契约、Python 静态编译和 `git diff --check` 通过。
@@ -89,7 +89,7 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 
 ## 当前阶段与下一步
 
-- 当前分支已小步提交 `trend` 规格与数据/计算层，并完成堆叠图表、fault-isolated runner、stub narrator 和应用接线；下一步执行真实 CLI/PDF 视觉验收后发布 PR。
+- 当前分支已完成 `trend` 规格、数据/计算层、堆叠图表、fault-isolated runner、stub narrator、应用接线和真实产物验收；下一步完成最终两轮检查后发布 Draft PR。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
 - RAG 继续延期，不在当前 M1 `trend` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
@@ -107,4 +107,9 @@ context recovery 和 verdict slice 已经合并。当前分支 `codex/m1-trend-s
 - 图表/runner 小步第一次检查：Python 静态编译、最多十个日期标签、唯一 narrator 操作和 `git diff --check` 通过。
 - 图表/runner 小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
 - CLI 集成测试验证 `verdict`、`metrics`、`trend` 严格按配置顺序渲染，3 章 complete、0 章 failed，并生成 2 张有效图表。
-- 当前 stub 模式纵向切片已接通；真实 CLI/PDF 页图验收和分支 PR 尚未完成。
+- 评审入口已统一为 `examples/report-config.m1-slices.json`；README 提供三章节一命令复现路径，配置通过公共 `ReportConfig` 契约解析。
+- 真实 fixture PostgreSQL + stub CLI 产物为 12 篇、负面占比 58.3%、3 章 complete、0 章 failed、2 张图表，`generatedAt` 为 Asia/Shanghai `+08:00`。
+- PDF 经 Poppler 验证为 A4 两页；两页逐页人工复核无中文乱码、截断、重叠、图例/轴标签异常或内容丢失。第二页保留完整趋势图并因此存在合理留白。
+- 分支最终第一次检查：三章节示例契约与中文字段、Python 静态编译、唯一 narrator 操作、旧评审路径清理和 `git diff --check` 全部通过。
+- 分支最终第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
+- 当前 stub 模式纵向切片和真实产物验收已完成；分支 Draft PR 尚未发布。
