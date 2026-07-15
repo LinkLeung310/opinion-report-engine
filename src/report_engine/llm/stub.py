@@ -19,6 +19,40 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.SEVERITY:
+            evidence_lines = "\n".join(
+                (
+                    f"- [Evidence: {record.record_id}] {record.title}: "
+                    f"{record.summary} ({record.platform})"
+                    if request.language is Language.EN
+                    else f"- [Evidence: {record.record_id}] {record.title}："
+                    f"{record.summary}（{record.platform}）"
+                )
+                for record in request.evidence.records
+            )
+            if request.language is Language.EN:
+                return (
+                    "## Negative severity\n\n"
+                    f"The scope contains {values['negativeArticles']} negative items. "
+                    f"High or critical items total {values['highCriticalArticles']} "
+                    f"({values['highCriticalRatio']}); the average negative score is "
+                    f"{values['averageNegativeScore']}. High or critical items account "
+                    f"for {values['highCriticalEngagementShare']} of negative engagement. "
+                    f"Missing severity labels: {values['missingSeverityArticles']}; "
+                    f"missing scores: {values['missingScoreArticles']}.\n\n"
+                    f"{evidence_lines}"
+                )
+            return (
+                "## 负面严重程度\n\n"
+                f"监测期内共有 {values['negativeArticles']} 篇负面内容，其中高/危内容 "
+                f"{values['highCriticalArticles']} 篇，占 {values['highCriticalRatio']}；"
+                f"平均负面程度为 {values['averageNegativeScore']}。高/危内容贡献全部负面"
+                f"互动的 {values['highCriticalEngagementShare']}。严重性标签缺失 "
+                f"{values['missingSeverityArticles']} 篇，负面分数缺失 "
+                f"{values['missingScoreArticles']} 篇。\n\n"
+                f"{evidence_lines}"
+            )
+
         if request.section_id is SectionId.PLATFORMS:
             tied = int(values["volumeLeaderCount"].replace(",", "")) > 1
             if request.language is Language.EN:
