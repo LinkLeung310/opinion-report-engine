@@ -703,6 +703,91 @@ denominator limitation without charting, evidence selection, or narrator cost. Q
 calculation, evidence, chart, or narration errors return `failed` with a safe
 stage-specific message while later sections continue.
 
+## `media-social` — 媒体与社媒对比
+
+Purpose: compare the captured volume and sentiment composition of records already
+classified by the dataset as `media` or `social`. The user-facing labels are
+`媒体内容` and `社交内容`; the section does not reinterpret those stored categories as
+company audiences, consumer demographics, professional-vs-personal authorship, or a
+claim about the whole media ecosystem.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`media-social.v1`):
+
+- hard-filter articles with the shared topic tag and complete half-open timestamp
+  scope;
+- use the schema's constrained `source_type` field directly. Never derive source type
+  from platform names, author names, title/summary text, an LLM, or an external lookup;
+- return exactly one aggregate row for `media` and one for `social`, retaining an
+  explicit zero row when a source type is absent;
+- for each source type, return article count, positive/neutral/negative counts, and
+  distinct platform count. Also return the scoped total article count and total
+  negative article count needed for denominators;
+- use only bound `topic_tag`, `from_inclusive`, and `to_exclusive`. The query will live
+  at `src/report_engine/data/queries/media_social.sql`; it does not generate SQL, read
+  free text, select article evidence, use RAG/embeddings, call an LLM, or use n8n.
+
+Derived in Python:
+
+- `articleShare` is each source type's article count divided by all scoped articles;
+  all calculations retain unrounded decimals and format percentages only for display;
+- within each populated source type, calculate positive, neutral, and negative shares.
+  An absent source type has unavailable composition rather than three fabricated zero
+  percentages;
+- `negativePopulationShare` is the source type's negative count divided by all scoped
+  negative articles. When the scope has no negative articles, retain explicit zero
+  negative-population shares and disclose the zero denominator;
+- identify the article-volume leader or full tie. Only when both source types contain
+  at least one article, calculate `socialMinusMediaNegativeShare` in percentage points
+  and identify the higher-negative-share source type or tie;
+- when either source type is absent, retain `insufficient_group_coverage` and do not
+  present the populated group's composition as a comparison against 0%;
+- retain source-type counts, article shares, sentiment counts/shares, platform counts,
+  negative-population shares, comparison availability, signed percentage-point delta,
+  and all leader/tie states in `FactSet` using `media-social.v1` or named
+  `media-social.*.v1` calculation identifiers.
+
+Evidence: none. This section compares structured aggregate labels only. It may not
+quote or identify an article, infer what an audience believes, explain why the groups
+differ, assign demographic meaning, or use external knowledge or RAG.
+
+Charts: one `media-social-comparison.png` two-panel chart for a non-empty scope. The
+left panel shows stacked positive/neutral/negative article counts for `媒体内容` and
+`社交内容`; the right panel shows the corresponding 100% composition and labels every
+bar with its sample size. Both panels use the required green, amber, and red sentiment
+colors. An absent group remains visible with `n=0 / 无样本` instead of a false 0%
+composition. The insight title states the volume split and, when comparable, the
+signed social-minus-media negative-share difference; a missing group produces a
+coverage title instead. Use the shared white background, hidden top/right spines,
+150 dpi theme, and embedded Chinese font.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, and charting;
+- Chinese heading `媒体与社媒对比`, followed by one concise volume paragraph and one
+  sentiment-composition paragraph;
+- state both group sample sizes and article shares. When both groups are populated,
+  state both negative counts, both within-group negative shares, and the signed
+  percentage-point difference; when one is absent, state that the comparison is
+  unavailable rather than treating no sample as neutral or zero-negative evidence;
+- disclose that `media`/`social` is the stored source classification and that results
+  describe captured records only. Small group sizes must remain visible whenever a
+  percentage is stated;
+- every count, percentage, delta, group label, leader, and tie comes from approved
+  facts. No cause, audience claim, platform-quality judgment, recommendation,
+  demographic statement, article claim, or new number is allowed;
+- the deterministic stub renders the same facts, sample sizes, comparison-availability
+  state, and classification limitation in automated tests.
+
+No-data rule: zero scoped articles returns `no_data`, renders a visible Chinese absence
+message, and performs no chart or narrator operation. A non-empty scope containing only
+one source type remains `complete`, renders the chart with an explicit absent group,
+and states that cross-group sentiment comparison is unavailable. A non-empty scope
+with zero negative records in both populated groups also remains `complete` and reports
+the valid zero-negative finding. Query, calculation, chart, or narration errors return
+`failed` with a safe stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in

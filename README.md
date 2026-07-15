@@ -27,6 +27,10 @@ The PR-oriented `engagement` slice adds an eighth chart that separates the four 
 interaction counters from their concentration in high-count records. Its ranked source
 evidence is auditable, while the text explicitly avoids engagement-rate, unique-reach,
 support, and causal claims that the available schema cannot justify.
+The PR-oriented `media-social` slice adds a ninth chart comparing absolute volume and
+within-group sentiment for the database's stored `media`/`social` source types. It keeps
+sample sizes visible, treats an absent group as unavailable rather than 0%, and does not
+infer audiences or source type from platform names or text.
 `verdict` adds an auditable Python-owned risk and momentum judgment without a redundant
 decorative chart; `trend` preserves quiet calendar days in a stacked sentiment timeline.
 `platforms` discloses volume ties and compares sentiment with engagement without
