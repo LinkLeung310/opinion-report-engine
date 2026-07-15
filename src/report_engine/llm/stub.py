@@ -19,6 +19,58 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.PLATFORMS:
+            tied = int(values["volumeLeaderCount"].replace(",", "")) > 1
+            if request.language is Language.EN:
+                volume = (
+                    f"{values['volumeLeaders']} tie at {values['leadingArticleCount']} items each"
+                    if tied
+                    else f"{values['volumeLeaders']} leads with {values['leadingArticleCount']} items"
+                )
+                negative = (
+                    f"- {values['negativeLeader']} contributes "
+                    f"{values['negativeLeaderArticles']} negative items, or "
+                    f"{values['negativeLeaderShare']} of all negative coverage; its "
+                    f"within-platform negative ratio is {values['negativeLeaderRatio']}.\n"
+                    if "negativeLeader" in values
+                    else "- No negative items appear in the selected scope.\n"
+                )
+                return (
+                    "## Platform performance\n\n"
+                    f"The scope contains {values['articles']} items across "
+                    f"{values['platformCount']} platforms.\n\n"
+                    f"- {volume}, representing {values['leadingArticleShare']} per leader.\n"
+                    f"{negative}"
+                    f"- {values['engagementLeader']} leads engagement with "
+                    f"{values['engagementLeaderTotal']}, or "
+                    f"{values['engagementLeaderShare']} of the total and "
+                    f"{values['engagementLeaderPerArticle']} per item."
+                )
+
+            volume = (
+                f"{values['volumeLeaders']}均为 {values['leadingArticleCount']} 篇，并列第一"
+                if tied
+                else f"{values['volumeLeaders']}以 {values['leadingArticleCount']} 篇居首"
+            )
+            negative = (
+                f"- {values['negativeLeader']}有 {values['negativeLeaderArticles']} 篇负面内容，"
+                f"占全部负面内容的 {values['negativeLeaderShare']}，平台内负面占比为 "
+                f"{values['negativeLeaderRatio']}。\n"
+                if "negativeLeader" in values
+                else "- 监测范围内未发现负面内容。\n"
+            )
+            return (
+                "## 平台表现\n\n"
+                f"监测期内 {values['articles']} 篇内容分布于 "
+                f"{values['platformCount']} 个平台。\n\n"
+                f"- {volume}，每个平台占总量的 {values['leadingArticleShare']}。\n"
+                f"{negative}"
+                f"- {values['engagementLeader']}互动量最高，达到 "
+                f"{values['engagementLeaderTotal']}，占总互动的 "
+                f"{values['engagementLeaderShare']}，篇均互动 "
+                f"{values['engagementLeaderPerArticle']}。"
+            )
+
         if request.section_id is SectionId.TREND:
             if request.language is Language.EN:
                 return (

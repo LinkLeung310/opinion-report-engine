@@ -11,6 +11,7 @@ class ChartTheme:
     NEGATIVE = "#DC2626"
     NEUTRAL = "#F59E0B"
     POSITIVE = "#10B981"
+    ACCENT = "#2563EB"
     BACKGROUND = "#FFFFFF"
     TEXT = "#111827"
     MUTED = "#6B7280"
