@@ -231,6 +231,76 @@ absence message, and performs no chart or narrator operation. Query, calculation
 chart, or narration errors return `failed` with a safe stage-specific message while
 later sections continue.
 
+## `severity` — 负面严重程度
+
+Purpose: show how strongly negative coverage is classified, how concentrated the
+high/critical risk is, and which real records make that risk concrete. The section
+describes stored negative labels; it does not independently diagnose reputational harm.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`severity.v1`):
+
+- hard-filter articles with the shared tag and complete half-open timestamp scope,
+  then retain only `sentiment = 'negative'` records;
+- compute the total negative count; low, medium, high, critical, and missing severity
+  counts; negative-score counts for 1 through 5; scored/missing-score counts; average
+  negative score; total negative engagement; and high/critical engagement;
+- rank evidence records by explicit severity order `critical > high > medium > low >
+  missing`, then negative score descending, total engagement descending,
+  `published_at` descending, and `external_id` ascending;
+- return at most the first three ranked records with their real external ID, title,
+  summary, platform, timestamp, and sentiment, alongside the repeated aggregate values;
+- use only bound `topic_tag` and timestamp boundaries. The query will live at
+  `src/report_engine/data/queries/severity.sql`; it does not use generated SQL,
+  embeddings, similarity search, or a vector store.
+
+Derived in Python:
+
+- `highCriticalArticles` = high + critical articles and `highCriticalRatio` = that
+  count / all negative articles;
+- `criticalRatio` = critical articles / all negative articles;
+- `highCriticalEngagementShare` = high/critical engagement / all negative engagement,
+  with an explicit zero value when all engagement fields are zero;
+- `averageNegativeScore` is formatted to one decimal only after PostgreSQL returns the
+  unrounded average; missing score and severity counts remain visible data-quality facts;
+- `highestObservedSeverity` follows the same explicit severity order and is absent only
+  when every negative record lacks a severity label;
+- every aggregate, percentage, average, category label, and evidence count is carried
+  by `FactSet` with `severity.v1` or a named `severity.*.v1` calculation identifier.
+
+Evidence: the query-approved top three records become one `EvidenceSet`. Each record
+keeps its real external ID, title, summary, platform, publication time, and negative
+sentiment. The shortlist is deterministic risk ranking, not semantic retrieval or RAG.
+Any narrative claim about a record must include its allowed Evidence ID; an unknown ID,
+unapproved title/summary, or unsupported explanation fails the section.
+
+Charts: one `severity-distribution.png` two-panel chart. The left panel shows low,
+medium, high, and critical severity counts; the right panel shows negative-score counts
+from 1 through 5. A consistent green-to-red risk ramp is used, with critical anchored
+to the required negative red. The title states the computed high/critical ratio, not a
+generic chart name. The chart uses the shared white-background, 150 dpi theme and
+embedded Chinese font. Missing-label counts are disclosed in narration rather than
+silently drawn as a normal risk grade.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, evidence
+  construction, and charting;
+- Chinese heading `负面严重程度`, followed by one concise aggregate paragraph and no
+  more than three evidence bullets;
+- all numbers and severity labels come from approved facts; evidence bullets use only
+  approved title/summary text and show the real Evidence ID;
+- no new cause, audience intent, recommendation, diagnosis, external knowledge, or
+  uncited article claim is allowed;
+- the deterministic stub renders the same aggregate and approved-evidence structure in
+  automated tests.
+
+No-data rule: zero negative records returns `no_data`, renders the valid finding
+`监测范围内未发现负面内容。`, and performs no chart or narrator operation. Query,
+calculation, evidence, chart, or narration errors return `failed` with a safe
+stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in
