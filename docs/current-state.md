@@ -100,7 +100,7 @@ context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支
 ## 当前阶段与下一步
 
 - PR #8 已合并，`main@7ca8f00` 的独立 CI 已通过 121 项测试；当前分支 `codex/m1-sentiment-evolution-section` 已从该绿色基线创建。
-- 中文 csuite 七章纵向报告已经完整合并；`sentiment-evolution` 规格已经完成，下一小步实现固定 SQL、完整日序列、平衡阶段与可追溯 FactSet。
+- 中文 csuite 七章纵向报告已经完整合并；`sentiment-evolution` 规格与 SQL/事实层已经实现，下一小步接入 100% 堆叠图、fault-isolated runner、stub narrator、运行时与 PR 版 CLI/PDF 产物。
 - 新分支第一次检查：工作区仅修改本状态文件；merge SHA、PR #8、章节边界与 RAG 延期声明一致，`git diff --check` 通过。
 - 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 121 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -114,6 +114,12 @@ context recovery 与完整中文 csuite 七章 slice 已经合并。当前分支
 - fixture 口径预查确认 7 日按 3/2/2 分为前/中/后期：情感计数分别为正/中/负 `1/2/3`、`1/1/2`、`0/0/2`，负面占比为 50.0%、50.0%、100.0%。后期增至 100.0% 但只有 2 篇，必须与热度变化分开解释。该预查只校准规格，尚未构成实现证据。
 - 规格小步第一次检查：必需规格段、`sentiment-evolution.v1`、平衡阶段规则、样本量披露、10 点阈值、一次 narrator、无证据/RAG/n8n 边界、D-24 和 `git diff --check` 全部通过。
 - 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 121 项通过；`pip check` 无破损依赖。
+- 固定 `sentiment_evolution.sql`、`PostgresSentimentEvolutionRepository`、`DailySentimentPoint`、`SentimentPhase`、`SentimentEvolutionSnapshot` 和可追溯 `FactSet` 已实现；空话题仍返回完整七日日历与三段零值阶段。
+- Python 将任意完整日历确定性切为最多三个平衡阶段，保留零量阶段，并只比较首末有效阶段；单一有效阶段返回“仅单阶段有数据”，不伪造趋势。
+- SQL/事实小步第一次检查：Python 静态编译、恰好六个 SQL 绑定参数、`git diff --check` 以及 sentiment-evolution 单元/真实数据库专属测试 7 项通过。
+- SQL/事实小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 128 项通过；`pip check` 无破损依赖。
+- fixture 集成测试正式验证阶段日数 `[3, 2, 2]`、样本量 `[6, 4, 2]`、正/中/负计数 `[(1,2,3), (1,1,2), (0,0,2)]`，以及负面占比变化 `+50.0 个百分点`。
+- FactSet 同时携带每阶段日期范围、样本量、三类计数/占比、首末有效阶段、未四舍五入差值和“负面占比上升”方向，避免把后期 2 篇的 100.0% 误读为绝对热度上升。
 
 ## M1 `viewpoints` 规格切片
 

@@ -13,6 +13,10 @@ from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
 from report_engine.sections.risk import RiskSnapshot
 from report_engine.sections.severity import SeverityEvidenceRecord, SeveritySnapshot
+from report_engine.sections.sentiment_evolution import (
+    DailySentimentPoint,
+    SentimentEvolutionSnapshot,
+)
 from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
 from report_engine.sections.verdict import VerdictSnapshot
 from report_engine.sections.viewpoints import (
@@ -32,6 +36,12 @@ VERDICT_SQL = (
 TREND_QUERY_ID = "trend.v1"
 TREND_SQL = (
     files("report_engine.data.queries").joinpath("trend.sql").read_text(encoding="utf-8")
+)
+SENTIMENT_EVOLUTION_QUERY_ID = "sentiment-evolution.v1"
+SENTIMENT_EVOLUTION_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("sentiment_evolution.sql")
+    .read_text(encoding="utf-8")
 )
 PLATFORMS_QUERY_ID = "platforms.v1"
 PLATFORMS_SQL = (
@@ -151,6 +161,38 @@ class PostgresTrendRepository:
                 for row in rows
             ),
             query_id=TREND_QUERY_ID,
+        )
+
+
+class PostgresSentimentEvolutionRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> SentimentEvolutionSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_date": scope.from_date,
+            "to_date": scope.to_date,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+            "timezone_name": scope.timezone_name,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(SENTIMENT_EVOLUTION_SQL, parameters)
+            rows = cursor.fetchall()
+
+        return SentimentEvolutionSnapshot(
+            points=tuple(
+                DailySentimentPoint(
+                    day=row["article_day"],
+                    article_count=row["article_count"],
+                    positive_articles=row["positive_articles"],
+                    neutral_articles=row["neutral_articles"],
+                    negative_articles=row["negative_articles"],
+                )
+                for row in rows
+            ),
+            query_id=SENTIMENT_EVOLUTION_QUERY_ID,
         )
 
 
