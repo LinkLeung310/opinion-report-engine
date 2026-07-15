@@ -26,6 +26,10 @@
     {
       "id": "platforms",
       "enabled": true
+    },
+    {
+      "id": "severity",
+      "enabled": true
     }
   ]
 }

@@ -59,6 +59,8 @@ class ReportAssembler:
             return "每日情感趋势" if language is Language.ZH else "Daily sentiment trend"
         if section_id is SectionId.PLATFORMS:
             return "平台量级、情感与互动对比" if language is Language.ZH else "Platform volume, sentiment, and engagement"
+        if section_id is SectionId.SEVERITY:
+            return "负面严重程度与分数分布" if language is Language.ZH else "Negative severity and score distribution"
         return f"{section_id.value} chart"
 
     def _meta(

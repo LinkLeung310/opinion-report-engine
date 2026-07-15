@@ -1,14 +1,14 @@
 # Current Project State
 
 最后核对日期：2026-07-15  
-最后实现基线：`main@c35106f`（PR #4，auditable daily trend section）
+最后实现基线：`main@5dd2c58`（PR #5，auditable platform performance section）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；目前 `verdict`、`metrics`、`trend` 与 `platforms` 四章完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；目前 `verdict`、`metrics`、`trend`、`platforms` 与 `severity` 五章完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -24,10 +24,13 @@
 - PR #2 的仓库治理已用 merge commit 合并：`286e6dc`。
 - PR #3 的 verdict slice 已用 merge commit 合并：`8c2381d`。
 - PR #4 的 trend slice 已用 merge commit 合并：`c35106f`。
-- `main@c35106f` 的 GitHub CI：76 项测试通过。
+- PR #5 的 platforms slice 已用 merge commit 合并：`5dd2c58`。
+- `main@5dd2c58` 的 GitHub CI：86 项测试通过。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
+- PR #5 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` + `platforms` 4 章 complete、0 章 failed、3 张图表的完整 A4 两页 bundle；`generatedAt` 为 `+08:00`。
+- 当前 severity 分支本地真实 CLI 验收得到前述 4 章 + `severity` 共 5 章 complete、0 章 failed、4 张图表的完整 A4 三页 bundle；`generatedAt` 为 `+08:00`。
 - wheel 已确认包含 CLI、PDF renderer 和中文字体。
 
 测试数量会随实现增长；恢复工作时必须重新运行并记录最新结果，不得把 47 当成永久常量。
@@ -51,7 +54,7 @@
 
 ## 当前范围约束
 
-context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1-platforms-section` 从绿色 `main@c35106f` 创建，准备定义 M1 `platforms` 的规格；尚未开始该章节实现。用户要求暂不开始 RAG，因此下一切片只处理固定 SQL、Python 事实、图表和 stub narrator，不新增 embedding、vector store、retriever 或 n8n 节点。
+context recovery、verdict、trend 和 platforms slice 已经合并。当前分支 `codex/m1-severity-section` 从绿色 `main@5dd2c58` 创建；`severity` 的规格、SQL/计算、图表、runner、运行时接线和真实 CLI/PDF 验收均已完成，尚待本小步提交、Draft PR、CI 与合并。用户要求暂不开始 RAG，因此本切片没有新增 embedding、vector store、retriever 或 n8n 节点。
 
 ## 治理切片验证
 
@@ -91,12 +94,12 @@ context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1
 
 ## 当前阶段与下一步
 
-- PR #4 已合并，`main@c35106f` 的独立 CI 已通过 76 项测试；当前分支 `codex/m1-platforms-section` 已从该绿色基线创建。
-- `platforms` 的规格、数据层、双面板图表、fault-isolated runner、stub narrator、运行时/CLI 接线和真实产物验收已完成；下一步完成最终两轮检查后发布 Draft PR。
-- 分支建立/状态恢复第一次检查：工作区仅修改本状态文件，merge SHA、PR #4、新分支、未实现边界和 RAG 延期声明一致，`git diff --check` 通过。
-- 分支建立/状态恢复第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 76 项通过；`pip check` 无破损依赖。
+- PR #5 已合并，`main@5dd2c58` 的独立 CI 已通过 86 项测试；当前分支 `codex/m1-severity-section` 已从该绿色基线创建。
+- `severity` stub 纵向切片已完成本地实现与验收；下一步提交并推送图表/runner 小步，创建 Draft PR 并等待分支 CI，不接真实 API。
+- 分支建立/状态恢复第一次检查：工作区仅修改本状态文件，merge SHA、PR #5、新分支、未实现边界和 RAG 延期声明一致，`git diff --check` 通过。
+- 分支建立/状态恢复第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 86 项通过；`pip check` 无破损依赖。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 M1 `platforms` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 M1 `severity` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
 ## M1 `trend` 规格切片
 
@@ -139,3 +142,24 @@ context recovery、verdict 和 trend slice 已经合并。当前分支 `codex/m1
 - 分支最终第一次检查：四章节示例契约、Python 静态编译、唯一 platforms narrator 操作、过期状态清理和 `git diff --check` 全部通过。
 - 分支最终第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 86 项通过；`pip check` 无破损依赖。
 - 当前完整 `platforms` stub 纵向切片已接通；真实 narrator、RAG、n8n 和其余 M1 章节仍未实现。
+
+## M1 `severity` 规格切片
+
+- `docs/02-report-spec.md` 已定义仅针对负面内容的固定查询、严重性/1–5 分数事实、真实高风险证据、双面板图、一次 narrator 和 no-data/failed 行为。
+- D-21 将“零负面内容”定义为有效 no-data 结论，并规定最多三条证据按 severity、negative score、互动、时间和 ID 确定性排序，不使用 RAG。
+- EvidenceSet 必须保留真实 external ID、标题、摘要、平台、时间和 sentiment；任何文章级叙述必须显示允许的 Evidence ID，未知引用或无来源解释使章节失败。
+- 规格小步第一次检查：必需规格段、`severity.v1`、一次 narrator、真实证据/非 RAG 边界、D-21 和 `git diff --check` 全部通过。
+- 规格小步第二次检查：真实 fixture PostgreSQL 下完整 pytest 为 86 项通过；`pip check` 无破损依赖。
+- fixture 口径预查确认 7 篇负面内容，低/中/高/危为 `[1, 2, 3, 1]`，负面分数 1–5 为 `[0, 2, 1, 3, 1]`。该预查只校准规格，尚未构成 `severity` 实现证据。
+- 固定 `severity.sql`、`PostgresSeverityRepository`、`SeveritySnapshot`、可追溯 `FactSet` 和真实字段 `EvidenceSet` 已实现；空负面范围返回合法空 snapshot。
+- 查询在 tag/完整日期硬过滤后仅保留负面记录，一次返回聚合及最多三条证据；证据按 D-21 的 severity、分数、互动、时间、ID 顺序确定性排名，不使用 RAG。
+- SQL/计算小步第一次检查：Python 静态编译、恰好三个 SQL 绑定参数、`git diff --check` 以及 severity 单元测试 4 项通过。
+- SQL/计算小步第二次检查：真实 fixture PostgreSQL 下 severity 专属集成测试 2 项通过、完整 pytest 92 项通过；`pip check` 无破损依赖。首次完整测试因沙箱无权访问系统临时目录产生 15 个 setup error，改用仓库内已忽略的 `tmp/` 后原范围全部通过，没有业务断言失败。
+- fixture 集成测试正式验证 7 篇负面、低/中/高/危 `[1, 2, 3, 1]`、分数 1–5 `[0, 2, 1, 3, 1]`、负面总互动 20,620、高/危互动 16,115，以及证据顺序 `bili-007`、`bili-005`、`bili-003`。
+- facts 保留未四舍五入的 PostgreSQL 平均分并仅显示为 3.4；高/危占比显示为 57.1%，高/危互动占比显示为 78.2%，证据事实保留三个真实 source record ID。
+- `SeverityChartBuilder`、fault-isolated `SeveritySectionRunner`、确定性中英文 stub、运行时接线、专属图片 alt 和五章节评审示例已实现。
+- narrator 每章只调用一次；runner 将三个真实 Evidence ID 与原始标题/摘要交给 narrator，并校验输出按批准顺序显示全部 ID 和原始证据文本。未知引用或篡改证据使本章安全进入 `failed`，不暴露模型错误内容。
+- 图表/runner 专属检查验证绿色到红色风险色阶、critical 固定负面红、150 dpi、洞察标题、no-data 跳过、Evidence ID 校验以及 query/calculation/chart/LLM 安全失败；相关 severity 测试 10 项通过。
+- 纵向接线后真实 fixture PostgreSQL 下完整 pytest 为 98 项通过；`pip check` 无破损依赖。
+- 真实 CLI 产物为 5 章 complete、0 章 failed、4 张图表；severity 正文准确包含 7 篇负面、高/危 4 篇/57.1%、平均分 3.4、高/危互动占比 78.2%，并显示 `bili-007`、`bili-005`、`bili-003` 三个 Evidence ID；`generatedAt` 为 `+08:00`。
+- PDF 经 Poppler 验证为 A4 三页；第三页完整承载 severity 文字、三条证据、双面板图和方法说明，不是孤页。逐页人工复核及图表原图检查均未发现中文乱码、截断、重叠、标签遮挡或风险色阶错误。

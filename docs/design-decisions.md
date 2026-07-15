@@ -25,6 +25,7 @@ contracts is treated as product-design space owned by this project.
 | D-18 | The `verdict` risk level and momentum use explicit Python thresholds, and the section has no redundant standalone chart | Executives get a stable, auditable opening judgment without model guesswork or decorative duplication |
 | D-19 | The `trend` timeline includes zero-volume calendar days and stacks daily sentiment counts | Readers see real quiet periods and sentiment shifts instead of a compressed, misleading timeline |
 | D-20 | `platforms` discloses volume ties, ranks negative concentration by negative count before rate, and groups chart rows after the top seven into `其他` | Readers see material platform differences without false winners, one-item rate distortion, or an unreadable long tail |
+| D-21 | `severity` treats zero negative records as a valid no-data finding and selects at most three high-risk evidence records by deterministic severity/score/engagement/recency order without RAG | Readers see auditable risk concentration and real source examples without fabricated causes or opaque retrieval |
 
 The repository itself will define the 19-section specification, fixtures, examples,
 gold-report visual baseline, metadata extensions, and catalog publishing behavior.

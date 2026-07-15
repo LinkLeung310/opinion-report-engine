@@ -11,6 +11,7 @@ from psycopg.rows import dict_row
 from report_engine.domain.scope import AnalysisScope
 from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
+from report_engine.sections.severity import SeverityEvidenceRecord, SeveritySnapshot
 from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
 from report_engine.sections.verdict import VerdictSnapshot
 
@@ -31,6 +32,12 @@ PLATFORMS_QUERY_ID = "platforms.v1"
 PLATFORMS_SQL = (
     files("report_engine.data.queries")
     .joinpath("platforms.sql")
+    .read_text(encoding="utf-8")
+)
+SEVERITY_QUERY_ID = "severity.v1"
+SEVERITY_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("severity.sql")
     .read_text(encoding="utf-8")
 )
 
@@ -162,4 +169,76 @@ class PostgresPlatformsRepository:
                 for row in rows
             ),
             query_id=PLATFORMS_QUERY_ID,
+        )
+
+
+class PostgresSeverityRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> SeveritySnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(SEVERITY_SQL, parameters)
+            rows = cursor.fetchall()
+
+        if not rows:
+            return SeveritySnapshot(
+                negative_articles=0,
+                low_articles=0,
+                medium_articles=0,
+                high_articles=0,
+                critical_articles=0,
+                missing_severity_articles=0,
+                score_1_articles=0,
+                score_2_articles=0,
+                score_3_articles=0,
+                score_4_articles=0,
+                score_5_articles=0,
+                scored_negative_articles=0,
+                missing_score_articles=0,
+                average_negative_score=None,
+                negative_engagement=0,
+                high_critical_engagement=0,
+                evidence_records=(),
+                query_id=SEVERITY_QUERY_ID,
+            )
+
+        aggregate = rows[0]
+        return SeveritySnapshot(
+            negative_articles=aggregate["negative_articles"],
+            low_articles=aggregate["low_articles"],
+            medium_articles=aggregate["medium_articles"],
+            high_articles=aggregate["high_articles"],
+            critical_articles=aggregate["critical_articles"],
+            missing_severity_articles=aggregate["missing_severity_articles"],
+            score_1_articles=aggregate["score_1_articles"],
+            score_2_articles=aggregate["score_2_articles"],
+            score_3_articles=aggregate["score_3_articles"],
+            score_4_articles=aggregate["score_4_articles"],
+            score_5_articles=aggregate["score_5_articles"],
+            scored_negative_articles=aggregate["scored_negative_articles"],
+            missing_score_articles=aggregate["missing_score_articles"],
+            average_negative_score=aggregate["average_negative_score"],
+            negative_engagement=aggregate["negative_engagement"],
+            high_critical_engagement=aggregate["high_critical_engagement"],
+            evidence_records=tuple(
+                SeverityEvidenceRecord(
+                    external_id=row["external_id"],
+                    title=row["title"],
+                    summary=row["summary"],
+                    platform=row["platform"],
+                    published_at=row["published_at"],
+                    sentiment=row["sentiment"],
+                    negative_score=row["negative_score"],
+                    severity=row["severity"],
+                    total_engagement=row["total_engagement"],
+                )
+                for row in rows
+            ),
+            query_id=SEVERITY_QUERY_ID,
         )

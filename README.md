@@ -12,13 +12,15 @@ The `main` branch is kept runnable. Feature work is developed on `codex/*` branc
 
 ## Runnable slices
 
-The repository currently implements `verdict`, `metrics`, `trend`, and `platforms` through the same boundaries
+The repository currently implements `verdict`, `metrics`, `trend`, `platforms`, and `severity` through the same boundaries
 the full product will use: fixed PostgreSQL SQL, Python-owned facts, injected narration,
-a set of three meaningful 150 dpi charts, A4 Chinese PDF rendering, and atomic bundle publication.
+a set of four meaningful 150 dpi charts, A4 Chinese PDF rendering, and atomic bundle publication.
 `verdict` adds an auditable Python-owned risk and momentum judgment without a redundant
 decorative chart; `trend` preserves quiet calendar days in a stacked sentiment timeline.
 `platforms` discloses volume ties and compares sentiment with engagement without
 letting one-item percentage outliers dominate the risk story.
+`severity` measures high-risk concentration and cites a deterministic shortlist of real
+fixture records by Evidence ID without claiming RAG or semantic retrieval.
 The remaining section IDs are registered but deliberately reported as visible failures
 until their own vertical slices are implemented.
 
