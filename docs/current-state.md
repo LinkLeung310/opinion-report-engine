@@ -128,6 +128,12 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 - 任务书要求固定 SQL、Python 计算、统一图表、每章节至多一次 narrator、数字可追溯和章节级容错；`media-social` 的 B 端媒体/C 端社交划分与比较口径属于本项目自主设计，必须在编码前写入 `docs/02-report-spec.md` 和设计决定。
 - 产品框架只把本章定义为“B 端媒体和 C 端社交内容的量级与情感差异”，没有提供平台分组映射、混合平台处理、样本量阈值、证据或图表细节；下一规格小步必须先核对 schema 与 fixtures，不能把平台名称的主观猜测静默写进 SQL。
 - 本阶段不使用 RAG 或 n8n，不引入真实 API 调用；开发与 CI 使用可注入 stub，最终真实模型只做凭据门控的冒烟测试。
+- schema 审计确认 `articles.source_type` 是受数据库约束的 `media` / `social` 字段，因此本章直接使用存储分类，不按平台名、作者或文本猜测；面向用户显示为“媒体内容/社交内容”，不扩张解释为 B2B/C 端人群或作者身份。
+- `docs/02-report-spec.md` 已定义固定两行聚合、文章量/情感构成、两组均有样本时的社交减媒体负面占比差、双面板 150 dpi 图、一次 narrator、无 EvidenceSet 和 no-data/单组缺失/零负面行为。
+- D-27 要求同时显示绝对量与组内构成，并把缺失组标记为“无样本/不可比较”，禁止将其伪装成 0% 负面或由模型补分类。
+- fixture 口径预查得到媒体 3 篇（正/中/负 1/1/1，负面 33.3%，总量占 25.0%）与社交 9 篇（1/2/6，负面 66.7%，总量占 75.0%）；社交负面占比较媒体高 33.3 个百分点，7 篇负面中媒体/社交分别占 14.3%/85.7%。该预查只校准规格，尚未构成实现证据。
+- 规格小步第一次检查：必需规格段、`media-social.v1`、存储分类、绝对量/组内构成、单组无样本、一次 narrator、无 EvidenceSet/RAG/n8n 边界、D-27、schema 约束和 `git diff --check` 全部通过；未修改实现、fixtures 或 n8n。
+- 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 160 项通过；`pip check` 无破损依赖。
 
 ## M1 `engagement` 阶段入口
 
