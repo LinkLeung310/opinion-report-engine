@@ -48,6 +48,14 @@
 
 context recovery 治理已经写入仓库。用户已明确要求暂不开始 RAG；本治理切片没有新增 embedding、vector store、retriever、模型调用或 n8n 节点。
 
+## 治理切片验证
+
+- 第一次检查（静态一致性）：`git diff --check` 通过；README、AGENTS、状态文件和文档导航中的本地 Markdown 链接全部可解析；工作区只包含预期治理文件。
+- 第二次检查（可执行回归）：真实 fixture PostgreSQL 环境下完整 pytest 为 47 项通过；`python -m pip check` 无破损依赖。
+- 小步提交：context recovery 入口、RAG/fixture 边界和 PR 证据模板分别提交，没有混入 RAG 实现或 n8n 节点修改。
+
+以后每个小步必须在本文件记录本次结果，并重新执行与该小步相称的两轮检查；历史结果不能替代当前验证。
+
 ## 恢复清单
 
 1. 读取根目录 `AGENTS.md`。
