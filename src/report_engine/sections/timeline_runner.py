@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.timeline import (
     ROLE_LABELS_EN,
     SENTIMENT_LABELS,
@@ -56,7 +57,7 @@ class TimelineSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Timeline data query failed")
+            return self._failed(FailureStage.QUERY, "Timeline data query failed", language)
 
         if not snapshot.has_data:
             heading = "Event timeline" if language is Language.EN else "事件时间线"
@@ -72,12 +73,13 @@ class TimelineSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.TIMELINE, snapshot.to_fact_set(), language)
             evidence = snapshot.to_evidence_set()
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
                 "Timeline facts or evidence construction failed",
+                language,
             )
 
         try:
@@ -86,6 +88,7 @@ class TimelineSectionRunner:
             return self._failed(
                 FailureStage.CHART,
                 "Timeline chart rendering failed",
+                language,
                 facts=facts,
                 evidence=evidence,
             )
@@ -99,6 +102,7 @@ class TimelineSectionRunner:
             return self._failed(
                 FailureStage.LLM,
                 "Timeline narration or evidence validation failed",
+                language,
                 facts=facts,
                 evidence=evidence,
                 charts=(chart_path.name,),
@@ -177,6 +181,7 @@ class TimelineSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         evidence: EvidenceSet = EvidenceSet(),
         charts: tuple[str, ...] = (),
@@ -184,7 +189,7 @@ class TimelineSectionRunner:
         return SectionResult(
             section_id=SectionId.TIMELINE,
             status=SectionStatus.FAILED,
-            markdown="## 事件时间线\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.TIMELINE, language),
             facts=facts,
             evidence=evidence,
             charts=charts,

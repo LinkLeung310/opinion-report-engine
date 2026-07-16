@@ -9,6 +9,7 @@ from report_engine.domain.facts import FactSet
 from report_engine.domain.results import FailureStage, SectionFailure, SectionResult, SectionStatus
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import localize_fact_set
 from report_engine.sections.benchmark import BenchmarkInputError, BenchmarkSnapshot, parse_comparison_tag
 
 
@@ -35,7 +36,7 @@ class BenchmarkSectionRunner:
         except Exception:
             return self._failed(FailureStage.QUERY, "Benchmark query failed", language)
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.BENCHMARK, snapshot.to_fact_set(), language)
         except Exception:
             return self._failed(FailureStage.CALCULATION, "Benchmark calculation failed", language)
         if not snapshot.has_data:

@@ -102,7 +102,7 @@ class StubNarrator:
                 high_critical_negative_share = values[
                     "highCriticalNegativeShare"
                 ]
-                if high_critical_negative_share == "不可用":
+                if high_critical_negative_share in {"不可用", "Unavailable"}:
                     high_critical_negative_share = "unavailable"
                 negative_pressure = (
                     "The selected records show no measured negative pressure. "
@@ -794,7 +794,7 @@ class StubNarrator:
 
         if request.section_id is SectionId.SENTIMENT_EVOLUTION:
             if request.language is Language.EN:
-                if values["direction"] == "仅单阶段有数据":
+                if request.facts.get("direction").raw_value == "insufficient":
                     return (
                         "## Sentiment evolution\n\n"
                         f"Only {values['firstPhaseLabel']} "
@@ -816,7 +816,7 @@ class StubNarrator:
                     f"{values['direction']}. Composition change does not indicate "
                     "discussion volume or renewed attention."
                 )
-            if values["direction"] == "仅单阶段有数据":
+            if request.facts.get("direction").raw_value == "insufficient":
                 return (
                     "## 情感演变\n\n"
                     f"仅{values['firstPhaseLabel']}（{values['firstPhaseDateRange']}）"
@@ -896,7 +896,14 @@ class StubNarrator:
 
         if request.section_id is SectionId.RISK:
             if request.language is Language.EN:
-                band_en = {"低": "low", "中": "medium", "高": "high"}
+                band_en = {
+                    "低": "low",
+                    "中": "medium",
+                    "高": "high",
+                    "Low": "low",
+                    "Medium": "medium",
+                    "High": "high",
+                }
                 return (
                     "## Risk assessment\n\n"
                     f"The {values['evaluatedSignalCount']} equally weighted structured "

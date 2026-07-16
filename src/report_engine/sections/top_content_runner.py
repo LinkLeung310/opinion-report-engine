@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import localize_fact_set
 from report_engine.sections.top_content import TopContentSnapshot
 
 
@@ -89,7 +90,7 @@ class TopContentSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.TOP_CONTENT, snapshot.to_fact_set(), language)
             evidence = snapshot.to_evidence_set()
         except Exception:
             return self._failed(

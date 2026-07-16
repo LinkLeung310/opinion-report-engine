@@ -16,6 +16,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.media_social import MediaSocialSnapshot
 
 
@@ -48,7 +49,7 @@ class MediaSocialSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Media-social query failed")
+            return self._failed(FailureStage.QUERY, "Media-social query failed", language)
 
         if not snapshot.has_data:
             heading = "Media and social" if language is Language.EN else "媒体与社媒对比"
@@ -64,9 +65,13 @@ class MediaSocialSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.MEDIA_SOCIAL, snapshot.to_fact_set(), language)
         except Exception:
-            return self._failed(FailureStage.CALCULATION, "Media-social calculation failed")
+            return self._failed(
+                FailureStage.CALCULATION,
+                "Media-social calculation failed",
+                language,
+            )
 
         try:
             chart_path = self._chart_builder.build(snapshot, chart_directory)
@@ -74,6 +79,7 @@ class MediaSocialSectionRunner:
             return self._failed(
                 FailureStage.CHART,
                 "Media-social chart rendering failed",
+                language,
                 facts=facts,
             )
 
@@ -91,6 +97,7 @@ class MediaSocialSectionRunner:
             return self._failed(
                 FailureStage.LLM,
                 "Media-social narration validation failed",
+                language,
                 facts=facts,
                 charts=(chart_path.name,),
             )
@@ -137,13 +144,14 @@ class MediaSocialSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         charts: tuple[str, ...] = (),
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.MEDIA_SOCIAL,
             status=SectionStatus.FAILED,
-            markdown="## 媒体与社媒对比\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.MEDIA_SOCIAL, language),
             facts=facts,
             charts=charts,
             failure=SectionFailure(stage, message),

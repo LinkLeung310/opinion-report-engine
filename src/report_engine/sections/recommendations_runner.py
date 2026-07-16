@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import localize_fact_set
 from report_engine.sections.recommendations import RecommendationsSnapshot
 
 
@@ -45,7 +46,7 @@ class RecommendationsSectionRunner:
             return self._failed(FailureStage.QUERY, "Recommendations query failed", language)
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.RECOMMENDATIONS, snapshot.to_fact_set(), language)
             evidence = snapshot.to_evidence_set()
             actions = snapshot.selected_actions
         except Exception:
