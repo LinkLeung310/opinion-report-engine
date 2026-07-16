@@ -1,7 +1,7 @@
 # Current Project State
 
-最后核对日期：2026-07-15  
-最后实现基线：`main@3448aa3`（PR #12，auditable media-social analysis）
+最后核对日期：2026-07-16
+最后实现基线：`main@93f7d16`（PR #13，M1 standard default configs）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
@@ -32,9 +32,11 @@
 - PR #10 的 keywords slice 已用 merge commit 合并：`1ee06f4`。
 - PR #11 的 engagement slice 已用 merge commit 合并：`9e157c5`。
 - PR #12 的 media-social slice 已用 merge commit 合并：`3448aa3`。
+- PR #13 的 M1 标准默认配置已用 merge commit 合并：`93f7d16`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
 - `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
+- `main@93f7d16` 的 GitHub CI：180 项测试通过（run `29425308622`）。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -53,13 +55,13 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 未开始：其余章节、3 类章节专属输入的完整行为、英文和任意组合未完成。
+- M2 已进入 `timeline` 规格阶段：其余章节、3 类章节专属输入的完整行为、英文和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
 - n8n 不能端到端运行，因为其调用的 M3 API 尚不存在；不得激活或声称集成完成。
 - `CatalogPublisher` / `index.json` 列表更新尚未实现。
-- gold-report 视觉资产和完整默认配置尚未交付。
+- gold-report 视觉资产尚未交付。
 
 ## 已知文档差异
 
@@ -69,7 +71,7 @@
 
 ## 当前范围约束
 
-context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、`keywords`、`engagement`、`media-social` slice 已经合并。当前分支 `codex/m1-default-configs` 从绿色 `main@3448aa3` 创建；下一阶段交付任务书指定文件名的两份标准默认配置并执行 M1 精确命令验收。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整中文 csuite 七章、PR 版新增四章以及两份 7/11 章标准默认配置已经合并，M1 离线验收完成。当前分支 `codex/m2-timeline-section` 从绿色 `main@93f7d16` 创建；下一阶段只定义并实现 `timeline` 的确定性分析切片。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## Context recovery 规则强化小步
 
@@ -119,12 +121,19 @@ context recovery、完整中文 csuite 七章与 PR 版 `sentiment-evolution`、
 
 ## 当前阶段与下一步
 
-- PR #12 已合并，`main@3448aa3` 的独立 CI 已通过 175 项测试；当前分支 `codex/m1-default-configs` 已从该绿色基线创建。
-- 中文 csuite 七章与 PR 十一章的纵向实现均已合并；下一小步创建 `examples/report-config.csuite.json` 与 `examples/report-config.pr.json`，并围绕任务书原命令增加端到端验收。
-- 新分支第一次检查：分支与 `main@3448aa3` 基线、PR #12、175 项 main CI、两份固定配置文件名、RAG 延期和 n8n Draft 边界一致，`git diff --check` 通过；工作区只修改本状态文件。
-- 新分支第二次检查：健康 fixture PostgreSQL 下完整 pytest 175 项通过；`pip check` 无破损依赖。
+- PR #13 已合并，`main@93f7d16` 的独立 CI 已通过 180 项测试；当前分支 `codex/m2-timeline-section` 已从该绿色基线创建。
+- M1 中文 csuite 七章与 PR 十一章的标准配置、stub CLI、固定 SQL、图表与 PDF 离线验收均已完成；下一小步先审计 schema/fixtures，并把 `timeline` 的选择规则、证据边界和退化行为写成规格与设计决定，再开始实现。
+- 新分支第一次检查：当前分支与 `main@93f7d16` merge-base 完全一致，`git diff --check` 通过，必需阶段标记均可定位，工作区只修改本状态文件，没有触碰实现、fixtures、RAG 或 n8n。
+- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 180 项通过；`pip check` 无破损依赖。首次命令曾误命中不含 pytest 的 Hermes Python，切换到 README 指定的项目 `.venv` 后验证成功；该环境路由问题未形成代码失败。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 M1 默认配置阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 `timeline` 阶段实现；n8n 保持 Draft，等待 M3 API。
+
+## M2 `timeline` 阶段入口
+
+- 产品框架只把 `timeline` 定义为“用峰值和代表性内容还原事件阶段”；任务书没有给出里程碑选择算法、阶段命名、点数上限、图表或退化行为，这些都必须明确标为项目自主设计，而不是面试方原始要求。
+- 本阶段坚持固定 SQL + Python 确定性计算 + 可审计 Evidence ID：模型最多做一次受约束叙述，不生成 SQL、不选择事实、不推断因果，也不把时间先后包装成因果关系。
+- 下一小步只做 schema/fixture 预查与规格决策；实现前必须定义首次收录、峰值日代表、明确标记的官方回应、最后收录之间的去重/排序/上限，以及无数据、单点、同日多点和缺少官方回应时的行为。
+- 本阶段不实现或暗示 RAG，不修改 n8n 工作流，不调用真实模型 API；开发与 CI 继续使用可注入 stub，真实 API 留到全部本地功能完成后的最终冒烟测试。
 
 ## M1 标准默认配置阶段入口
 
