@@ -122,7 +122,7 @@ context recovery、完整中文 csuite 七章、PR 版新增四章以及两份 7
 ## 当前阶段与下一步
 
 - PR #13 已合并，`main@93f7d16` 的独立 CI 已通过 180 项测试；当前分支 `codex/m2-timeline-section` 已从该绿色基线创建。
-- M1 中文 csuite 七章与 PR 十一章的标准配置、stub CLI、固定 SQL、图表与 PDF 离线验收均已完成；`timeline` 规格与 D-28 已写明，下一小步实现其固定 SQL、Python 事实和真实 fixture 集成测试。
+- M1 中文 csuite 七章与 PR 十一章的标准配置、stub CLI、固定 SQL、图表与 PDF 离线验收均已完成；`timeline` 的规格、固定 SQL、Python 事实与真实 fixture 集成测试已完成，下一小步接入 runner、图表、stub 和 bundle/PDF 验收。
 - 新分支第一次检查：当前分支与 `main@93f7d16` merge-base 完全一致，`git diff --check` 通过，必需阶段标记均可定位，工作区只修改本状态文件，没有触碰实现、fixtures、RAG 或 n8n。
 - 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 180 项通过；`pip check` 无破损依赖。首次命令曾误命中不含 pytest 的 Hermes Python，切换到 README 指定的项目 `.venv` 后验证成功；该环境路由问题未形成代码失败。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -139,6 +139,10 @@ context recovery、完整中文 csuite 七章、PR 版新增四章以及两份 7
 - fixture 预查得到 12 篇范围内记录、峰值日 2026-03-20 共 3 篇；四个角色依次命中 `bili-001`、`bili-006`、`bili-007`、`bili-012`，与规格的排序和去重口径一致。
 - 规格小步第一次检查：`git diff --check`、必需合同段、唯一 `timeline` 章节、唯一 D-28、仅文档改动均通过；真实 PostgreSQL 候选查询精确返回上述四个 Evidence ID。
 - 规格小步第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 180 项通过；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
+- 固定 `timeline.sql`、`PostgresTimelineRepository`、角色行/去重里程碑模型、`EvidenceSet` 和 `FactSet` 已实现；查询只绑定 tag、半开时间边界与时区，最多返回四个固定角色，Python 按真实 Evidence ID 合并并验证完整角色顺序与重复记录字段一致性。
+- 时间线事实包含范围内 12 篇、峰值日 3/20 共 3 篇、回应标签记录 1 篇、4 个里程碑和首末收录跨 7 个自然日；峰值日代表 `bili-007` 的存储互动计数和为 10,020，所有里程碑事实保留来源 ID。
+- SQL/事实小步第一次检查：`git diff --check`、Python 静态编译、四个 SQL 绑定参数各出现一次、预期文件范围和 timeline 专属单元测试 5 项通过。
+- SQL/事实小步第二次检查：健康 fixture PostgreSQL 下 timeline 集成测试 2 项通过，完整 pytest 187 项通过；`pip check` 无破损依赖。空话题返回合法 `no_data` snapshot；本小步未接 runner/图表、RAG、n8n 或真实模型 API。
 
 ## M1 标准默认配置阶段入口
 

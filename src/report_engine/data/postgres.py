@@ -21,6 +21,7 @@ from report_engine.sections.sentiment_evolution import (
     SentimentEvolutionSnapshot,
 )
 from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
+from report_engine.sections.timeline import TimelineRoleRecord, TimelineSnapshot
 from report_engine.sections.verdict import VerdictSnapshot
 from report_engine.sections.viewpoints import (
     ViewpointEvidenceRecord,
@@ -83,6 +84,10 @@ VIEWPOINTS_SQL = (
     files("report_engine.data.queries")
     .joinpath("viewpoints.sql")
     .read_text(encoding="utf-8")
+)
+TIMELINE_QUERY_ID = "timeline.v1"
+TIMELINE_SQL = (
+    files("report_engine.data.queries").joinpath("timeline.sql").read_text(encoding="utf-8")
 )
 
 
@@ -523,4 +528,66 @@ class PostgresViewpointsRepository:
                 for row in rows
             ),
             query_id=VIEWPOINTS_QUERY_ID,
+        )
+
+
+class PostgresTimelineRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> TimelineSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+            "timezone_name": scope.timezone_name,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(TIMELINE_SQL, parameters)
+            rows = cursor.fetchall()
+
+        if not rows:
+            return TimelineSnapshot(
+                article_count=0,
+                peak_day=None,
+                peak_articles=0,
+                response_tagged_articles=0,
+                role_records=(),
+                timezone_name=scope.timezone_name,
+                query_id=TIMELINE_QUERY_ID,
+            )
+
+        aggregate_fields = (
+            "article_count",
+            "peak_day",
+            "peak_articles",
+            "response_tagged_articles",
+        )
+        for field in aggregate_fields:
+            if len({row[field] for row in rows}) != 1:
+                raise RuntimeError(f"timeline query returned inconsistent {field}")
+
+        aggregate = rows[0]
+        return TimelineSnapshot(
+            article_count=aggregate["article_count"],
+            peak_day=aggregate["peak_day"],
+            peak_articles=aggregate["peak_articles"],
+            response_tagged_articles=aggregate["response_tagged_articles"],
+            role_records=tuple(
+                TimelineRoleRecord(
+                    role=row["role"],
+                    external_id=row["external_id"],
+                    title=row["title"],
+                    summary=row["summary"],
+                    platform=row["platform"],
+                    published_at=row["published_at"],
+                    published_day=row["published_day"],
+                    sentiment=row["sentiment"],
+                    total_engagement=row["total_engagement"],
+                    response_tagged=row["response_tagged"],
+                )
+                for row in rows
+            ),
+            timezone_name=scope.timezone_name,
+            query_id=TIMELINE_QUERY_ID,
         )
