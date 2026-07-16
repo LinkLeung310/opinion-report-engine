@@ -9,12 +9,14 @@ description = "Configuration-driven public-opinion report generator"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+  "fastapi>=0.139,<1",
   "matplotlib>=3.10,<4",
   "pydantic>=2.12,<3",
   "psycopg[binary]>=3.2,<4",
   "python-dotenv>=1.1,<2",
   "reportlab>=4.4,<5",
   "typer>=0.15,<1",
+  "uvicorn>=0.51,<1",
 ]
 
 [project.scripts]
@@ -22,6 +24,7 @@ report = "report_engine.cli:app"
 
 [project.optional-dependencies]
 dev = [
+  "httpx2>=2.7,<3",
   "pypdf>=6,<7",
   "pytest>=8.3,<9",
 ]

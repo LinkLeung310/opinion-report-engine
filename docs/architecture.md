@@ -283,10 +283,13 @@ src/report_engine/
 │   ├── pdf.py
 │   └── templates/
 ├── storage/
-│   └── bundle.py
+│   ├── bundle.py
+│   ├── catalog.py
+│   └── archive.py
 └── api/
     ├── app.py
-    └── jobs.py
+    ├── jobs.py
+    └── manager.py
 ```
 
 This is a package-boundary proposal, not permission to create empty abstraction files.
@@ -311,8 +314,16 @@ variants without changing the core execution flow.
 
 ### M3
 
-Wrap `ReportApplicationService` with job submission, status, and download endpoints.
-Persist completed bundle state on disk so completed reports survive service restarts.
+Wrap `ReportApplicationService` with the exact HTTP contract in
+[`api-contract.md`](api-contract.md). A bounded in-process job manager owns UUID task
+IDs, progress, atomic task-state persistence and ZIP publication. Each real worker owns
+its PostgreSQL connection, narrator and application service; concurrent jobs never
+share a psycopg connection. FastAPI remains a thin adapter over that manager.
+
+The application uses FastAPI lifespan to start and close the manager. Completed task
+records reload from disk after restart and remain downloadable. A queued/running record
+left by an unexpected stop becomes a safe `service_restarted` failure rather than being
+silently resumed or reported as complete.
 
 ### n8n demonstration workflow
 

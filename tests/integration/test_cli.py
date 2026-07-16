@@ -34,7 +34,11 @@ def test_cli_real_mode_builds_narrator_from_environment_without_network(
         captured.update(base_url=base_url, api_key=api_key, model=model)
         return StubNarrator()
 
-    monkeypatch.setattr(cli_module, "OpenAICompatibleNarrator", fake_real_narrator)
+    monkeypatch.setattr(
+        runtime_module,
+        "OpenAICompatibleNarrator",
+        fake_real_narrator,
+    )
     config = Path(__file__).parents[2] / "examples" / "report-config.metrics.json"
 
     result = CliRunner().invoke(

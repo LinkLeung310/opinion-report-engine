@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime
+from typing import Protocol
 from zoneinfo import ZoneInfo
 
+import psycopg
 from psycopg import Connection
 
 from report_engine.application.planner import ReportPlanner
@@ -46,6 +50,7 @@ from report_engine.data.postgres import (
     PostgresVerdictRepository,
     PostgresViewpointsRepository,
 )
+from report_engine.llm.openai_compatible import OpenAICompatibleNarrator
 from report_engine.llm.protocol import Narrator
 from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
 from report_engine.sections.engagement_runner import EngagementSectionRunner
@@ -70,10 +75,59 @@ from report_engine.sections.timeline_runner import TimelineSectionRunner
 from report_engine.sections.top_content_runner import TopContentSectionRunner
 from report_engine.sections.verdict_runner import VerdictSectionRunner
 from report_engine.sections.viewpoints_runner import ViewpointsSectionRunner
+from report_engine.settings import Settings, SettingsError
 from report_engine.storage import BundlePublisher, CatalogPublisher
 
 
 REPORT_TIMEZONE = ZoneInfo("Asia/Shanghai")
+
+
+class PostgresConnector(Protocol):
+    def __call__(
+        self,
+        dsn: str,
+        *,
+        connect_timeout: int,
+    ) -> AbstractContextManager[Connection]: ...
+
+
+def build_real_narrator(settings: Settings) -> Narrator:
+    """Build one real narrator without hiding missing or unsafe settings."""
+
+    if (
+        settings.llm_base_url is None
+        or settings.llm_api_key is None
+        or settings.llm_model is None
+    ):
+        raise SettingsError("LLM settings are required for real narration")
+    try:
+        return OpenAICompatibleNarrator(
+            base_url=settings.llm_base_url,
+            api_key=settings.llm_api_key,
+            model=settings.llm_model,
+        )
+    except ValueError as exc:
+        raise SettingsError(f"Invalid LLM settings: {exc}") from exc
+
+
+def build_report_service_factory(
+    settings: Settings,
+    *,
+    narrator_factory: Callable[[], Narrator],
+    connect: PostgresConnector = psycopg.connect,
+) -> Callable[[], AbstractContextManager[ReportApplicationService]]:
+    """Create per-task database, narrator, and application-service contexts."""
+
+    @contextmanager
+    def open_service():
+        narrator = narrator_factory()
+        with connect(
+            settings.pg_dsn,
+            connect_timeout=5,
+        ) as connection:
+            yield build_report_service(connection, narrator)
+
+    return open_service
 
 
 def build_report_service(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import threading
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
@@ -53,13 +54,28 @@ class CatalogPublisherPort(Protocol):
 
 
 class ReportIdAllocator:
+    _lock = threading.Lock()
+    _reservations: set[tuple[Path, str]] = set()
+
     def allocate(self, config: ReportConfig, output_root: Path) -> str:
         safe_tag = re.sub(r"[^a-z0-9]+", "-", config.topic.tag.lower()).strip("-")
         base = f"{safe_tag or 'report'}-{config.date_range.to_date.isoformat()}"
-        version = 1
-        while (output_root / f"{base}-v{version}").exists():
-            version += 1
-        return f"{base}-v{version}"
+        root = Path(output_root).resolve()
+        with self._lock:
+            version = 1
+            while (
+                (output_root / f"{base}-v{version}").exists()
+                or (root, f"{base}-v{version}") in self._reservations
+            ):
+                version += 1
+            report_id = f"{base}-v{version}"
+            self._reservations.add((root, report_id))
+            return report_id
+
+    def release(self, report_id: str, output_root: Path) -> None:
+        root = Path(output_root).resolve()
+        with self._lock:
+            self._reservations.discard((root, report_id))
 
 
 class ReportApplicationService:
@@ -83,44 +99,62 @@ class ReportApplicationService:
         self._clock = clock
         self._id_allocator = id_allocator or ReportIdAllocator()
 
-    def generate(self, config: ReportConfig, output_root: Path) -> ReportResult:
+    def generate(
+        self,
+        config: ReportConfig,
+        output_root: Path,
+        *,
+        progress_callback: Callable[[SectionId | None, int], None] | None = None,
+    ) -> ReportResult:
         plan = self._planner.build(config)
         report_id = self._id_allocator.allocate(config, output_root)
 
-        with TemporaryDirectory(prefix=f"{report_id}-") as temporary:
-            chart_directory = Path(temporary) / "charts"
-            results = tuple(
-                self._run_section(
-                    section.id,
-                    section.can_execute,
-                    section.input_errors,
-                    plan.scope,
-                    config.language,
-                    chart_directory,
-                    section.input,
+        try:
+            with TemporaryDirectory(prefix=f"{report_id}-") as temporary:
+                chart_directory = Path(temporary) / "charts"
+                results: list[SectionResult] = []
+                for completed, section in enumerate(plan.sections):
+                    if progress_callback is not None:
+                        progress_callback(section.id, completed)
+                    results.append(
+                        self._run_section(
+                            section.id,
+                            section.can_execute,
+                            section.input_errors,
+                            plan.scope,
+                            config.language,
+                            chart_directory,
+                            section.input,
+                        )
+                    )
+                if progress_callback is not None:
+                    progress_callback(None, len(results))
+                section_results = tuple(results)
+                report = self._assembler.assemble(
+                    config=config,
+                    report_id=report_id,
+                    sections=section_results,
+                    generated_at=self._clock(),
                 )
-                for section in plan.sections
-            )
-            report = self._assembler.assemble(
-                config=config,
-                report_id=report_id,
-                sections=results,
-                generated_at=self._clock(),
-            )
-            pdf_bytes = self._pdf_renderer.render(report.markdown, chart_directory)
-            chart_sources = {
-                chart_name: chart_directory / chart_name
-                for result in results
-                for chart_name in result.charts
-            }
-            bundle_path = self._publisher.publish(
-                report=report,
-                pdf_bytes=pdf_bytes,
-                chart_sources=chart_sources,
-                output_root=output_root,
-            )
-            self._catalog_publisher.publish(bundle_path, output_root)
-        return report
+                pdf_bytes = self._pdf_renderer.render(
+                    report.markdown,
+                    chart_directory,
+                )
+                chart_sources = {
+                    chart_name: chart_directory / chart_name
+                    for result in section_results
+                    for chart_name in result.charts
+                }
+                bundle_path = self._publisher.publish(
+                    report=report,
+                    pdf_bytes=pdf_bytes,
+                    chart_sources=chart_sources,
+                    output_root=output_root,
+                )
+                self._catalog_publisher.publish(bundle_path, output_root)
+            return report
+        finally:
+            self._id_allocator.release(report_id, output_root)
 
     def _run_section(
         self,

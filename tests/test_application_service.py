@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
 
 from report_engine.application.planner import ReportPlanner
-from report_engine.application.service import CatalogPublisherPort, ReportApplicationService
+from report_engine.application.service import (
+    CatalogPublisherPort,
+    ReportApplicationService,
+    ReportIdAllocator,
+)
 from report_engine.charts.metrics import MetricsChartBuilder
 from report_engine.config import ReportConfig, SectionId
 from report_engine.llm.stub import StubNarrator
@@ -144,6 +149,30 @@ def test_allocates_a_new_human_readable_version_without_overwriting(tmp_path) ->
     assert [entry["id"] for entry in catalog] == [first.report_id, second.report_id]
 
 
+def test_report_id_allocator_reserves_versions_across_service_instances(
+    tmp_path,
+) -> None:
+    output_root = tmp_path / "out"
+    config = metrics_only_config()
+    allocators = [ReportIdAllocator() for _ in range(8)]
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        report_ids = list(
+            executor.map(
+                lambda allocator: allocator.allocate(config, output_root),
+                allocators,
+            )
+        )
+    try:
+        assert set(report_ids) == {
+            f"bilibili-dislike-2026-03-23-v{version}"
+            for version in range(1, 9)
+        }
+    finally:
+        for allocator, report_id in zip(allocators, report_ids, strict=True):
+            allocator.release(report_id, output_root)
+
+
 def test_catalog_failure_is_a_report_level_failure_after_bundle_publication(
     tmp_path,
 ) -> None:
@@ -174,6 +203,21 @@ def test_passes_the_planned_section_input_to_the_runner(tmp_path) -> None:
     )
 
     assert captured_inputs == [{"fixtureFlag": "preserved"}]
+
+
+def test_reports_ordered_section_progress_without_changing_generation(tmp_path) -> None:
+    progress: list[tuple[SectionId | None, int]] = []
+
+    result = build_service(StubNarrator()).generate(
+        metrics_only_config(),
+        tmp_path / "out",
+        progress_callback=lambda section_id, completed: progress.append(
+            (section_id, completed)
+        ),
+    )
+
+    assert result.report_id == "bilibili-dislike-2026-03-23-v1"
+    assert progress == [(SectionId.METRICS, 0), (None, 1)]
 
 
 def test_unimplemented_sections_become_visible_failures_instead_of_crashing(tmp_path) -> None:
