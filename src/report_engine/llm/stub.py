@@ -19,6 +19,85 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.SPREAD_PATH:
+            sentiments_en = {
+                "positive": "positive",
+                "neutral": "neutral",
+                "negative": "negative",
+            }
+            platform_lines = []
+            for index, evidence in enumerate(request.evidence.records, start=1):
+                prefix = f"platform{index}"
+                if request.language is Language.EN:
+                    sentiment = sentiments_en[
+                        request.facts.get(f"{prefix}FirstSentiment").raw_value
+                    ]
+                    platform_lines.append(
+                        f"- wave {values[f'{prefix}EntryWave']} | "
+                        f"{values[f'{prefix}Name']} | first "
+                        f"{values[f'{prefix}FirstObservedAt']} | last "
+                        f"{values[f'{prefix}LastObservedAt']} | "
+                        f"{values[f'{prefix}Articles']} records "
+                        f"({values[f'{prefix}NegativeArticles']} negative) | "
+                        f"{values[f'{prefix}ActiveDays']} active days | stored "
+                        f"interactions {values[f'{prefix}TotalEngagement']}. First "
+                        f"captured record [Evidence: {evidence.record_id}] "
+                        f"{sentiment} | {evidence.title}: {evidence.summary}"
+                    )
+                else:
+                    platform_lines.append(
+                        f"- 波次 {values[f'{prefix}EntryWave']}｜"
+                        f"{values[f'{prefix}Name']}｜首次 "
+                        f"{values[f'{prefix}FirstObservedAt']}｜末次 "
+                        f"{values[f'{prefix}LastObservedAt']}｜"
+                        f"{values[f'{prefix}Articles']} 篇（负面 "
+                        f"{values[f'{prefix}NegativeArticles']} 篇）｜活跃 "
+                        f"{values[f'{prefix}ActiveDays']} 日｜存储互动 "
+                        f"{values[f'{prefix}TotalEngagement']}。首收录记录 "
+                        f"[Evidence: {evidence.record_id}] "
+                        f"{values[f'{prefix}FirstSentiment']}｜"
+                        f"{evidence.title}：{evidence.summary}"
+                    )
+            lines = "\n".join(platform_lines)
+            if request.language is Language.EN:
+                return (
+                    "## Propagation path (observable order)\n\n"
+                    f"Across {values['articles']} scoped records, "
+                    f"{values['platformCount']} platforms are observed; "
+                    f"{values['displayPlatformCount']} are displayed and "
+                    f"{values['omittedPlatformCount']} omitted. Across "
+                    f"{values['calendarDays']} calendar days, "
+                    f"{values['multiPlatformDays']} contain multiple platforms. The "
+                    f"same-day maximum is {values['maxDailyPlatforms']} platforms on "
+                    f"{values['maxDailyPlatformDays']}. Displayed platforms form "
+                    f"{values['entryWaveCount']} first-capture waves; the earliest "
+                    f"platform set is {values['earliestPlatforms']} and the latest new "
+                    f"platform set is {values['latestNewPlatforms']}, separated by "
+                    f"{values['firstObservationIntervalHours']} hours.\n\n{lines}\n\n"
+                    "The database has no repost, quote, parent, referral, or source-edge "
+                    "fields. This is captured first-observation order and platform "
+                    "participation only, not event origin, a transmission chain, "
+                    "audience movement, or causal platform influence."
+                )
+            return (
+                "## 传播路径（可观测顺序）\n\n"
+                f"监测期内 {values['articles']} 篇内容覆盖 "
+                f"{values['platformCount']} 个平台，显示 "
+                f"{values['displayPlatformCount']} 个、省略 "
+                f"{values['omittedPlatformCount']} 个；"
+                f"{values['calendarDays']} 个日历日中有 "
+                f"{values['multiPlatformDays']} 个多平台日，单日最多 "
+                f"{values['maxDailyPlatforms']} 个平台，出现在 "
+                f"{values['maxDailyPlatformDays']}。显示平台形成 "
+                f"{values['entryWaveCount']} 个首次收录波次；最早平台为 "
+                f"{values['earliestPlatforms']}，最后新出现平台为 "
+                f"{values['latestNewPlatforms']}，首收录间隔 "
+                f"{values['firstObservationIntervalHours']} 小时。\n\n{lines}\n\n"
+                "数据库没有转载、引用、父子、引流或来源边字段；以上只表示本监测范围"
+                "内的首次收录顺序和平台参与轨迹，不代表事件起源、传播链、受众迁移或"
+                "平台间因果影响。"
+            )
+
         if request.section_id is SectionId.NEGATIVE_THEMES:
             labels_en = {
                 "user_agency": "User agency and control",

@@ -24,6 +24,7 @@ from report_engine.sections.sentiment_evolution import (
     DailySentimentPoint,
     SentimentEvolutionSnapshot,
 )
+from report_engine.sections.spread_path import SpreadPathSnapshot, SpreadPathSourceRecord
 from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
 from report_engine.sections.timeline import TimelineRoleRecord, TimelineSnapshot
 from report_engine.sections.top_content import TopContentRecord, TopContentSnapshot
@@ -104,6 +105,12 @@ NEGATIVE_THEMES_QUERY_ID = "negative-themes.v1"
 NEGATIVE_THEMES_SQL = (
     files("report_engine.data.queries")
     .joinpath("negative_themes.sql")
+    .read_text(encoding="utf-8")
+)
+SPREAD_PATH_QUERY_ID = "spread-path.v1"
+SPREAD_PATH_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("spread_path.sql")
     .read_text(encoding="utf-8")
 )
 
@@ -709,4 +716,41 @@ class PostgresNegativeThemesRepository:
                 if row["external_id"] is not None
             ),
             query_id=NEGATIVE_THEMES_QUERY_ID,
+        )
+
+
+class PostgresSpreadPathRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> SpreadPathSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(SPREAD_PATH_SQL, parameters)
+            rows = cursor.fetchall()
+
+        return SpreadPathSnapshot(
+            from_date=scope.from_date,
+            to_date=scope.to_date,
+            records=tuple(
+                SpreadPathSourceRecord(
+                    external_id=row["external_id"],
+                    title=row["title"],
+                    summary=row["summary"],
+                    platform=row["platform"],
+                    published_at=row["published_at"],
+                    sentiment=row["sentiment"],
+                    likes=row["likes"],
+                    comments=row["comments"],
+                    shares=row["shares"],
+                    favorites=row["favorites"],
+                )
+                for row in rows
+            ),
+            timezone_name=scope.timezone_name,
+            query_id=SPREAD_PATH_QUERY_ID,
         )

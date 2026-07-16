@@ -326,6 +326,59 @@ def test_cli_generates_a_complete_negative_themes_only_bundle(tmp_path, monkeypa
     }
 
 
+def test_cli_generates_a_complete_spread_path_only_bundle(tmp_path, monkeypatch) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.pr.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    raw["sections"] = [{"id": "spread-path", "enabled": True}]
+    config = tmp_path / "report-config.spread-path.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert "## 传播路径（可观测顺序）" in markdown
+    assert "4 个首次收录波次" in markdown
+    assert "首收录间隔 32.5 小时" in markdown
+    assert "单日最多 3 个平台，出现在 3/20" in markdown
+    evidence_ids = ("bili-001", "bili-002", "bili-003", "bili-004")
+    positions = [markdown.index(f"[Evidence: {record_id}]") for record_id in evidence_ids]
+    assert positions == sorted(positions)
+    assert "用户发现负反馈入口层级变化，担心表达不喜欢变得更困难。" in markdown
+    assert "文章分析入口调整可能用于降低误触，但需要更清楚的用户说明。" in markdown
+    assert "数据库没有转载、引用、父子、引流或来源边字段" in markdown
+    assert (target / "charts" / "platform-time-matrix.png").is_file()
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {
+        "requested": 1,
+        "complete": 1,
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == 1
+    assert meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "暂无",
+        "peakDay": "暂无",
+    }
+
+
 @pytest.mark.parametrize(
     ("filename", "report_type", "headings", "charts"),
     (
