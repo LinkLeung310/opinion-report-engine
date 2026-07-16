@@ -307,7 +307,9 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - `docs/02-report-spec.md` 与 D-36 已定义 `recommendations.v1`：固定 SQL 返回范围计数与全部真实负面记录，Python 复用公开的 `negative-themes.codebook.v1`，从高/危核验、用户自主权、透明度、反馈闭环和无候选回退五类版本化行动中最多选择四项；优先级是透明词典序，不创建综合分数。
 - 每项行动固定建议角色、立即/24 小时/72 小时 playbook 目标、动作文本、核验清单、全部触发 source ID 和一条真实代表 Evidence ID；共享代表可在行动顺序中重复引用，但底层 `EvidenceSet` 去重。模型不得新增行动、改写原文、补数字、生成法律结论或执行外部操作。
 - 本章不生成图表：排序文本卡片已经表达行动顺序，视觉分数/红绿灯会暗示未经验证的效果或置信度。零文章为不调用 narrator 的 `no_data`；非空零负面为不调用 narrator 的 `complete` 常规监测结论；存在负面时至少产生可审计回退行动并恰好调用一次 narrator。
-- fixture 口径按现有已验证事实预期四项行动依次为 `triage_high_risk`、`restore_user_control`、`explain_change`、`close_feedback_loop`，代表 Evidence ID 序列为 `bili-007`、`bili-005`、`bili-003`、`bili-007`；底层证据去重为三条。该预期只校准规格，尚未构成 recommendations 实现证据。
+- 固定 `recommendations.sql`、`PostgresRecommendationsRepository`、`RecommendationsSnapshot` 和版本化行动定义已实现；查询只绑定 tag 与半开时间范围，并复用已验证的负面记录模型和主题代码本，不调用模型、RAG、n8n 或外部服务。
+- fixture PostgreSQL 正式验证四项行动依次为 `triage_high_risk`、`restore_user_control`、`explain_change`、`close_feedback_loop`，代表 Evidence ID 序列为 `bili-007`、`bili-005`、`bili-003`、`bili-007`；底层 `EvidenceSet` 按首次出现去重为三条。零文章返回合法空 snapshot，未命中主要行动的负面记录确定性进入人工复核回退。
+- SQL/事实小步单次检查：新模块与 PostgreSQL repository 静态编译、`git diff --check`、三个 SQL 绑定参数各出现一次，以及 recommendations 单元/真实 fixture PostgreSQL 集成测试共 7 项通过。pytest 仅提示沙箱无法写 `.pytest_cache`，不影响测试结果；本小步尚未接 runner、stub、CLI 或 PDF。
 - 规格小步单次检查：变更范围仅为逐章规格、设计决定与状态文档；`git diff --check`、唯一 `recommendations` 章节、唯一 D-36，以及固定 SQL/共享代码本/最多四项/确定性优先级/真实证据/无图表/一次 narrator/no-data/无 RAG/无外部执行合同均通过。未修改实现、fixtures 或 n8n，也未重复运行刚在 main CI 通过的 317 项测试。
 
 ## M2 `timeline` 阶段入口
