@@ -1,7 +1,7 @@
 # Current Project State
 
 最后核对日期：2026-07-16
-最后实现基线：`main@eeeba95`（PR #20，auditable business impact）
+最后实现基线：`main@5909005`（PR #21，auditable recommended actions）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
@@ -40,6 +40,7 @@
 - PR #18 的 response slice 已用 merge commit 合并：`ad1e414`。
 - PR #19 的 benchmark slice 已用 merge commit 合并：`542196c`。
 - PR #20 的 biz-impact slice 已用 merge commit 合并：`eeeba95`。
+- PR #21 的 recommendations slice 已用 merge commit 合并：`5909005`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
 - `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
@@ -51,6 +52,7 @@
 - `main@ad1e414` 的 GitHub CI：274 项测试通过（run `29475994557`）。
 - `main@542196c` 的 GitHub CI：289 项测试通过（run `29477030341`）。
 - `main@eeeba95` 的 GitHub CI：317 项测试通过（run `29499194452`）。
+- `main@5909005` 的 GitHub CI：330 项测试通过（run `29510962414`）。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -69,7 +71,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark` 与 `biz-impact` 纵向切片；`recommendations` 已在当前功能分支完成本地验收但尚未经 PR/CI 合并。完整英文矩阵和任意组合仍未完成。
+- M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark`、`biz-impact` 与 `recommendations` 十九章纵向切片均已合并。完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -85,7 +87,7 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes`/`spread-path`/`response`/`benchmark`/`biz-impact` 纵向切片已经合并。当前分支 `codex/m2-recommendations-section` 从绿色 `main@eeeba95` 创建，并已完成 `recommendations` 的本地纵向验收；下一步是提交、PR/CI 与合并，不在本分支混入英文矩阵。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整 M1 离线实现与默认配置、以及全部 19 章纵向切片已经合并。当前分支 `codex/m2-language-combinations` 从独立 CI 通过的绿色 `main@5909005` 创建；本阶段只补完整英文矩阵和任意章节组合验收，并修复该矩阵揭示的真实跨章节问题。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## Context recovery 规则强化小步
 
@@ -315,6 +317,14 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - recommendations-only 真实 fixture CLI bundle 为 1 章 complete、0 failed、0 图表，meta 显示 12 篇、负面占比 58.3%；正文按 `bili-007`、`bili-005`、`bili-003`、`bili-007` 顺序呈现四项行动，并明确建议角色、人工审核和无自动外部执行边界。
 - 产物小步单次阶段检查：`git diff --check`、全仓 Python 静态编译、`pip check`、健康 fixture PostgreSQL 下完整 pytest 330 项、真实 CLI bundle 与 Poppler A4 检查均通过。PDF 为两页，逐页原图复核无中文乱码、截断、重叠、Markdown 泄漏或孤立标题；第二页完整承载第 4 项、人工审核边界和方法说明。
 - 本小步未实现 RAG、未修改或激活 n8n，也未调用真实模型 API；真实 API 仍只留到全部本地功能完成后的最终凭据门控冒烟。
+- PR #21 已由分支 CI run `29510849347` 验证后以 merge commit `5909005` 合并；合并后的独立 main CI run `29510962414` 在 Python 3.12 + PostgreSQL fixtures 上通过全部 330 项测试。
+
+## M2 英文与任意组合阶段入口
+
+- 任务书明确要求 `language: "en"` 和任意章节组合；现有逐章中英文 stub 测试与单章 CLI 证据不能替代完整 19 章交叉验收，也不能证明混合专属 input、无图表章节、共享 Evidence ID 和任意顺序在同一 bundle 中稳定工作。
+- 本阶段将先建立一份 19 章英文全量配置和确定性参数化组合矩阵，断言仅执行 enabled 章节、严格保留数组顺序、每章 narrator 次数不超过一次、三类专属 input 正确传递、局部失败隔离、meta 统计与产物集合一致。
+- 组合矩阵采用有覆盖依据的确定性样例，而非穷举 `2^19`：单章、全章、乱序、跨报告类型、含/不含三类 input、零数据与注入失败分别覆盖独立风险。若测试发现英文标题、PDF 字体/分页或章节间事实键冲突，只在本阶段修复并记录。
+- 新分支 `codex/m2-language-combinations` 精确从绿色 `main@5909005` 创建；入口小步只记录 PR #21/main CI 证据和本阶段边界，不修改运行代码、fixtures、RAG 或 n8n。
 
 ## M2 `timeline` 阶段入口
 
