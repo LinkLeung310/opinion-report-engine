@@ -124,7 +124,7 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline` 
 ## 当前阶段与下一步
 
 - PR #14 已合并，`main@26814cf` 的独立 CI 已通过 196 项测试；当前分支 `codex/m2-top-content-section` 已从该绿色基线创建。
-- `timeline` 的规格、固定 SQL、事实、证据、图表、一次 stub narrator、timeline-only bundle 和 A4 PDF 已合并；下一小步只审计 `top-content` 与 engagement/severity/viewpoints/timeline 的职责重叠并定义逐章规格。
+- `timeline` 的规格、固定 SQL、事实、证据、图表、一次 stub narrator、timeline-only bundle 和 A4 PDF 已合并；`top-content` 规格与 D-30 已写明，下一小步实现固定 SQL、Python 事实和真实 fixture 集成测试。
 - 新分支第一次检查：当前分支与 `main@26814cf` merge-base 完全一致，`git diff --check` 通过，PR #14/main CI/新阶段/RAG/n8n 标记均可定位，工作区只修改本状态文件。
 - 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 196 项通过；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -136,6 +136,11 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline` 
 - 本章与已实现的 `engagement` 高计数排行、`severity` 高风险证据、`viewpoints` 代表性样本和 `timeline` 里程碑存在明显重叠；下一小步必须先定义独有用户价值和去重原则，不能简单拼接已有列表或重复同一结论。
 - “影响”只能描述存储互动计数、严重性和跨平台/时间等可观测信号，不能从计数推断真实触达、支持度、业务后果或因果影响；所有内容必须保留真实标题、摘要和 Evidence ID。
 - 用户要求 RAG 暂不开始，因此本阶段采用固定 SQL 与确定性 Python 基线；不修改 n8n，不调用真实模型 API，也不提前实现下一个章节。
+- 重叠审计把本章限定为内容级双信号交叉：不重复 `engagement` 的总体计数组成/集中度，不重复 `severity` 的负面标签分布，也不把 `viewpoints` 或 `timeline` 的选择目标混入代表性排序。
+- `docs/02-report-spec.md` 与 D-30 已定义 `top-content.v1`：去重合并存储互动前 3 与明确高风险信号前 3，分类为双信号、仅高互动、仅高风险；高风险信号只来自负面记录的 `high/critical` 严重性或 ≥4 负面分数，不从文本或模型猜测，也不合成为影响力分数。
+- fixture 预查按固定展示顺序得到 `bili-007`、`bili-005`、`bili-010`、`bili-003`；双信号 2 篇、仅高互动 1 篇、仅高风险 1 篇，入选去重互动计数 16,890（占全量 64.5%），明确高风险候选共 4 篇。
+- 规格小步第一次检查：`git diff --check`、唯一 `top-content` 章节、唯一 D-30、必需合同段和仅文档改动均通过；真实 PostgreSQL 预查精确复算上述 ID、分类、计数与占比。
+- 规格小步第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 196 项通过；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 
 ## M2 `timeline` 阶段入口
 
