@@ -222,6 +222,10 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 规格小步第一次检查：仅 `docs/02-report-spec.md` 与 `docs/design-decisions.md` 改动；`git diff --check`、唯一 `response` 章节、唯一 D-33、必需合同段和无实现/n8n 变更均通过。
 - 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 243 项，`pip check` 无破损依赖。本小步未实现 runner/图表、RAG、n8n 或真实模型 API。
 - 实现前审计发现 planner 已保留 `SectionConfig.input`，但 application service 当前未把章节 input 传给 runner。下一小步先以向后兼容的可选参数显式贯通该输入，再实现 `response.sql` 与 Python 事实；不得让 response runner 静默重读配置或从标签推断日期。
+- 章节 input 贯通小步已修复上述断层：application service 现在把 planner 保留的原始章节 input 显式传给统一 runner lifecycle；全部 15 个现有 runner 以可选参数向后兼容原三参数调用，后续 `response`、`benchmark`、`biz-impact` 无需各自重读配置或建立隐藏执行路径。
+- input 贯通小步第一次检查：`git diff --check`、17 个预期代码/测试文件范围、Python 静态编译、15/15 runner 签名覆盖和唯一 service 传递点均通过；新增测试覆盖配置 → planner → service → runner 的精确字典保留。
+- input 贯通小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 244 项，`pip check` 无破损依赖。本小步未新增 SQL、response runner/图表、LLM、RAG、n8n 或真实 API 调用。
+- 下一小步只实现固定 `response.sql`、输入日期解析/窗口校验、Python 聚合事实和真实 fixture PostgreSQL 集成测试；runner、图表与 narrator 仍留到后续提交。
 
 ## M2 `timeline` 阶段入口
 

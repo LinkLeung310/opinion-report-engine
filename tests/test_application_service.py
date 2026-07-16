@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -42,26 +43,58 @@ class FakePdfRenderer:
         return b"%PDF-1.4\ndeterministic fixture"
 
 
-def metrics_only_config() -> ReportConfig:
+class CapturingMetricsRunner:
+    def __init__(
+        self,
+        delegate: MetricsSectionRunner,
+        captured_inputs: list[dict[str, object]],
+    ) -> None:
+        self._delegate = delegate
+        self._captured_inputs = captured_inputs
+
+    def run(
+        self,
+        scope,
+        language,
+        chart_directory,
+        section_input: Mapping[str, object] | None = None,
+    ):
+        self._captured_inputs.append(dict(section_input or {}))
+        return self._delegate.run(scope, language, chart_directory, section_input)
+
+
+def metrics_only_config(
+    section_input: dict[str, object] | None = None,
+) -> ReportConfig:
     raw = sample_config()
     raw["topic"] = {
         "tag": "bilibili-dislike",
         "displayName": "B站猜你不喜欢算法调整",
         "eventTitle": "B站猜你不喜欢算法调整事件",
     }
-    raw["sections"] = [{"id": "metrics", "enabled": True}]
+    raw["sections"] = [
+        {"id": "metrics", "enabled": True, "input": section_input}
+    ]
     return ReportConfig.model_validate(raw)
 
 
-def build_service(narrator: StubNarrator) -> ReportApplicationService:
+def build_service(
+    narrator: StubNarrator,
+    captured_inputs: list[dict[str, object]] | None = None,
+) -> ReportApplicationService:
     metrics_runner = MetricsSectionRunner(
         repository=FakeMetricsRepository(),
         chart_builder=MetricsChartBuilder(),
         narrator=narrator,
     )
+    runner = (
+        CapturingMetricsRunner(metrics_runner, captured_inputs)
+        if captured_inputs is not None
+        else metrics_runner
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
-        section_runners={SectionId.METRICS: metrics_runner},
+        section_runners={SectionId.METRICS: runner},
         assembler=ReportAssembler(),
         pdf_renderer=FakePdfRenderer(),
         publisher=BundlePublisher(),
@@ -96,6 +129,18 @@ def test_allocates_a_new_human_readable_version_without_overwriting(tmp_path) ->
     assert second.report_id == "bilibili-dislike-2026-03-23-v2"
     assert (output_root / first.report_id).is_dir()
     assert (output_root / second.report_id).is_dir()
+
+
+def test_passes_the_planned_section_input_to_the_runner(tmp_path) -> None:
+    captured_inputs: list[dict[str, object]] = []
+    service = build_service(StubNarrator(), captured_inputs)
+
+    service.generate(
+        metrics_only_config({"fixtureFlag": "preserved"}),
+        tmp_path / "out",
+    )
+
+    assert captured_inputs == [{"fixtureFlag": "preserved"}]
 
 
 def test_unimplemented_sections_become_visible_failures_instead_of_crashing(tmp_path) -> None:

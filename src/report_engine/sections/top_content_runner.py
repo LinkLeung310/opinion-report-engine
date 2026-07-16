@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Protocol
+from typing import Mapping, Protocol
 
 from report_engine.config import Language, SectionId
 from report_engine.domain.evidence import EvidenceSet
@@ -64,6 +64,7 @@ class TopContentSectionRunner:
         scope: AnalysisScope,
         language: Language,
         chart_directory: Path,
+        section_input: Mapping[str, object] | None = None,
     ) -> SectionResult:
         try:
             snapshot = self._repository.fetch(scope)
