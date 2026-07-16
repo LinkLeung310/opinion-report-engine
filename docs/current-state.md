@@ -248,6 +248,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 下一小步只审计 schema 与合成 fixtures，确认是否存在可用于真实 SQL 对标的第二话题及其日期覆盖；在数据事实明确前不决定窗口对齐、归一化指标或样本不足门槛。
 - 本阶段必须避免把不同采集规模、日期长度或平台覆盖造成的差异写成事件本身更严重/更成功；任何对标结论只能描述可审计的收录量、构成和存储互动差异。
 - 用户要求 RAG 暂不开始，本阶段采用固定 SQL 与确定性 Python 基线；不修改 n8n，不调用真实模型 API，也不提前实现 `biz-impact`。
+- schema/fixture 审计确认当前种子没有可用的独立历史事件：`algorithm` 与 `official-response` 都是当前话题记录的重叠标签，`other-topic` 只有 1 条专用于 tag 过滤的边界记录；不得把这些数据静默包装成历史案例。
+- `docs/02-report-spec.md` 与 D-34 已定义 `benchmark.v1`：当前组使用用户选择的完整日期范围；历史组只取带 `comparisonTag` 且不带当前 tag 的独立记录，以其首次收录日为锚点，截取与当前范围完全等长的自然日窗口，并披露窗口外历史记录。
+- 规格限定比较文章日均量、情感构成、高/危占全部样本比例、平台覆盖和篇均存储互动及其可用差值；不创建综合分数，不使用 EvidenceSet/RAG，也不得从收录差异推断事件客观重要性、严重性、成功或业务后果。
+- 为使固定 SQL 集成测试有真实的双组数据，后续 SQL/事实小步将新增一个与现有标签完全不重叠、日期更早的合成历史事件 cohort；它必须明确标为 synthetic fixture，且不得改变现有主话题 12 篇及其所有已验证口径。
+- 规格小步第一次检查：仅逐章规格、设计决定和状态文档改动；`git diff --check`、唯一 `benchmark` 章节、唯一 D-34、必需输入/等长窗口/独立 cohort/一次 narrator/no-data/无 RAG 边界均通过。真实 PostgreSQL 审计复现当前无可用独立历史 cohort 的数据缺口。
+- 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 274 项，`pip check` 无破损依赖。本小步未修改 fixtures/实现、RAG、n8n 或真实模型 API；下一小步才新增独立 synthetic cohort、固定 SQL、Python 事实和数据库集成测试。
 
 ## M2 `timeline` 阶段入口
 
