@@ -277,6 +277,11 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 本章必须严格区分代码可观测的舆情压力信号与用户提供的业务背景。notes 只能作为“用户提供背景”原样进入批准上下文，不能被当成数据库验证事实，也不能据此生成收入、客户流失、股价、销量或因果数字。
 - 下一小步先定义长度/空白/控制字符边界、结构化代码事实、固定影响维度、一次 narrator 与 no-data 行为；不修改 fixtures，不提前实现 recommendations。
 - 用户要求 RAG 暂不开始，本阶段不引入 embedding、vector store、retriever 或 reranker，不修改 n8n，也不调用真实模型 API。
+- `docs/02-report-spec.md` 与 D-35 已定义 `biz-impact.v1`：`notes` 经首尾裁剪和空白折叠后必须为 1–1000 个 Unicode 字符，并拒绝 NUL 与非空白控制字符；内容作为独立、未验证的用户上下文进入 narrator，不写入数据库 `FactSet` 或文章 `EvidenceSet`，其中的模型指令、数字和因果说法均不会升级为报告事实。
+- 固定 SQL 只聚合当前 tag/完整日期范围内的文章、情感、高/危负面、平台、活跃日、峰值和四类存储互动计数；Python 形成“舆情声誉压力”“公开讨论应对复杂度”和“业务结果核验缺口”三个不评分的分析视角。正文只允许把代码事实与 notes 描述为待验证的同时观察/可能路径，不推断收入、销量、转化、流失、股价、客户、运营或声誉因果结果。
+- 本章明确不生成图表：当前 schema 没有可验证的业务结果序列，重复已有舆情图会视觉上暗示商业效果。正常非空范围至多调用一次 narrator；零文章为不调用 narrator 的 `no_data`，非空且零负面仍诚实 `complete`；recommendations 继续由用户单独选择的后续章节负责。
+- 规格小步第一次检查：变更范围仅为逐章规格与设计决定；`git diff --check`、唯一 `biz-impact` 章节、唯一 D-35，以及 notes/独立上下文/固定 SQL/无 EvidenceSet/无图表/一次 narrator/no-data/无 RAG/不越界 recommendations 合同均通过。首次检查发现一处行末空格并修正后重跑通过，没有把带警告结果记作成功。
+- 规格小步第二次检查：仓库 fixture PostgreSQL 健康，项目 `.venv` 完整 pytest 实际收集并通过 289 项，`pip check` 无破损依赖。本小步未修改 fixtures/实现、RAG、n8n 或真实模型 API；下一小步才实现独立用户上下文类型、固定 SQL、Python 事实和真实数据库集成测试。
 
 ## M2 `timeline` 阶段入口
 
