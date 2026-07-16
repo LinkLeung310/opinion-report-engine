@@ -1,14 +1,14 @@
 # Current Project State
 
 最后核对日期：2026-07-16
-最后实现基线：`main@ad1e414`（PR #18，balanced response comparison）
+最后实现基线：`main@542196c`（PR #19，independent historical benchmark）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`，以及当前分支的 `response` 已完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response` 与 `benchmark` 已完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -38,6 +38,7 @@
 - PR #16 的 negative-themes slice 已用 merge commit 合并：`d5d2120`。
 - PR #17 的 spread-path slice 已用 merge commit 合并：`1a047b4`。
 - PR #18 的 response slice 已用 merge commit 合并：`ad1e414`。
+- PR #19 的 benchmark slice 已用 merge commit 合并：`542196c`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
 - `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
@@ -47,6 +48,7 @@
 - `main@d5d2120` 的 GitHub CI：227 项测试通过（run `29473309498`）。
 - `main@1a047b4` 的 GitHub CI：243 项测试通过（run `29474436518`）。
 - `main@ad1e414` 的 GitHub CI：274 项测试通过（run `29475994557`）。
+- `main@542196c` 的 GitHub CI：289 项测试通过（run `29477030341`）。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -65,7 +67,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline`、`top-content`、`negative-themes`、`spread-path` 与 `response` 纵向切片；当前进入 `benchmark` 规格阶段。`benchmark`、`biz-impact`、`recommendations`、完整英文矩阵和任意组合仍未完成。
+- M2 已完成并合并 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response` 与 `benchmark` 纵向切片；当前进入 `biz-impact` 规格阶段。`biz-impact`、`recommendations`、完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -81,7 +83,7 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes`/`spread-path`/`response` 纵向切片已经合并。当前分支 `codex/m2-benchmark-section` 从绿色 `main@ad1e414` 创建；下一阶段只定义并实现 `benchmark` 的可审计历史事件对标。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes`/`spread-path`/`response`/`benchmark` 纵向切片已经合并。当前分支 `codex/m2-biz-impact-section` 从绿色 `main@542196c` 创建；下一阶段只定义并实现 `biz-impact` 的可审计用户背景与代码事实结合分析。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## Context recovery 规则强化小步
 
@@ -131,12 +133,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 
 ## 当前阶段与下一步
 
-- PR #18 已用 merge commit `ad1e414` 合并；`main@ad1e414` 的独立 CI run `29475994557` 已通过 274 项测试。当前分支 `codex/m2-benchmark-section` 已从该绿色基线创建并推送。
-- `timeline`、`top-content`、`negative-themes`、`spread-path` 与 `response` 的完整纵向切片已合并；下一小步只审计 schema/fixtures 并定义 `benchmark` 的专属输入、独有用户价值、固定查询、事实、图表、叙述与退化合同，不直接开始实现。
-- 新分支第一次检查：当前分支、`origin/main` 和 merge-base 均精确指向 `ad1e414`，工作区创建时干净；没有从旧功能分支串联开发。
-- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 274 项；Python 静态编译与 `pip check` 通过。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
+- PR #19 已用 merge commit `542196c` 合并；`main@542196c` 的独立 CI run `29477030341` 已通过 289 项测试。当前分支 `codex/m2-biz-impact-section` 已从该绿色基线创建并推送。
+- `timeline`、`top-content`、`negative-themes`、`spread-path`、`response` 与 `benchmark` 的完整纵向切片已合并；下一小步只定义 `biz-impact` 的 notes 输入、代码事实、用户背景边界、叙述与退化合同，不直接开始实现。
+- 新分支第一次检查：当前分支、`origin/main` 和 merge-base 均精确指向 `542196c`，工作区创建时干净；没有从旧功能分支串联开发。
+- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 289 项；Python 静态编译与 `pip check` 通过。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 `response` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 `biz-impact` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
 ## M2 `top-content` 阶段入口
 
@@ -266,6 +268,15 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 首次图表视觉检查发现图例压住横轴标签；移至图外右上方并缩小绘图区后重新生成。最终图表原图与 Poppler PDF 页均无中文乱码、截断、重叠、图例遮挡或孤页。
 - 产物小步第一次检查：Python 静态编译、`git diff --check` 和 benchmark 模型/SQL/runner/图表/CLI 聚焦 15 项通过。
 - 产物小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 289 项，`pip check` 无破损依赖，最终 v2 bundle 视觉验收通过。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
+- PR #19 分支 CI run `29476953634` 通过后转为 ready，并用 merge commit `542196c` 合并；合并后独立 main CI run `29477030341` 通过 289 项测试。功能分支保留，未 squash 或删除历史。
+
+## M2 `biz-impact` 阶段入口
+
+- 产品框架只把 `biz-impact` 定义为“结合代码事实和用户 `notes` 分析业务影响”；任务书没有定义 notes 格式、事实选择、影响类别、图表、可信度或退化行为，这些必须标为项目自主设计。
+- `notes` 是任务书固定公共配置中本章节的专属输入，不能改名、移到环境变量或让模型补写；缺失或非法输入只让本章节进入可行动的 `failed`，不能影响其他章节。
+- 本章必须严格区分代码可观测的舆情压力信号与用户提供的业务背景。notes 只能作为“用户提供背景”原样进入批准上下文，不能被当成数据库验证事实，也不能据此生成收入、客户流失、股价、销量或因果数字。
+- 下一小步先定义长度/空白/控制字符边界、结构化代码事实、固定影响维度、一次 narrator 与 no-data 行为；不修改 fixtures，不提前实现 recommendations。
+- 用户要求 RAG 暂不开始，本阶段不引入 embedding、vector store、retriever 或 reranker，不修改 n8n，也不调用真实模型 API。
 
 ## M2 `timeline` 阶段入口
 
