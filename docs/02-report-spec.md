@@ -1089,6 +1089,106 @@ some negative records are unclassified; the unmatched count/share must stay visi
 Blank required source text, or query, classification, evidence, chart, or narration
 errors return `failed` with a safe stage-specific message while later sections continue.
 
+## `spread-path` — 可观测平台迁移
+
+Purpose: show when discussion first becomes observable on each material platform and how
+platform participation changes across the report calendar. Unlike `timeline`, this is a
+platform-by-time population matrix rather than a compact event chronology; unlike `trend`,
+it preserves the platform dimension instead of summing daily volume; unlike `platforms`,
+it preserves entry timing and active days instead of aggregating the whole period. The
+current schema contains no repost, quote, parent, referral, or canonical-source relation,
+so this section does not claim an article-level transmission chain, platform-to-platform
+causality, or the true origin of the event.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`spread-path.v1`):
+
+- hard-filter articles with the shared topic tag and complete half-open timestamp scope;
+  return real external ID, title, summary, platform, timestamp, sentiment, and all four
+  stored interaction counters for every scoped record;
+- order records by timestamp ascending and external ID ascending. SQL performs only
+  scope filtering and does not infer a parent, source edge, repost relationship, platform
+  transition, origin, or influence; it does not use embeddings/RAG, call an LLM, search
+  externally, or use n8n;
+- use only bound `topic_tag`, `from_inclusive`, and `to_exclusive`. The query will live at
+  `src/report_engine/data/queries/spread_path.sql`. The repository receives the shared
+  report-calendar boundaries from `AnalysisScope`, so zero-volume dates can remain visible
+  without changing the public config contract.
+
+Derived in Python:
+
+- construct the complete report-timezone calendar and a platform-by-day article-count
+  matrix, retaining explicit zero cells. Calculate scoped `articles`, distinct
+  `platforms`, observed calendar days, multi-platform days, the maximum distinct platforms
+  observed on one day, and every tied day attaining that maximum;
+- for every platform calculate first and last observed timestamps, article count, negative
+  article count, distinct active days, total stored interaction, and the real first-observed
+  record. "First observed" means earliest record captured inside this scope, not event
+  origin or first publication anywhere;
+- rank platforms for material display by article count descending, total stored interaction
+  descending, first-observed timestamp ascending, then platform name ascending. Retain at
+  most six; report total, displayed, and omitted platform counts. Render retained platforms
+  in first-observed timestamp order, with platform name as the deterministic display-only
+  tie-breaker;
+- assign a dense `entryWave` by distinct first-observed timestamp. Platforms with identical
+  timestamps share the same wave and are not ordered semantically. Calculate displayed
+  entry-wave count and the elapsed hours from the earliest to latest first observation
+  across all scoped platforms; one platform yields zero elapsed hours rather than an
+  invented cross-platform transition;
+- retain the earliest-observed platform set and latest-new-platform set with tie disclosure.
+  Do not create graph edges or an arrow-separated "A spread to B" sequence from temporal
+  adjacency alone;
+- one `EvidenceSet` contains the first-observed record for each displayed platform in fixed
+  display order. Every fact uses `spread-path.v1` or a named `spread-path.*.v1` Python
+  calculation source; platform facts keep their supporting source IDs and first-record
+  facts keep the selected real external ID.
+
+Evidence: required whenever at least two platforms are displayed. Each first-observed record
+preserves its real external ID, exact title and summary, platform, timestamp, and sentiment.
+Every platform entry bullet must show one `[Evidence: <id>]`, preserve the exact source text,
+and cite IDs in fixed display order. Unknown, duplicate, omitted, or reordered citations,
+modified text, or evidence outside the query result causes safe section failure. This is
+deterministic first-observation selection, not semantic retrieval or RAG.
+
+Charts: one `platform-time-matrix.png` annotated heatmap when at least two platforms are
+displayed. Columns are every report-calendar day; rows are displayed platforms in fixed
+first-observed order; cell labels are article counts including zero. Count intensity uses a
+single non-sentiment accent scale rather than the positive/neutral/negative palette, because
+color represents volume, not sentiment. Each platform's first non-zero cell receives a
+visible outline and its `entryWave` number; shared wave numbers expose exact-time ties. The
+title states platform count and measured first-observation interval. A chart note says that
+wave order is captured timing, not a repost edge or causal path. Use the shared white
+background, hidden top/right spines, 150 dpi theme, embedded Chinese font, at most six rows,
+and at most fourteen x-axis labels while retaining every daily matrix column.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, evidence construction,
+  and charting;
+- Chinese heading `传播路径（可观测顺序）`, followed by scoped article/platform counts,
+  displayed/omitted counts, report-calendar span, multi-platform days, maximum same-day
+  platform coverage with tied day(s), entry-wave count, and first-observation interval;
+- render displayed platform bullets in fixed order. Each states only entry wave, approved
+  local first/last timestamps, article/negative/active-day/stored-interaction facts, exact
+  first-record title and summary, sentiment, and Evidence ID;
+- call the result `首次收录顺序`, `平台参与轨迹`, or `可观测迁移`, never an origin, repost
+  chain, referral route, audience journey, causal handoff, or proof that one platform drove
+  another. Disclose omitted platforms and exact-time entry ties when present;
+- explicitly state that the schema lacks relational propagation edges. The model may not
+  invent a source node, transition arrow, cause, audience movement, recommendation, external
+  fact, new evidence, or unapproved number. The deterministic Chinese/English stub renders
+  the same facts, exact source text, limitations, and citation order in automated tests.
+
+No-data rule: zero scoped articles returns `no_data`, renders a visible Chinese absence
+message, and performs no evidence, chart, or narrator operation. A non-empty scope with only
+one platform remains `complete` and renders a deterministic single-platform/no-cross-platform-
+comparison message without chart or narrator cost. Two or more platforms first observed at
+the exact same timestamp remain `complete` with a shared entry wave and explicit tie rather
+than a fabricated order. Blank required source text, or query, calculation, evidence, chart,
+or narration errors return `failed` with a safe stage-specific message while later sections
+continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in
