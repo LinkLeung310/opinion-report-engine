@@ -282,6 +282,11 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 本章明确不生成图表：当前 schema 没有可验证的业务结果序列，重复已有舆情图会视觉上暗示商业效果。正常非空范围至多调用一次 narrator；零文章为不调用 narrator 的 `no_data`，非空且零负面仍诚实 `complete`；recommendations 继续由用户单独选择的后续章节负责。
 - 规格小步第一次检查：变更范围仅为逐章规格与设计决定；`git diff --check`、唯一 `biz-impact` 章节、唯一 D-35，以及 notes/独立上下文/固定 SQL/无 EvidenceSet/无图表/一次 narrator/no-data/无 RAG/不越界 recommendations 合同均通过。首次检查发现一处行末空格并修正后重跑通过，没有把带警告结果记作成功。
 - 规格小步第二次检查：仓库 fixture PostgreSQL 健康，项目 `.venv` 完整 pytest 实际收集并通过 289 项，`pip check` 无破损依赖。本小步未修改 fixtures/实现、RAG、n8n 或真实模型 API；下一小步才实现独立用户上下文类型、固定 SQL、Python 事实和真实数据库集成测试。
+- 独立 `UserContext` / `VerificationStatus.UNVERIFIED` 与 `parse_biz_impact_notes` 已实现：notes 折叠普通空白、接受恰好 1000 字符、拒绝缺失/空白/超长/NUL/非空白 C0/C1 控制字符，并保留固定 report-config 来源；notes 不进入 `FactSet` 或 `EvidenceSet`。
+- 固定 `biz_impact.sql`、`PostgresBizImpactRepository` 和 `BizImpactSnapshot` 已实现。Python 校验日期、情感合计、高/危负面子集、平台/活跃日/峰值和空范围一致性；事实保留情感占比、活跃日覆盖、峰值占比、高/危占负面与全量比例、四类存储互动、篇均值、两个描述性视角、业务结果数据缺口和未建立因果状态，不生成综合分数。
+- 真实 synthetic fixture 集成测试验证 2026-03-17 至 3/23 共 12 篇、正/中/负 2/3/7、4 平台、7 个活跃日、3/20 峰值 3 篇、高/危负面 4 篇、赞/评/转/藏 15,460/4,705/4,620/1,385、存储互动合计 26,170、评论加转发 9,325；负面占比 58.3%、高/危占负面 57.1%、高/危占全量 33.3%、峰值占比 25.0%。空话题返回带完整日期范围的合法零值 snapshot，分母事实明确不可用。
+- SQL/事实小步第一次检查：范围严格为独立上下文、biz-impact 模型、固定 SQL、PostgreSQL adapter 与两类测试共 7 个文件；`git diff --check`、Python 静态编译、四个 SQL 绑定参数各一次、SQL 不含 notes/模型术语、无超长 Python 行，以及单元/真实数据库聚焦 17 项测试均通过。初版范围脚本因 `git diff --name-only` 不列未跟踪文件而误报，改为已修改与未跟踪文件并集后重跑通过，没有改变实现来迎合检查器；最终 staged 检查另发现三个新文件末尾多余空白行，修正并重新暂存后通过。
+- SQL/事实小步第二次检查：仓库 fixture PostgreSQL 健康，项目 `.venv` 完整 pytest 实际收集并通过 306 项，`pip check` 无破损依赖。本小步未接 biz-impact runner/stub/PDF、recommendations、RAG、n8n 或真实模型 API；下一小步才贯通独立上下文到一次 narrator 和完整 bundle。
 
 ## M2 `timeline` 阶段入口
 
