@@ -34,7 +34,12 @@ class SpreadPathRepository(Protocol):
 
 
 class SpreadPathChartBuilder(Protocol):
-    def build(self, snapshot: SpreadPathSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: SpreadPathSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class SpreadPathSectionRunner:
@@ -101,7 +106,7 @@ class SpreadPathSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

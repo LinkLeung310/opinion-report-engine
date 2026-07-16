@@ -97,7 +97,12 @@ def failed_section_markdown(section_id: SectionId, language: Language) -> str:
 
 
 _RISK_BANDS_EN = {"低": "Low", "中": "Medium", "高": "High"}
-_PHASES_EN = {"全期": "Full period", "前期": "Early phase", "中期": "Middle phase", "后期": "Late phase"}
+_PHASES_EN = {
+    "全期": "Full period",
+    "前期": "Early phase",
+    "中期": "Middle phase",
+    "后期": "Late phase",
+}
 _DIRECTIONS_EN = {
     "负面占比上升": "Negative share increased",
     "负面占比下降": "Negative share decreased",
@@ -121,10 +126,56 @@ _THEME_LABELS_EN = {
     "透明度与解释": "Transparency and explanation",
     "反馈有效性": "Feedback effectiveness",
 }
+_RISK_SIGNAL_LABELS_EN = {
+    "sentimentPressure": "Negative sentiment",
+    "severityPressure": "High/critical severity",
+    "spreadPressure": "Platform spread",
+    "persistencePressure": "Persistent coverage",
+    "amplificationPressure": "Engagement amplification",
+}
 
 
 def _replace_joined(value: str, mapping: dict[str, str]) -> str:
     return ", ".join(mapping.get(part, part) for part in value.split("、"))
+
+
+def phase_label(label: str, language: Language) -> str:
+    return _PHASES_EN.get(label, label) if language is Language.EN else label
+
+
+def source_type_label(source_type: str, language: Language) -> str:
+    labels = {
+        "media": ("媒体内容", "Media"),
+        "social": ("社交内容", "Social"),
+    }
+    zh, en = labels[source_type]
+    return select(language, zh, en)
+
+
+def timeline_roles_label(roles: Iterable[str], language: Language) -> str:
+    labels = {
+        "first_observed": ("首次收录", "first observed"),
+        "tagged_response": ("回应标签记录", "response-tagged record"),
+        "peak_day_representative": ("峰值日代表", "peak-day representative"),
+        "last_observed": ("最后收录", "last observed"),
+    }
+    return join_display(
+        (select(language, *labels[role]) for role in roles),
+        language,
+    )
+
+
+def top_content_category_label(category: str, language: Language) -> str:
+    labels = {
+        "dual_signal": ("双信号代表", "dual-signal representative"),
+        "engagement_only": ("仅高互动代表", "engagement-only representative"),
+        "risk_only": ("仅高风险代表", "risk-only representative"),
+    }
+    return select(language, *labels[category])
+
+
+def risk_signal_label(key: str, label_zh: str, language: Language) -> str:
+    return _RISK_SIGNAL_LABELS_EN[key] if language is Language.EN else label_zh
 
 
 def _english_fact_value(section_id: SectionId, fact: Fact) -> str:
@@ -183,7 +234,8 @@ def _english_fact_value(section_id: SectionId, fact: Fact) -> str:
         if key.endswith("Severity"):
             if value == "不适用":
                 return "Not applicable"
-            return severity_label(fact.raw_value if isinstance(fact.raw_value, str) else None, Language.EN)
+            raw_severity = fact.raw_value if isinstance(fact.raw_value, str) else None
+            return severity_label(raw_severity, Language.EN)
         if key.endswith("Rank") and value == "未排名":
             return "Unranked"
         if key.endswith("NegativeScore") and value == "未提供":

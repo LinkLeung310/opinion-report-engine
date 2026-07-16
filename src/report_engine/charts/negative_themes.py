@@ -12,6 +12,8 @@ from matplotlib.patches import Patch
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import select
 from report_engine.sections.negative_themes import NegativeThemesSnapshot
 
 
@@ -19,7 +21,12 @@ class NegativeThemesChartBuilder:
     filename = "negative-theme-coverage.png"
     other_negative = "#FCA5A5"
 
-    def build(self, snapshot: NegativeThemesSnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: NegativeThemesSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if not snapshot.has_display_themes:
             raise ValueError("cannot chart negative themes without display themes")
 
@@ -38,7 +45,9 @@ class NegativeThemesChartBuilder:
                 "axes.unicode_minus": False,
             }
         ):
-            figure = Figure(figsize=(7.2, 3.15))
+            figure = Figure(
+                figsize=(7.2, 3.55 if language is Language.EN else 3.15)
+            )
             FigureCanvasAgg(figure)
             axes = figure.subplots()
             ChartTheme.apply(figure, axes)
@@ -47,7 +56,7 @@ class NegativeThemesChartBuilder:
                 high_critical,
                 color=ChartTheme.NEGATIVE,
                 height=0.54,
-                label="高/危负面",
+                label=select(language, "高/危负面", "High/critical negative"),
             )
             axes.barh(
                 positions,
@@ -55,11 +64,24 @@ class NegativeThemesChartBuilder:
                 left=high_critical,
                 color=self.other_negative,
                 height=0.54,
-                label="其他负面",
+                label=select(language, "其他负面", "Other negative"),
             )
-            axes.set_yticks(positions, [theme.label_zh for theme in themes])
+            axes.set_yticks(
+                positions,
+                [
+                    select(
+                        language,
+                        theme.definition.label_zh,
+                        theme.definition.label_en,
+                    )
+                    for theme in themes
+                ],
+            )
             axes.invert_yaxis()
-            axes.set_xlabel("匹配负面内容数", color=ChartTheme.MUTED)
+            axes.set_xlabel(
+                select(language, "匹配负面内容数", "Matched negative records"),
+                color=ChartTheme.MUTED,
+            )
             axes.xaxis.get_major_locator().set_params(integer=True)
             axes.grid(axis="x", color="#E5E7EB", linewidth=0.7)
 
@@ -70,8 +92,15 @@ class NegativeThemesChartBuilder:
                 axes.text(
                     theme.article_count + 0.12,
                     position,
-                    f"{theme.article_count}/{snapshot.negative_article_count} · "
-                    f"{share:.1%}｜关切 {theme.concern_articles} · 诉求 {theme.demand_articles}",
+                    select(
+                        language,
+                        f"{theme.article_count}/{snapshot.negative_article_count} · "
+                        f"{share:.1%}｜关切 {theme.concern_articles} · "
+                        f"诉求 {theme.demand_articles}",
+                        f"{theme.article_count}/{snapshot.negative_article_count} · "
+                        f"{share:.1%} | concerns {theme.concern_articles} · "
+                        f"requests {theme.demand_articles}",
+                    ),
                     va="center",
                     fontsize=8.3,
                     color=ChartTheme.TEXT,
@@ -80,8 +109,14 @@ class NegativeThemesChartBuilder:
             lead = themes[0]
             lead_share = lead.article_count / snapshot.negative_article_count
             figure.suptitle(
-                f"{lead.label_zh}覆盖 {lead.article_count}/{snapshot.negative_article_count} "
-                f"篇负面内容（{lead_share:.1%}）",
+                select(
+                    language,
+                    f"{lead.label_zh}覆盖 {lead.article_count}/"
+                    f"{snapshot.negative_article_count} 篇负面内容（{lead_share:.1%}）",
+                    f"{lead.definition.label_en} covers {lead.article_count}/"
+                    f"{snapshot.negative_article_count} negative records "
+                    f"({lead_share:.1%})",
+                ),
                 x=0.08,
                 y=0.97,
                 ha="left",
@@ -90,22 +125,43 @@ class NegativeThemesChartBuilder:
             )
             figure.legend(
                 handles=(
-                    Patch(facecolor=ChartTheme.NEGATIVE, label="高/危负面"),
-                    Patch(facecolor=self.other_negative, label="其他负面"),
+                    Patch(
+                        facecolor=ChartTheme.NEGATIVE,
+                        label=select(
+                            language,
+                            "高/危负面",
+                            "High/critical negative",
+                        ),
+                    ),
+                    Patch(
+                        facecolor=self.other_negative,
+                        label=select(language, "其他负面", "Other negative"),
+                    ),
                 ),
                 frameon=False,
                 ncol=2,
-                loc="upper right",
-                bbox_to_anchor=(0.94, 0.965),
+                loc="upper center" if language is Language.EN else "upper right",
+                bbox_to_anchor=(
+                    (0.66, 0.84) if language is Language.EN else (0.94, 0.965)
+                ),
             )
             figure.text(
                 0.08,
                 0.02,
-                "议题与关切/诉求角色可重叠，数量不可相加为去重总数。",
+                select(
+                    language,
+                    "议题与关切/诉求角色可重叠，数量不可相加为去重总数。",
+                    "Themes and concern/request roles may overlap; counts are not additive.",
+                ),
                 color=ChartTheme.MUTED,
                 fontsize=8.2,
             )
-            figure.subplots_adjust(left=0.20, right=0.95, bottom=0.20, top=0.75)
+            figure.subplots_adjust(
+                left=0.20,
+                right=0.95,
+                bottom=0.20,
+                top=0.67 if language is Language.EN else 0.75,
+            )
 
             output_path = output_directory / self.filename
             figure.savefig(

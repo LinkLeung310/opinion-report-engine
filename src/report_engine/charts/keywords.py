@@ -12,13 +12,20 @@ from matplotlib.ticker import MaxNLocator
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import sentiment_label, select
 from report_engine.sections.keywords import KeywordsSnapshot
 
 
 class KeywordsChartBuilder:
     filename = "keyword-coverage.png"
 
-    def build(self, snapshot: KeywordsSnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: KeywordsSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if not snapshot.has_data:
             raise ValueError("cannot chart keywords without recurring phrases")
 
@@ -34,9 +41,17 @@ class KeywordsChartBuilder:
         ]
         leading = snapshot.leading_phrases
         title = (
-            f"{len(leading)} 个短语并列覆盖 {leading[0].document_count} 篇内容"
+            select(
+                language,
+                f"{len(leading)} 个短语并列覆盖 {leading[0].document_count} 篇内容",
+                f"{len(leading)} phrases tie at {leading[0].document_count} documents",
+            )
             if len(leading) > 1
-            else f"{leading[0].text}覆盖 {leading[0].document_count} 篇内容，居首"
+            else select(
+                language,
+                f"{leading[0].text}覆盖 {leading[0].document_count} 篇内容，居首",
+                f"{leading[0].text} leads with {leading[0].document_count} documents",
+            )
         )
         font_path = report_font_path()
         fontManager.addfont(font_path)
@@ -57,33 +72,44 @@ class KeywordsChartBuilder:
                 positions,
                 positive,
                 color=ChartTheme.POSITIVE,
-                label="正面",
+                label=sentiment_label("positive", language),
             )
             axes.barh(
                 positions,
                 neutral,
                 left=positive,
                 color=ChartTheme.NEUTRAL,
-                label="中性",
+                label=sentiment_label("neutral", language),
             )
             axes.barh(
                 positions,
                 negative,
                 left=negative_left,
                 color=ChartTheme.NEGATIVE,
-                label="负面",
+                label=sentiment_label("negative", language),
             )
             axes.set_yticks(
                 positions,
                 [
-                    f"{phrase.text}（后期新增）"
+                    select(
+                        language,
+                        f"{phrase.text}（后期新增）",
+                        f"{phrase.text} (late-emerging)",
+                    )
                     if phrase.late_emerging
                     else phrase.text
                     for phrase in phrases
                 ],
             )
             axes.invert_yaxis()
-            axes.set_xlabel("提及该短语的文章数（同一文章只计一次）", color=ChartTheme.MUTED)
+            axes.set_xlabel(
+                select(
+                    language,
+                    "提及该短语的文章数（同一文章只计一次）",
+                    "Documents mentioning the phrase (counted once per document)",
+                ),
+                color=ChartTheme.MUTED,
+            )
             axes.xaxis.set_major_locator(MaxNLocator(integer=True))
             maximum = max(phrase.document_count for phrase in phrases)
             axes.set_xlim(0, maximum * 1.32)

@@ -25,7 +25,12 @@ class PlatformsRepository(Protocol):
 
 
 class PlatformsChartBuilder(Protocol):
-    def build(self, snapshot: PlatformsSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: PlatformsSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class PlatformsSectionRunner:
@@ -74,7 +79,7 @@ class PlatformsSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

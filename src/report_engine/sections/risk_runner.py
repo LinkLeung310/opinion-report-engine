@@ -25,7 +25,12 @@ class RiskRepository(Protocol):
 
 
 class RiskChartBuilder(Protocol):
-    def build(self, snapshot: RiskSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: RiskSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class RiskSectionRunner:
@@ -74,7 +79,7 @@ class RiskSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

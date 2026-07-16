@@ -30,7 +30,12 @@ class MetricsRepository(Protocol):
 
 
 class MetricsChartBuilder(Protocol):
-    def build(self, snapshot: MetricsSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: MetricsSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class MetricsSectionRunner:
@@ -72,7 +77,7 @@ class MetricsSectionRunner:
 
         facts = localize_fact_set(SectionId.METRICS, snapshot.to_fact_set(), language)
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

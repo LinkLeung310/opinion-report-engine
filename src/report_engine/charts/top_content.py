@@ -12,6 +12,13 @@ from matplotlib.patches import Patch
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import (
+    sentiment_label,
+    severity_label,
+    select,
+    top_content_category_label,
+)
 from report_engine.sections.top_content import TopContentSnapshot
 
 
@@ -30,7 +37,12 @@ class TopContentChartBuilder:
         "critical": 4,
     }
 
-    def build(self, snapshot: TopContentSnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: TopContentSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if not snapshot.has_selected_records:
             raise ValueError("cannot chart top-content without selected records")
 
@@ -40,7 +52,8 @@ class TopContentChartBuilder:
         totals = [record.total_engagement for record in rows]
         colors = [self.sentiment_colors[record.sentiment] for record in rows]
         labels = [
-            f"{record.category_label} · {record.external_id}\n{record.title}"
+            f"{top_content_category_label(record.category, language)} · "
+            f"{record.external_id}\n{record.title}"
             for record in rows
         ]
         severity_values = [
@@ -50,12 +63,20 @@ class TopContentChartBuilder:
             for record in rows
         ]
         score_labels = [
-            "不适用"
+            select(language, "不适用", "Not applicable")
             if record.sentiment != "negative"
             else (
-                f"负面分 {record.negative_score}"
+                select(
+                    language,
+                    f"负面分 {record.negative_score}",
+                    f"Negative score {record.negative_score}",
+                )
                 if record.negative_score is not None
-                else "负面分未提供"
+                else select(
+                    language,
+                    "负面分未提供",
+                    "Negative score unavailable",
+                )
             )
             for record in rows
         ]
@@ -69,7 +90,10 @@ class TopContentChartBuilder:
                 "axes.unicode_minus": False,
             }
         ):
-            height = max(3.0, 0.35 * len(rows) + 1.6)
+            height = max(
+                3.8 if language is Language.EN else 3.0,
+                0.35 * len(rows) + 1.6,
+            )
             figure = Figure(figsize=(7.2, height))
             FigureCanvasAgg(figure)
             engagement_axes, risk_axes = figure.subplots(
@@ -89,8 +113,15 @@ class TopContentChartBuilder:
             )
             engagement_axes.set_yticks(positions, labels)
             engagement_axes.invert_yaxis()
-            engagement_axes.set_xlabel("单篇存储互动计数", color=ChartTheme.MUTED)
-            engagement_axes.set_title("互动信号", loc="left", color=ChartTheme.TEXT)
+            engagement_axes.set_xlabel(
+                select(language, "单篇存储互动计数", "Stored engagement per record"),
+                color=ChartTheme.MUTED,
+            )
+            engagement_axes.set_title(
+                select(language, "互动信号", "Engagement signal"),
+                loc="left",
+                color=ChartTheme.TEXT,
+            )
             max_total = max(totals) or 1
             engagement_axes.set_xlim(0, max_total * 1.28)
             engagement_axes.bar_label(
@@ -128,17 +159,39 @@ class TopContentChartBuilder:
             risk_axes.set_xlim(-1.45, 4.45)
             risk_axes.set_xticks(
                 (-1, 0, 1, 2, 3, 4),
-                ("不适用", "未分类", "低", "中", "高", "危"),
-                rotation=25,
+                (
+                    select(language, "不适用", "N/A"),
+                    select(language, severity_label(None, language), "Unclass."),
+                    severity_label("low", language),
+                    select(language, severity_label("medium", language), "Med."),
+                    severity_label("high", language),
+                    severity_label("critical", language),
+                ),
+                rotation=30,
             )
-            risk_axes.set_xlabel("存储严重性分级", color=ChartTheme.MUTED)
-            risk_axes.set_title("结构化风险信号", loc="left", color=ChartTheme.TEXT)
+            if language is Language.EN:
+                risk_axes.tick_params(axis="x", labelsize=8)
+            risk_axes.set_xlabel(
+                select(language, "存储严重性分级", "Stored severity classification"),
+                color=ChartTheme.MUTED,
+            )
+            risk_axes.set_title(
+                select(language, "结构化风险信号", "Structured risk signal"),
+                loc="left",
+                color=ChartTheme.TEXT,
+            )
             risk_axes.tick_params(axis="y", left=False, labelleft=False)
             risk_axes.grid(axis="x", color="#E5E7EB", linewidth=0.7)
 
             counts = snapshot.category_counts
             figure.suptitle(
-                f"{len(rows)} 篇代表内容中，{counts['dual_signal']} 篇同时进入两类前三",
+                select(
+                    language,
+                    f"{len(rows)} 篇代表内容中，"
+                    f"{counts['dual_signal']} 篇同时进入两类前三",
+                    f"{counts['dual_signal']} of {len(rows)} selected records rank in "
+                    "both top-three lists",
+                ),
                 x=0.06,
                 y=0.98,
                 ha="left",
@@ -147,20 +200,31 @@ class TopContentChartBuilder:
             )
             figure.legend(
                 handles=(
-                    Patch(facecolor=ChartTheme.POSITIVE, label="正面"),
-                    Patch(facecolor=ChartTheme.NEUTRAL, label="中性"),
-                    Patch(facecolor=ChartTheme.NEGATIVE, label="负面"),
+                    Patch(
+                        facecolor=ChartTheme.POSITIVE,
+                        label=sentiment_label("positive", language),
+                    ),
+                    Patch(
+                        facecolor=ChartTheme.NEUTRAL,
+                        label=sentiment_label("neutral", language),
+                    ),
+                    Patch(
+                        facecolor=ChartTheme.NEGATIVE,
+                        label=sentiment_label("negative", language),
+                    ),
                 ),
                 frameon=False,
                 ncol=3,
-                loc="upper right",
-                bbox_to_anchor=(0.97, 0.995),
+                loc="upper center" if language is Language.EN else "upper right",
+                bbox_to_anchor=(
+                    (0.72, 0.86) if language is Language.EN else (0.97, 0.995)
+                ),
             )
             figure.subplots_adjust(
                 left=0.24,
                 right=0.96,
                 bottom=0.15,
-                top=0.75,
+                top=0.67 if language is Language.EN else 0.75,
                 wspace=0.13,
             )
 

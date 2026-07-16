@@ -14,6 +14,8 @@ from matplotlib.patches import Patch
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import sentiment_label, select, timeline_roles_label
 from report_engine.sections.timeline import TimelineSnapshot
 
 
@@ -25,7 +27,12 @@ class TimelineChartBuilder:
         "negative": ChartTheme.NEGATIVE,
     }
 
-    def build(self, snapshot: TimelineSnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: TimelineSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if not snapshot.has_data:
             raise ValueError("cannot chart an empty timeline")
 
@@ -71,7 +78,8 @@ class TimelineChartBuilder:
             ):
                 label = (
                     f"{local_time:%m/%d %H:%M}\n"
-                    f"{milestone.role_display} · {milestone.external_id}"
+                    f"{timeline_roles_label(milestone.roles, language)} · "
+                    f"{milestone.external_id}"
                 )
                 axes.annotate(
                     label,
@@ -98,19 +106,40 @@ class TimelineChartBuilder:
             axes.set_ylim(-1, 1)
             axes.set_yticks([])
             axes.xaxis.set_major_formatter(DateFormatter("%m/%d", tz=timezone))
-            axes.set_xlabel("收录时间（Asia/Shanghai）", color=ChartTheme.MUTED)
+            axes.set_xlabel(
+                select(
+                    language,
+                    "收录时间（Asia/Shanghai）",
+                    "Observed time (Asia/Shanghai)",
+                ),
+                color=ChartTheme.MUTED,
+            )
             axes.set_title(
-                f"首末收录跨 {snapshot.observed_calendar_days} 个自然日，"
-                f"共 {len(milestones)} 个里程碑",
+                select(
+                    language,
+                    f"首末收录跨 {snapshot.observed_calendar_days} 个自然日，"
+                    f"共 {len(milestones)} 个里程碑",
+                    f"{snapshot.observed_calendar_days} calendar days from first to "
+                    f"last observation; {len(milestones)} milestones",
+                ),
                 loc="left",
                 color=ChartTheme.TEXT,
                 fontsize=13,
             )
             axes.legend(
                 handles=(
-                    Patch(facecolor=ChartTheme.POSITIVE, label="正面"),
-                    Patch(facecolor=ChartTheme.NEUTRAL, label="中性"),
-                    Patch(facecolor=ChartTheme.NEGATIVE, label="负面"),
+                    Patch(
+                        facecolor=ChartTheme.POSITIVE,
+                        label=sentiment_label("positive", language),
+                    ),
+                    Patch(
+                        facecolor=ChartTheme.NEUTRAL,
+                        label=sentiment_label("neutral", language),
+                    ),
+                    Patch(
+                        facecolor=ChartTheme.NEGATIVE,
+                        label=sentiment_label("negative", language),
+                    ),
                 ),
                 frameon=False,
                 ncol=3,

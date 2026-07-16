@@ -29,7 +29,12 @@ class EngagementRepository(Protocol):
 
 
 class EngagementChartBuilder(Protocol):
-    def build(self, snapshot: EngagementSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: EngagementSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class EngagementSectionRunner:
@@ -92,7 +97,7 @@ class EngagementSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

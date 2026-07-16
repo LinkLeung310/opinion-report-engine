@@ -12,6 +12,8 @@ from matplotlib.ticker import MaxNLocator, PercentFormatter
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import sentiment_label, select, source_type_label
 from report_engine.sections.media_social import MediaSocialSnapshot
 
 
@@ -22,6 +24,7 @@ class MediaSocialChartBuilder:
         self,
         snapshot: MediaSocialSnapshot,
         output_directory: Path,
+        language: Language = Language.ZH,
     ) -> Path:
         if not snapshot.has_data:
             raise ValueError("cannot chart an empty media-social snapshot")
@@ -31,7 +34,10 @@ class MediaSocialChartBuilder:
         fontManager.addfont(font_path)
         font_family = FontProperties(fname=font_path).get_name()
         positions = [0, 1]
-        labels = [f"{row.label_zh}\nn={row.article_count}" for row in snapshot.rows]
+        labels = [
+            f"{source_type_label(row.source_type, language)}\nn={row.article_count}"
+            for row in snapshot.rows
+        ]
         positive_counts = [row.positive_articles for row in snapshot.rows]
         neutral_counts = [row.neutral_articles for row in snapshot.rows]
         negative_counts = [row.negative_articles for row in snapshot.rows]
@@ -56,14 +62,14 @@ class MediaSocialChartBuilder:
                 positions,
                 positive_counts,
                 color=ChartTheme.POSITIVE,
-                label="正面",
+                label=sentiment_label("positive", language),
             )
             count_axes.bar(
                 positions,
                 neutral_counts,
                 bottom=positive_counts,
                 color=ChartTheme.NEUTRAL,
-                label="中性",
+                label=sentiment_label("neutral", language),
             )
             count_bottom = [
                 positive + neutral
@@ -76,11 +82,18 @@ class MediaSocialChartBuilder:
                 negative_counts,
                 bottom=count_bottom,
                 color=ChartTheme.NEGATIVE,
-                label="负面",
+                label=sentiment_label("negative", language),
             )
-            count_axes.set_title("内容量与情感", loc="left", color=ChartTheme.TEXT)
+            count_axes.set_title(
+                select(language, "内容量与情感", "Volume and sentiment"),
+                loc="left",
+                color=ChartTheme.TEXT,
+            )
             count_axes.set_xticks(positions, labels)
-            count_axes.set_ylabel("文章数", color=ChartTheme.MUTED)
+            count_axes.set_ylabel(
+                select(language, "文章数", "Articles"),
+                color=ChartTheme.MUTED,
+            )
             count_axes.yaxis.set_major_locator(MaxNLocator(integer=True))
             count_axes.set_ylim(0, max(row.article_count for row in snapshot.rows) * 1.18)
             for position, row in zip(positions, snapshot.rows, strict=True):
@@ -98,14 +111,14 @@ class MediaSocialChartBuilder:
                 positions,
                 positive_shares,
                 color=ChartTheme.POSITIVE,
-                label="正面",
+                label=sentiment_label("positive", language),
             )
             share_axes.bar(
                 positions,
                 neutral_shares,
                 bottom=positive_shares,
                 color=ChartTheme.NEUTRAL,
-                label="中性",
+                label=sentiment_label("neutral", language),
             )
             share_bottom = [
                 positive + neutral
@@ -118,11 +131,18 @@ class MediaSocialChartBuilder:
                 negative_shares,
                 bottom=share_bottom,
                 color=ChartTheme.NEGATIVE,
-                label="负面",
+                label=sentiment_label("negative", language),
             )
-            share_axes.set_title("组内情感构成", loc="left", color=ChartTheme.TEXT)
+            share_axes.set_title(
+                select(language, "组内情感构成", "Within-group sentiment"),
+                loc="left",
+                color=ChartTheme.TEXT,
+            )
             share_axes.set_xticks(positions, labels)
-            share_axes.set_ylabel("组内占比", color=ChartTheme.MUTED)
+            share_axes.set_ylabel(
+                select(language, "组内占比", "Within-group share"),
+                color=ChartTheme.MUTED,
+            )
             share_axes.set_ylim(0, 1)
             share_axes.yaxis.set_major_formatter(PercentFormatter(1, decimals=0))
             for position, row in zip(positions, snapshot.rows, strict=True):
@@ -130,7 +150,7 @@ class MediaSocialChartBuilder:
                     share_axes.text(
                         position,
                         0.04,
-                        "无样本",
+                        select(language, "无样本", "No sample"),
                         ha="center",
                         va="bottom",
                         color=ChartTheme.MUTED,
@@ -138,7 +158,7 @@ class MediaSocialChartBuilder:
                     )
 
             figure.suptitle(
-                self._title(snapshot),
+                self._title(snapshot, language),
                 x=0.07,
                 y=0.98,
                 ha="left",
@@ -157,7 +177,11 @@ class MediaSocialChartBuilder:
             figure.text(
                 0.5,
                 0.04,
-                "存储 source_type 的绝对量与组内构成",
+                select(
+                    language,
+                    "存储 source_type 的绝对量与组内构成",
+                    "Stored source_type volume and within-group composition",
+                ),
                 ha="center",
                 color=ChartTheme.MUTED,
                 fontsize=8,
@@ -182,21 +206,41 @@ class MediaSocialChartBuilder:
         return output_path
 
     @staticmethod
-    def _title(snapshot: MediaSocialSnapshot) -> str:
+    def _title(snapshot: MediaSocialSnapshot, language: Language) -> str:
         media_share = snapshot.article_share(snapshot.media)
         social_share = snapshot.article_share(snapshot.social)
         if not snapshot.comparison_available:
             populated = snapshot.media if snapshot.media.article_count else snapshot.social
-            return f"仅{populated.label_zh}有样本，跨组情感不可比较"
+            label = source_type_label(populated.source_type, language)
+            return select(
+                language,
+                f"仅{label}有样本，跨组情感不可比较",
+                f"Only {label} has a sample; cross-group sentiment is unavailable",
+            )
         delta = snapshot.social_minus_media_negative_share
         if delta is None:
             raise ValueError("Comparable source types require a negative-share delta")
         if delta > 0:
-            comparison = f"社交负面占比高 {delta * 100:.1f} 个百分点"
+            comparison = select(
+                language,
+                f"社交负面占比高 {delta * 100:.1f} 个百分点",
+                f"social negative share is {delta * 100:.1f} percentage points higher",
+            )
         elif delta < 0:
-            comparison = f"社交负面占比低 {abs(delta) * 100:.1f} 个百分点"
+            comparison = select(
+                language,
+                f"社交负面占比低 {abs(delta) * 100:.1f} 个百分点",
+                "social negative share is "
+                f"{abs(delta) * 100:.1f} percentage points lower",
+            )
         else:
-            comparison = "两组负面占比相同"
-        return (
-            f"媒体/社交量级 {media_share:.1%}/{social_share:.1%}，{comparison}"
+            comparison = select(
+                language,
+                "两组负面占比相同",
+                "both groups have the same negative share",
+            )
+        return select(
+            language,
+            f"媒体/社交量级 {media_share:.1%}/{social_share:.1%}，{comparison}",
+            f"Media/social volume {media_share:.1%}/{social_share:.1%}; {comparison}",
         )

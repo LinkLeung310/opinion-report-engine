@@ -29,7 +29,12 @@ class SeverityRepository(Protocol):
 
 
 class SeverityChartBuilder(Protocol):
-    def build(self, snapshot: SeveritySnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: SeveritySnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class SeveritySectionRunner:
@@ -79,7 +84,7 @@ class SeveritySectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

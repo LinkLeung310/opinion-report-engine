@@ -18,7 +18,12 @@ class BenchmarkRepository(Protocol):
 
 
 class BenchmarkChartBuilder(Protocol):
-    def build(self, snapshot: BenchmarkSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: BenchmarkSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class BenchmarkSectionRunner:
@@ -46,7 +51,7 @@ class BenchmarkSectionRunner:
             return SectionResult(SectionId.BENCHMARK, SectionStatus.NO_DATA,
                                  f"## {heading}\n\n{message}", facts=facts)
         try:
-            chart = self.chart_builder.build(snapshot, chart_directory)
+            chart = self.chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(FailureStage.CHART, "Benchmark chart rendering failed", language, facts)
         try:

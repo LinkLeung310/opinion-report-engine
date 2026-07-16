@@ -31,7 +31,12 @@ class ResponseRepository(Protocol):
 
 
 class ResponseChartBuilder(Protocol):
-    def build(self, snapshot: ResponseSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: ResponseSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class ResponseSectionRunner:
@@ -100,7 +105,7 @@ class ResponseSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

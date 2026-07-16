@@ -29,6 +29,7 @@ class SentimentEvolutionChartBuilder(Protocol):
         self,
         snapshot: SentimentEvolutionSnapshot,
         output_directory: Path,
+        language: Language = Language.ZH,
     ) -> Path: ...
 
 
@@ -90,7 +91,7 @@ class SentimentEvolutionSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

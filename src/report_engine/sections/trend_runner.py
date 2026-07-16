@@ -25,7 +25,12 @@ class TrendRepository(Protocol):
 
 
 class TrendChartBuilder(Protocol):
-    def build(self, snapshot: TrendSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: TrendSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class TrendSectionRunner:
@@ -74,7 +79,7 @@ class TrendSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
