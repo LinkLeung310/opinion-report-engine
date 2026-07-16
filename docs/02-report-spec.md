@@ -883,6 +883,105 @@ limitation above. Blank required source text, or query, calculation, evidence, c
 or narration errors return `failed` with a safe stage-specific message while later
 sections continue.
 
+## `top-content` — 代表性内容
+
+Purpose: compare content-level attention and structured risk signals in one auditable
+shortlist. Unlike `engagement`, this section does not explain aggregate counter
+composition or concentration; unlike `severity`, it does not describe the population
+distribution of negative labels. It answers whether the records prominent in stored
+interaction counters are the same records prominent in explicit high-risk fields.
+Neither signal is a measure of reach, support, business impact, or causality.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`top-content.v1`):
+
+- hard-filter articles with the shared topic tag and complete half-open timestamp
+  scope; return real external ID, title, summary, platform, timestamp, sentiment,
+  severity, negative score, all four stored interaction counters, and their sum;
+- rank records with positive total engagement by total engagement descending,
+  timestamp descending, then external ID ascending. The first up to three are
+  `engagement_representative` candidates;
+- define an explicit high-risk-signal candidate as a negative record whose stored
+  severity is `high` or `critical`, or whose stored negative score is at least 4.
+  This is a project selection rule over supplied labels, not an independent diagnosis;
+- rank all high-risk-signal candidates by severity order `critical > high > medium >
+  low > missing`, negative score descending with missing last, total engagement
+  descending, timestamp descending, then external ID ascending. The first up to three
+  are `risk_representative` candidates;
+- union both candidate sets by external ID, retaining the population engagement rank
+  and high-risk-candidate rank for each selected record. Return at most six records,
+  plus scoped article count, positive-engagement record count, high-risk-signal
+  candidate count, and total stored engagement;
+- order selected records by `dual_signal` first, then `engagement_only`, then
+  `risk_only`. Within each group use risk rank, engagement rank, and external ID, with
+  unavailable ranks sorted last;
+- use only bound `topic_tag`, `from_inclusive`, and `to_exclusive`. The query will live
+  at `src/report_engine/data/queries/top_content.sql`; it does not generate SQL, infer
+  risk from free text, use embeddings/RAG, call an LLM, search externally, or use n8n.
+
+Derived in Python:
+
+- assign each selected record exactly one display category: `双信号代表` when it is
+  in both top-three sets, `仅高互动代表`, or `仅高风险代表`;
+- `articles`, `positiveEngagementArticles`, `highRiskSignalArticles`,
+  `selectedCount`, `dualSignalCount`, `engagementOnlyCount`, and `riskOnlyCount`;
+- `selectedEngagement` and `selectedEngagementShare`, where the numerator is the
+  deduplicated selected records' stored counter sum and the denominator is all scoped
+  stored engagement. Zero total engagement yields an explicit zero share rather than
+  division by zero;
+- retain each record's real ranks, counters, severity, negative score, category, and
+  classification availability. Do not collapse severity and negative score into a
+  composite probability or silently reconcile conflicting/missing labels;
+- one `EvidenceSet` containing selected records in fixed display order. Every fact
+  uses `top-content.v1` or a named `top-content.*.v1` calculation source and keeps
+  selected source record IDs where applicable.
+
+Evidence: required whenever records are selected. Each record preserves its real
+external ID, exact title and summary, platform, timestamp, and sentiment. Every
+narrative bullet must show `[Evidence: <id>]`, preserve the approved title/summary
+verbatim, and show only its approved category, ranks, stored counters, severity, and
+negative score. Unknown, duplicate, omitted, or reordered citations, modified source
+text, or evidence outside the fixed query causes safe section failure. This is a
+deterministic cross-signal shortlist, not semantic retrieval or RAG.
+
+Charts: one `top-content-signals.png` aligned two-panel chart when at least one record
+is selected. Rows use the fixed EvidenceSet order and labels containing category,
+Evidence ID, and a legible title. The left panel shows each record's total stored
+engagement as horizontal bars colored by sentiment. The right panel shows the stored
+severity category (`未分类/低/中/高/危`) and labels the negative score when present;
+non-negative records display `不适用` instead of a fabricated zero risk. The chart
+does not combine both axes into an influence score. Its title states the computed
+dual-signal count and selected-record count. Use the shared white background, hidden
+top/right spines, 150 dpi theme, and embedded Chinese font.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, evidence
+  construction, and charting;
+- Chinese heading `代表性内容`, followed by one context paragraph stating scoped
+  article count, positive-engagement and high-risk-signal candidate counts, selected
+  count, category counts, selected stored-engagement total/share, and denominator
+  limitation;
+- follow with selected evidence bullets in exact order. Each bullet states the
+  approved category, real ranks when available, platform, sentiment, exact title and
+  summary, total stored engagement, severity, negative score, and Evidence ID;
+- describe only observed signals. Do not explain why a record received interaction,
+  equate likes with support, call counters reach, infer audience size, diagnose harm,
+  claim business consequences, or turn the shortlist into a complete content census;
+- disclose that interaction counters can differ by platform and that the high-risk
+  role is triggered by supplied structured labels. The deterministic stub renders the
+  same facts, exact source text, limitations, and citation order in tests.
+
+No-data rule: zero scoped articles returns `no_data`, renders a visible Chinese absence
+message, and performs no evidence, chart, or narrator operation. A non-empty scope
+with neither positive engagement nor a high-risk-signal candidate remains `complete`
+and renders a deterministic no-qualifying-signal message without chart or narrator
+cost. A shortlist containing only one signal type remains `complete`; it explicitly
+states that cross-signal overlap is unavailable/zero rather than inventing the missing
+type. Query, calculation, evidence, chart, or narration errors return `failed` with a
+safe stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in

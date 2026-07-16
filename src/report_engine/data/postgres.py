@@ -22,6 +22,7 @@ from report_engine.sections.sentiment_evolution import (
 )
 from report_engine.sections.trend import DailyTrendPoint, TrendSnapshot
 from report_engine.sections.timeline import TimelineRoleRecord, TimelineSnapshot
+from report_engine.sections.top_content import TopContentRecord, TopContentSnapshot
 from report_engine.sections.verdict import VerdictSnapshot
 from report_engine.sections.viewpoints import (
     ViewpointEvidenceRecord,
@@ -88,6 +89,12 @@ VIEWPOINTS_SQL = (
 TIMELINE_QUERY_ID = "timeline.v1"
 TIMELINE_SQL = (
     files("report_engine.data.queries").joinpath("timeline.sql").read_text(encoding="utf-8")
+)
+TOP_CONTENT_QUERY_ID = "top-content.v1"
+TOP_CONTENT_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("top_content.sql")
+    .read_text(encoding="utf-8")
 )
 
 
@@ -590,4 +597,60 @@ class PostgresTimelineRepository:
             ),
             timezone_name=scope.timezone_name,
             query_id=TIMELINE_QUERY_ID,
+        )
+
+
+class PostgresTopContentRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> TopContentSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(TOP_CONTENT_SQL, parameters)
+            rows = cursor.fetchall()
+
+        if not rows:
+            raise RuntimeError("top-content query returned no aggregate row")
+        aggregate_fields = (
+            "article_count",
+            "positive_engagement_articles",
+            "high_risk_signal_articles",
+            "total_engagement",
+        )
+        for field in aggregate_fields:
+            if len({row[field] for row in rows}) != 1:
+                raise RuntimeError(f"top-content query returned inconsistent {field}")
+
+        aggregate = rows[0]
+        return TopContentSnapshot(
+            article_count=aggregate["article_count"],
+            positive_engagement_articles=aggregate["positive_engagement_articles"],
+            high_risk_signal_articles=aggregate["high_risk_signal_articles"],
+            total_engagement=aggregate["total_engagement"],
+            records=tuple(
+                TopContentRecord(
+                    external_id=row["external_id"],
+                    title=row["title"],
+                    summary=row["summary"],
+                    platform=row["platform"],
+                    published_at=row["published_at"],
+                    sentiment=row["sentiment"],
+                    severity=row["severity"],
+                    negative_score=row["negative_score"],
+                    likes=row["likes"],
+                    comments=row["comments"],
+                    shares=row["shares"],
+                    favorites=row["favorites"],
+                    engagement_rank=row["engagement_rank"],
+                    risk_rank=row["risk_rank"],
+                )
+                for row in rows
+                if row["external_id"] is not None
+            ),
+            query_id=TOP_CONTENT_QUERY_ID,
         )

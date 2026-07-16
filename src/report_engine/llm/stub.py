@@ -19,6 +19,98 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.TOP_CONTENT:
+            categories_en = {
+                "dual_signal": "dual-signal representative",
+                "engagement_only": "engagement-only representative",
+                "risk_only": "risk-only representative",
+            }
+            sentiments_en = {
+                "positive": "positive",
+                "neutral": "neutral",
+                "negative": "negative",
+            }
+            severities_en = {
+                None: "unclassified",
+                "low": "low",
+                "medium": "medium",
+                "high": "high",
+                "critical": "critical",
+            }
+            evidence_lines = []
+            for index, evidence in enumerate(request.evidence.records, start=1):
+                prefix = f"record{index}"
+                engagement_rank_raw = request.facts.get(
+                    f"{prefix}EngagementRank"
+                ).raw_value
+                risk_rank_raw = request.facts.get(f"{prefix}RiskRank").raw_value
+                severity_raw = request.facts.get(f"{prefix}Severity").raw_value
+                score_raw = request.facts.get(f"{prefix}NegativeScore").raw_value
+                if request.language is Language.EN:
+                    severity = (
+                        "not applicable"
+                        if evidence.sentiment != "negative"
+                        else severities_en[severity_raw]
+                    )
+                    evidence_lines.append(
+                        f"- [Evidence: {evidence.record_id}] "
+                        f"{categories_en[request.facts.get(f'{prefix}Category').raw_value]} | "
+                        f"engagement rank "
+                        f"{engagement_rank_raw if engagement_rank_raw is not None else 'unranked'} | "
+                        f"risk rank {risk_rank_raw if risk_rank_raw is not None else 'unranked'} | "
+                        f"{values[f'{prefix}Platform']} | "
+                        f"{sentiments_en[evidence.sentiment]} | "
+                        f"{evidence.title}: {evidence.summary} | stored interactions "
+                        f"{values[f'{prefix}TotalEngagement']} | severity {severity} | "
+                        f"negative score {score_raw if score_raw is not None else 'unavailable'}"
+                    )
+                else:
+                    evidence_lines.append(
+                        f"- [Evidence: {evidence.record_id}] "
+                        f"{values[f'{prefix}Category']}｜互动排名 "
+                        f"{values[f'{prefix}EngagementRank']}｜风险排名 "
+                        f"{values[f'{prefix}RiskRank']}｜"
+                        f"{values[f'{prefix}Platform']}｜"
+                        f"{values[f'{prefix}Sentiment']}｜"
+                        f"{evidence.title}：{evidence.summary}｜存储互动 "
+                        f"{values[f'{prefix}TotalEngagement']}｜严重性 "
+                        f"{values[f'{prefix}Severity']}｜负面分 "
+                        f"{values[f'{prefix}NegativeScore']}"
+                    )
+            lines = "\n".join(evidence_lines)
+            if request.language is Language.EN:
+                return (
+                    "## Representative content\n\n"
+                    f"Across {values['articles']} captured records, "
+                    f"{values['positiveEngagementArticles']} have positive stored "
+                    f"interaction counters and {values['highRiskSignalArticles']} "
+                    "meet the explicit high-risk-signal rule. The deduplicated "
+                    f"shortlist contains {values['selectedCount']} records: "
+                    f"{values['dualSignalCount']} dual-signal representatives, "
+                    f"{values['engagementOnlyCount']} engagement-only, and "
+                    f"{values['riskOnlyCount']} risk-only. Their stored interactions "
+                    f"total {values['selectedEngagement']} "
+                    f"({values['selectedEngagementShare']} of all stored interactions).\n\n"
+                    f"{lines}\n\nInteraction-counter definitions may differ by "
+                    "platform. The risk role is triggered only by supplied structured "
+                    "fields; neither signal establishes reach, support, business "
+                    "consequences, harm, or causality."
+                )
+            return (
+                "## 代表性内容\n\n"
+                f"监测期内 {values['articles']} 篇内容中，"
+                f"{values['positiveEngagementArticles']} 篇有正向存储互动，"
+                f"{values['highRiskSignalArticles']} 篇符合明确高风险信号规则；"
+                f"入选 {values['selectedCount']} 篇去重代表内容：双信号 "
+                f"{values['dualSignalCount']} 篇、仅高互动 "
+                f"{values['engagementOnlyCount']} 篇、仅高风险 "
+                f"{values['riskOnlyCount']} 篇。入选内容存储互动合计 "
+                f"{values['selectedEngagement']}（占全部存储互动 "
+                f"{values['selectedEngagementShare']}）。\n\n{lines}\n\n"
+                "不同平台的互动计数口径可能不同；高风险角色只由数据库提供的结构化"
+                "字段触发，不能据此推断触达、支持度、业务后果、伤害或因果影响。"
+            )
+
         if request.section_id is SectionId.TIMELINE:
             role_labels_en = {
                 "first_observed": "first observed",
