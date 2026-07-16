@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 from report_engine.config import Language, SectionId
 from report_engine.llm.protocol import NarrationRequest
+from report_engine.presentation import section_heading
 
 
 class StubNarrator:
@@ -18,6 +19,14 @@ class StubNarrator:
         if request.section_id in self._fail_sections:
             raise TimeoutError("synthetic provider response containing secret details")
 
+        markdown = self._render(request)
+        _, separator, body = markdown.partition("\n\n")
+        if not separator:
+            raise ValueError("Stub narration must contain a heading and body")
+        return f"## {section_heading(request.section_id, request.language)}\n\n{body}"
+
+    @staticmethod
+    def _render(request: NarrationRequest) -> str:
         values = request.facts.prompt_values()
         if request.section_id is SectionId.RECOMMENDATIONS:
             evidence_by_id = {

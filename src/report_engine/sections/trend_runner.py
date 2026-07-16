@@ -16,7 +16,11 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
-from report_engine.presentation import failed_section_markdown, localize_fact_set
+from report_engine.presentation import (
+    failed_section_markdown,
+    localize_fact_set,
+    section_heading,
+)
 from report_engine.sections.trend import TrendSnapshot
 
 
@@ -57,7 +61,6 @@ class TrendSectionRunner:
             return self._failed(FailureStage.QUERY, "Trend data query failed", language)
 
         if not snapshot.has_data:
-            heading = "Heat trend" if language is Language.EN else "热度趋势"
             message = (
                 "No relevant data is available for this monitoring scope."
                 if language is Language.EN
@@ -66,7 +69,7 @@ class TrendSectionRunner:
             return SectionResult(
                 SectionId.TREND,
                 SectionStatus.NO_DATA,
-                f"## {heading}\n\n{message}",
+                f"## {section_heading(SectionId.TREND, language)}\n\n{message}",
             )
 
         try:

@@ -129,7 +129,7 @@ def test_english_narration_preserves_observable_order_limit() -> None:
     ).run(scope(), Language.EN, Path("charts"))
 
     assert result.status is SectionStatus.COMPLETE
-    assert "## Propagation path (observable order)" in result.markdown
+    assert "## Observable platform sequence" in result.markdown
     assert "wave 1 | B站 | first 2026-03-17 09:00" in result.markdown
     assert "no repost, quote, parent, referral, or source-edge fields" in result.markdown
     assert "not event origin, a transmission chain" in result.markdown

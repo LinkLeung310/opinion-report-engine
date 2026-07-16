@@ -17,7 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
-from report_engine.presentation import localize_fact_set
+from report_engine.presentation import localize_fact_set, section_heading
 from report_engine.sections.spread_path import SpreadPathSnapshot
 
 
@@ -80,11 +80,6 @@ class SpreadPathSectionRunner:
             )
 
         if not snapshot.has_data:
-            heading = (
-                "Propagation path (observable order)"
-                if language is Language.EN
-                else "传播路径（可观测顺序）"
-            )
             message = (
                 "No relevant source records are available for observable platform migration."
                 if language is Language.EN
@@ -93,7 +88,10 @@ class SpreadPathSectionRunner:
             return SectionResult(
                 section_id=SectionId.SPREAD_PATH,
                 status=SectionStatus.NO_DATA,
-                markdown=f"## {heading}\n\n{message}",
+                markdown=(
+                    f"## {section_heading(SectionId.SPREAD_PATH, language)}\n\n"
+                    f"{message}"
+                ),
                 facts=facts,
             )
 
@@ -145,7 +143,7 @@ class SpreadPathSectionRunner:
         values = facts.prompt_values()
         if language is Language.EN:
             return (
-                "## Propagation path (observable order)\n\n"
+                f"## {section_heading(SectionId.SPREAD_PATH, language)}\n\n"
                 f"All {values['articles']} scoped records come from one platform, "
                 f"{values['platform1Name']}, observed from "
                 f"{values['platform1FirstObservedAt']} to "
@@ -154,7 +152,7 @@ class SpreadPathSectionRunner:
                 "edge is inferred, and no chart or model narration is generated."
             )
         return (
-            "## 传播路径（可观测顺序）\n\n"
+            f"## {section_heading(SectionId.SPREAD_PATH, language)}\n\n"
             f"监测范围内 {values['articles']} 篇内容均来自单一平台 "
             f"{values['platform1Name']}，首末收录时间为 "
             f"{values['platform1FirstObservedAt']} 至 "
@@ -253,11 +251,6 @@ class SpreadPathSectionRunner:
         evidence: EvidenceSet = EvidenceSet(),
         charts: tuple[str, ...] = (),
     ) -> SectionResult:
-        heading = (
-            "Propagation path (observable order)"
-            if language is Language.EN
-            else "传播路径（可观测顺序）"
-        )
         body = (
             "This section could not be generated. Please try again later."
             if language is Language.EN
@@ -266,7 +259,9 @@ class SpreadPathSectionRunner:
         return SectionResult(
             section_id=SectionId.SPREAD_PATH,
             status=SectionStatus.FAILED,
-            markdown=f"## {heading}\n\n{body}",
+            markdown=(
+                f"## {section_heading(SectionId.SPREAD_PATH, language)}\n\n{body}"
+            ),
             facts=facts,
             evidence=evidence,
             charts=charts,

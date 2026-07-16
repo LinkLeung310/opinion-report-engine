@@ -16,7 +16,11 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
-from report_engine.presentation import failed_section_markdown, localize_fact_set
+from report_engine.presentation import (
+    failed_section_markdown,
+    localize_fact_set,
+    section_heading,
+)
 from report_engine.sections.media_social import MediaSocialSnapshot
 
 
@@ -57,7 +61,6 @@ class MediaSocialSectionRunner:
             return self._failed(FailureStage.QUERY, "Media-social query failed", language)
 
         if not snapshot.has_data:
-            heading = "Media and social" if language is Language.EN else "媒体与社媒对比"
             message = (
                 "No relevant data is available for this monitoring scope."
                 if language is Language.EN
@@ -66,7 +69,7 @@ class MediaSocialSectionRunner:
             return SectionResult(
                 SectionId.MEDIA_SOCIAL,
                 SectionStatus.NO_DATA,
-                f"## {heading}\n\n{message}",
+                f"## {section_heading(SectionId.MEDIA_SOCIAL, language)}\n\n{message}",
             )
 
         try:
