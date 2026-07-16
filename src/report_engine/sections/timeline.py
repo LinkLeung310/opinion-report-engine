@@ -22,6 +22,12 @@ ROLE_LABELS = {
     "peak_day_representative": "峰值日代表",
     "last_observed": "最后收录",
 }
+ROLE_LABELS_EN = {
+    "first_observed": "first observed",
+    "tagged_response": "response-tagged record",
+    "peak_day_representative": "peak-day representative",
+    "last_observed": "last observed",
+}
 SENTIMENT_LABELS = {
     "positive": "正面",
     "neutral": "中性",
@@ -296,6 +302,7 @@ class TimelineSnapshot:
             local_time = milestone.published_at.astimezone(timezone)
             values = (
                 ("Id", milestone.external_id, milestone.external_id),
+                ("RoleKeys", ",".join(milestone.roles), ",".join(milestone.roles)),
                 ("Roles", milestone.role_display, milestone.role_display),
                 ("PublishedAt", local_time, local_time.strftime("%Y-%m-%d %H:%M")),
                 ("Platform", milestone.platform, milestone.platform),

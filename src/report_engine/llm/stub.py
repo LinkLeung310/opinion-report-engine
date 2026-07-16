@@ -19,6 +19,86 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.TIMELINE:
+            role_labels_en = {
+                "first_observed": "first observed",
+                "tagged_response": "response-tagged record",
+                "peak_day_representative": "peak-day representative",
+                "last_observed": "last observed",
+            }
+            sentiment_labels_en = {
+                "positive": "positive",
+                "neutral": "neutral",
+                "negative": "negative",
+            }
+            evidence_lines = []
+            for index, evidence in enumerate(request.evidence.records, start=1):
+                prefix = f"milestone{index}"
+                peak_key = f"{prefix}PeakEngagement"
+                role_keys = values[f"{prefix}RoleKeys"].split(",")
+                if request.language is Language.EN:
+                    roles = ", ".join(role_labels_en[role] for role in role_keys)
+                    engagement = (
+                        f" Captured engagement-counter snapshot: {values[peak_key]}."
+                        if peak_key in values
+                        else ""
+                    )
+                    evidence_lines.append(
+                        f"- [Evidence: {evidence.record_id}] "
+                        f"{values[f'{prefix}PublishedAt']} | {roles} | "
+                        f"{values[f'{prefix}Platform']} | "
+                        f"{sentiment_labels_en[evidence.sentiment]} | "
+                        f"{evidence.title}: {evidence.summary}{engagement}"
+                    )
+                else:
+                    engagement = (
+                        f" 存储互动计数快照：{values[peak_key]}。"
+                        if peak_key in values
+                        else ""
+                    )
+                    evidence_lines.append(
+                        f"- [Evidence: {evidence.record_id}] "
+                        f"{values[f'{prefix}PublishedAt']}｜"
+                        f"{values[f'{prefix}Roles']}｜"
+                        f"{values[f'{prefix}Platform']}｜"
+                        f"{values[f'{prefix}Sentiment']}｜"
+                        f"{evidence.title}：{evidence.summary}{engagement}"
+                    )
+            lines = "\n".join(evidence_lines)
+            if request.language is Language.EN:
+                response_note = (
+                    f"The scope contains {values['responseTaggedArticles']} record "
+                    "with the exact official-response tag; the earliest one is shown."
+                    if values["responseTaggedArticles"] != "0"
+                    else "No scoped record carries the exact official-response tag; "
+                    "this does not establish that no response occurred."
+                )
+                return (
+                    "## Event timeline\n\n"
+                    f"Across {values['articles']} captured records, the volume peak is "
+                    f"{values['peakDay']} with {values['peakArticles']} records. The "
+                    f"first-to-last observed span is {values['observedCalendarDays']} "
+                    f"calendar days, represented by {values['milestoneCount']} "
+                    f"deduplicated milestones. {response_note}\n\n{lines}\n\n"
+                    "The order is an observed chronology, not evidence of causality, "
+                    "speaker authority, response effectiveness, reach, or impact."
+                )
+            response_note = (
+                f"范围内有 {values['responseTaggedArticles']} 篇带精确 "
+                "official-response 标签的记录，时间线展示其中最早一篇。"
+                if values["responseTaggedArticles"] != "0"
+                else "范围内没有带精确 official-response 标签的记录；这不等于没有发生回应。"
+            )
+            return (
+                "## 事件时间线\n\n"
+                f"监测期内共 {values['articles']} 篇收录内容，讨论量于 "
+                f"{values['peakDay']} 达峰，当日 {values['peakArticles']} 篇。"
+                f"首末收录跨 {values['observedCalendarDays']} 个自然日，去重后展示 "
+                f"{values['milestoneCount']} 个里程碑。{response_note}\n\n"
+                f"{lines}\n\n以上顺序仅表示可观测收录时间，不证明因果、发言者权威性、"
+                "回应效果、触达或影响。"
+            )
+
         if request.section_id is SectionId.MEDIA_SOCIAL:
             comparable = values["comparisonStatus"] == "comparable"
             if request.language is Language.EN:

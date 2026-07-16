@@ -19,6 +19,7 @@ def role_record(
     *,
     engagement: int = 100,
     response_tagged: bool = False,
+    sentiment: str = "negative",
 ) -> TimelineRoleRecord:
     published_at = datetime(2026, 3, day, hour, tzinfo=TIMEZONE)
     return TimelineRoleRecord(
@@ -29,7 +30,7 @@ def role_record(
         platform="测试平台",
         published_at=published_at,
         published_day=published_at.date(),
-        sentiment="negative",
+        sentiment=sentiment,
         total_engagement=engagement,
         response_tagged=response_tagged,
     )
@@ -49,6 +50,7 @@ def fixture_snapshot() -> TimelineSnapshot:
                 19,
                 19,
                 response_tagged=True,
+                sentiment="positive",
             ),
             role_record(
                 "peak_day_representative",
@@ -117,7 +119,19 @@ def test_timeline_merges_multiple_roles_for_one_evidence_record() -> None:
 
 
 def test_timeline_without_response_tag_remains_complete_and_ordered() -> None:
-    snapshot = TimelineSnapshot(
+    snapshot = no_response_snapshot()
+
+    assert snapshot.has_data is True
+    assert [milestone.external_id for milestone in snapshot.milestones] == [
+        "first",
+        "peak",
+        "last",
+    ]
+    assert snapshot.to_fact_set().get("responseTaggedArticles").raw_value == 0
+
+
+def no_response_snapshot() -> TimelineSnapshot:
+    return TimelineSnapshot(
         article_count=3,
         peak_day=date(2026, 3, 20),
         peak_articles=1,
@@ -131,17 +145,8 @@ def test_timeline_without_response_tag_remains_complete_and_ordered() -> None:
         query_id="timeline.v1",
     )
 
-    assert snapshot.has_data is True
-    assert [milestone.external_id for milestone in snapshot.milestones] == [
-        "first",
-        "peak",
-        "last",
-    ]
-    assert snapshot.to_fact_set().get("responseTaggedArticles").raw_value == 0
-
-
-def test_empty_timeline_is_valid_no_data_without_facts() -> None:
-    snapshot = TimelineSnapshot(
+def empty_timeline() -> TimelineSnapshot:
+    return TimelineSnapshot(
         article_count=0,
         peak_day=None,
         peak_articles=0,
@@ -150,6 +155,10 @@ def test_empty_timeline_is_valid_no_data_without_facts() -> None:
         timezone_name="Asia/Shanghai",
         query_id="timeline.v1",
     )
+
+
+def test_empty_timeline_is_valid_no_data_without_facts() -> None:
+    snapshot = empty_timeline()
 
     assert snapshot.has_data is False
     assert snapshot.milestones == ()

@@ -122,7 +122,7 @@ context recovery、完整中文 csuite 七章、PR 版新增四章以及两份 7
 ## 当前阶段与下一步
 
 - PR #13 已合并，`main@93f7d16` 的独立 CI 已通过 180 项测试；当前分支 `codex/m2-timeline-section` 已从该绿色基线创建。
-- M1 中文 csuite 七章与 PR 十一章的标准配置、stub CLI、固定 SQL、图表与 PDF 离线验收均已完成；`timeline` 的规格、固定 SQL、Python 事实与真实 fixture 集成测试已完成，下一小步接入 runner、图表、stub 和 bundle/PDF 验收。
+- M1 中文 csuite 七章与 PR 十一章的标准配置、stub CLI、固定 SQL、图表与 PDF 离线验收均已完成；`timeline` 纵向切片和 bundle/PDF 验收已完成，下一步创建 Draft PR 并等待 CI。
 - 新分支第一次检查：当前分支与 `main@93f7d16` merge-base 完全一致，`git diff --check` 通过，必需阶段标记均可定位，工作区只修改本状态文件，没有触碰实现、fixtures、RAG 或 n8n。
 - 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 180 项通过；`pip check` 无破损依赖。首次命令曾误命中不含 pytest 的 Hermes Python，切换到 README 指定的项目 `.venv` 后验证成功；该环境路由问题未形成代码失败。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -143,6 +143,11 @@ context recovery、完整中文 csuite 七章、PR 版新增四章以及两份 7
 - 时间线事实包含范围内 12 篇、峰值日 3/20 共 3 篇、回应标签记录 1 篇、4 个里程碑和首末收录跨 7 个自然日；峰值日代表 `bili-007` 的存储互动计数和为 10,020，所有里程碑事实保留来源 ID。
 - SQL/事实小步第一次检查：`git diff --check`、Python 静态编译、四个 SQL 绑定参数各出现一次、预期文件范围和 timeline 专属单元测试 5 项通过。
 - SQL/事实小步第二次检查：健康 fixture PostgreSQL 下 timeline 集成测试 2 项通过，完整 pytest 187 项通过；`pip check` 无破损依赖。空话题返回合法 `no_data` snapshot；本小步未接 runner/图表、RAG、n8n 或真实模型 API。
+- `TimelineChartBuilder`、fault-isolated `TimelineSectionRunner`、确定性中英文 stub、运行时注册和专属图片 alt 已接入；正常路径恰好一次 narrator 操作，引用乱序、原文/角色/时间/平台/情感改写以及未知 Evidence ID 均安全失败，no-data 不出图也不调用 narrator。
+- timeline-only CLI 验收得到 1 章 complete、0 章 failed、1 张 150 dpi 图和 A4 单页 PDF；Markdown 按 `bili-001`、`bili-006`、`bili-007`、`bili-012` 顺序保留原始标题、摘要和 Evidence ID，页面目视无中文乱码、截断、重叠或图例遮挡。
+- 任意组合验收发现旧 assembler 在未选择 `metrics` 时把 `meta.stats.articles` 误写为 0；D-29 已改为逐字段从用户实际选择章节的可审计事实解析。最终 timeline-only `stats` 为 articles 12、negativeRatio `暂无`、peakDay `3/20`，不插入未选章节也不伪造缺失负面占比。
+- 产物小步第一次检查（修订后）：`git diff --check`、Python 静态编译、唯一运行时注册、唯一 narrator 调用点和 timeline/assembler 聚焦测试 16 项通过。
+- 产物小步第二次检查（修订后）：健康 fixture PostgreSQL 下 timeline SQL + CLI 聚焦集成测试 3 项通过，完整 pytest 196 项通过，`pip check` 无破损依赖；最终 v2 PDF 渲染页与目视通过的 v1 逐像素一致。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
 
 ## M1 标准默认配置阶段入口
 

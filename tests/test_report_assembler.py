@@ -9,6 +9,7 @@ from report_engine.domain.results import (
     SectionResult,
     SectionStatus,
 )
+from report_engine.domain.facts import Fact, FactSet
 from report_engine.rendering.assembler import ReportAssembler
 from report_engine.sections.metrics import MetricsSnapshot
 from tests.test_config import sample_config
@@ -121,3 +122,35 @@ def test_meta_summary_uses_the_same_metrics_fact_set() -> None:
         "peakDay": "3/20",
     }
     assert result.meta["file"] == "/reports/layoff-2026-03-23-v1.pdf"
+
+
+def test_meta_summary_uses_available_selected_section_facts_without_false_zero() -> None:
+    raw = sample_config()
+    raw["sections"] = [{"id": "timeline", "enabled": True}]
+    config = ReportConfig.model_validate(raw)
+    timeline_facts = FactSet(
+        facts=(
+            Fact("articles", 12, "12", "timeline.v1"),
+            Fact("peakDay", date(2026, 3, 20), "3/20", "timeline.v1"),
+        )
+    )
+
+    result = ReportAssembler().assemble(
+        config,
+        "layoff-2026-03-23-v1",
+        (
+            SectionResult(
+                section_id=SectionId.TIMELINE,
+                status=SectionStatus.COMPLETE,
+                markdown="## 事件时间线\n\n已生成。",
+                facts=timeline_facts,
+            ),
+        ),
+        datetime(2026, 7, 15, 2, 0, tzinfo=UTC),
+    )
+
+    assert result.meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "暂无",
+        "peakDay": "3/20",
+    }
