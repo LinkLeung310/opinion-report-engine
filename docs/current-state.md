@@ -304,6 +304,11 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 当前 `docs/02-report-spec.md` 尚无 recommendations 技术合同。下一小步只做 schema/fixture 与已批准事实能力审计，再定义固定事实来源、透明行动代码本、优先级、一次 narrator、无数据和失败隔离；实现必须等规格决定完成后开始。
 - 本阶段不使用 RAG 或 n8n，不调用真实模型 API；开发与 CI 继续使用可注入 stub，真实 API 留到全部本地功能完成后的最终冒烟测试。
 - 新分支 `codex/m2-recommendations-section` 从已通过独立 main CI 的 `eeeba95` 创建；本入口小步只更新状态，不修改实现、fixtures 或公共输入/输出契约。
+- `docs/02-report-spec.md` 与 D-36 已定义 `recommendations.v1`：固定 SQL 返回范围计数与全部真实负面记录，Python 复用公开的 `negative-themes.codebook.v1`，从高/危核验、用户自主权、透明度、反馈闭环和无候选回退五类版本化行动中最多选择四项；优先级是透明词典序，不创建综合分数。
+- 每项行动固定建议角色、立即/24 小时/72 小时 playbook 目标、动作文本、核验清单、全部触发 source ID 和一条真实代表 Evidence ID；共享代表可在行动顺序中重复引用，但底层 `EvidenceSet` 去重。模型不得新增行动、改写原文、补数字、生成法律结论或执行外部操作。
+- 本章不生成图表：排序文本卡片已经表达行动顺序，视觉分数/红绿灯会暗示未经验证的效果或置信度。零文章为不调用 narrator 的 `no_data`；非空零负面为不调用 narrator 的 `complete` 常规监测结论；存在负面时至少产生可审计回退行动并恰好调用一次 narrator。
+- fixture 口径按现有已验证事实预期四项行动依次为 `triage_high_risk`、`restore_user_control`、`explain_change`、`close_feedback_loop`，代表 Evidence ID 序列为 `bili-007`、`bili-005`、`bili-003`、`bili-007`；底层证据去重为三条。该预期只校准规格，尚未构成 recommendations 实现证据。
+- 规格小步单次检查：变更范围仅为逐章规格、设计决定与状态文档；`git diff --check`、唯一 `recommendations` 章节、唯一 D-36，以及固定 SQL/共享代码本/最多四项/确定性优先级/真实证据/无图表/一次 narrator/no-data/无 RAG/无外部执行合同均通过。未修改实现、fixtures 或 n8n，也未重复运行刚在 main CI 通过的 317 项测试。
 
 ## M2 `timeline` 阶段入口
 
