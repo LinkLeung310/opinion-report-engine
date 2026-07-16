@@ -216,6 +216,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 本章与 `trend` 的总量时间序列、`sentiment-evolution` 的阶段情感构成和 `timeline` 的回应标签记录存在重叠。下一小步必须先定义“以用户给定切点做平衡前后比较”的独有价值，不能把时间先后或下降直接称为回应造成的效果。
 - fixture 中 `responseDate=2026-03-19` 可与精确 `official-response` 标签记录 `bili-006` 对照，但用户输入仍是分析切点，标签只可作为数据覆盖说明，不能替代输入或证明发言权威性。
 - 用户要求 RAG 暂不开始，本阶段先设计确定性、可测试的非 RAG 基线；不引入 embedding、vector store、retriever 或 reranker，不修改 n8n，不调用真实模型 API，也不提前实现 `benchmark`。
+- `docs/02-report-spec.md` 与 D-33 已定义 `response.v1`：排除只有日期精度的回应日，以用户给定 `responseDate` 为切点，取范围内前后各最多 7 个且长度完全相同的完整自然日；只比较观察到的热度与情感，不把时间相关性表述为回应效果或因果。
+- 规格明确披露回应日记录、回应日精确标签覆盖和平衡窗口外记录；一侧零样本仍可诚实完成但分母相关比例为 `unavailable`，两侧均无比较记录返回 `no_data`，非法/边界日期在查询前返回章节级 `INPUT` 失败。本章是聚合比较，不创建 `EvidenceSet`，不重复 `timeline` 的回应记录选择。
+- 真实 fixture PostgreSQL 预查确认：`responseDate=2026-03-19` 时匹配窗口为 3/17–3/18 与 3/20–3/21，各 2 天、各 4 篇、各 2 篇负面（50%）；回应日 2 篇，其中 1 篇带精确 `official-response` 标签；3/22–3/23 的 2 篇因平衡窗口被明确排除。
+- 规格小步第一次检查：仅 `docs/02-report-spec.md` 与 `docs/design-decisions.md` 改动；`git diff --check`、唯一 `response` 章节、唯一 D-33、必需合同段和无实现/n8n 变更均通过。
+- 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 243 项，`pip check` 无破损依赖。本小步未实现 runner/图表、RAG、n8n 或真实模型 API。
+- 实现前审计发现 planner 已保留 `SectionConfig.input`，但 application service 当前未把章节 input 传给 runner。下一小步先以向后兼容的可选参数显式贯通该输入，再实现 `response.sql` 与 Python 事实；不得让 response runner 静默重读配置或从标签推断日期。
 
 ## M2 `timeline` 阶段入口
 

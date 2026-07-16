@@ -1189,6 +1189,104 @@ than a fabricated order. Blank required source text, or query, calculation, evid
 or narration errors return `failed` with a safe stage-specific message while later sections
 continue.
 
+## `response` — 回应前后对比
+
+Purpose: compare like-for-like observation windows immediately before and after a
+user-supplied response date. Unlike `trend`, this is not a full-range time series;
+unlike `sentiment-evolution`, it does not infer generic phases; unlike `timeline`, it
+does not select response records or reconstruct chronology. It reports an observed
+before/after association only and never claims that a response caused, resolved, or
+failed to change public opinion.
+
+Inputs: required section-specific `input.responseDate`, using strict ISO `YYYY-MM-DD`
+syntax. The date must fall strictly inside the shared report range with at least one
+complete report-timezone calendar day available on both sides. Missing input follows
+the planner's existing section-local input failure. Invalid syntax, an out-of-range
+date, or a boundary date returns a section-local `INPUT` failure with an actionable
+message. The engine must not infer this input from an `official-response` tag.
+
+Comparison-window decision:
+
+- exclude the complete `responseDate` calendar day. The public input has date rather
+  than time precision, so assigning same-day records to either side could silently mix
+  content published before and after the response;
+- set `windowDays` to the smaller of seven days, complete in-scope days before the
+  response date, and complete in-scope days after it. The pre window is
+  `[responseDate - windowDays, responseDate)` and the post window is
+  `(responseDate, responseDate + windowDays]`, using report-timezone calendar dates;
+- use equal-length windows even when more report days are available on one side. Report
+  all response-day and outside-matched-window exclusions so the fair comparison does
+  not masquerade as full-range coverage.
+
+Fixed query plan (`response.v1`):
+
+- hard-filter articles with the shared topic tag and complete half-open timestamp
+  scope; return local `published_day`, sentiment, and whether each record has the exact
+  `official-response` tag;
+- order by local day and sentiment. SQL performs only scope filtering and exposes the
+  exact tag signal; it does not choose the response date, assign comparison windows,
+  calculate an effect, use embeddings/RAG, call an LLM, search externally, or use n8n;
+- use only bound `topic_tag`, `from_inclusive`, `to_exclusive`, and `timezone_name`.
+  The query will live at `src/report_engine/data/queries/response.sql`.
+
+Derived in Python:
+
+- retain scoped `articles`, `responseDate`, `windowDays`, the exact pre/post date
+  boundaries, `comparisonArticles`, `responseDayArticles`,
+  `responseDayOfficialTaggedArticles`, and `outsideMatchedWindowsArticles`;
+- for each matched side calculate article count, daily average, and positive, neutral,
+  and negative counts and shares. A share is unavailable when that side has zero
+  articles; it is never rendered as a measured 0%;
+- calculate post-minus-pre article delta, daily-average delta, and article percent
+  change only when the pre count is non-zero. Calculate sentiment-share deltas in
+  percentage points only when both side denominators are non-zero. Retain unrounded
+  values for comparison and round only for display;
+- an exact `official-response` tag is coverage metadata for the excluded response day,
+  not a substitute for the user's date and not proof of speaker identity, authority,
+  causality, or effectiveness;
+- every fact uses `response.v1` or a named `response.*.v1` Python calculation source.
+  This aggregate section has no `EvidenceSet`; qualitative response-record selection
+  remains the distinct responsibility of `timeline`.
+
+Evidence: none. The section does not quote or rank individual records and does not use
+retrieval or RAG.
+
+Charts: one `response-window-comparison.png` stacked sentiment bar chart when at least
+one comparison window contains articles. The two bars represent the equal-length pre
+and post windows and use the required positive/neutral/negative colors. Each bar labels
+the total, daily average, and negative share, with unavailable displayed explicitly for
+a zero-sample side. The title states the measured comparison rather than an effect. A
+chart note gives both exact date ranges, says the response day was excluded, and says
+that observed before/after difference is not causal attribution. Use the shared white
+background, hidden top/right spines, embedded Chinese font, and 150 dpi theme.
+
+Narration contract:
+
+- at most one narrator operation after successful input validation, query,
+  calculation, and charting;
+- Chinese heading `回应前后对比`, followed by the user-supplied date, exact matched
+  windows and `windowDays`, response-day exclusion, scoped/comparison/excluded counts,
+  and exact response-day tag coverage;
+- compare only approved pre/post article totals, daily averages, sentiment counts and
+  shares, article percent change when available, and sentiment-share percentage-point
+  deltas when available. State missing denominators as unavailable rather than filling
+  in zero or asking the model to calculate;
+- use terms such as `回应前观察窗口`, `回应后观察窗口`, and `观察到的差异`. Never say that
+  the response caused, reduced, increased, resolved, failed, worked, or was ineffective.
+  Do not invent a response time, speaker identity, recommendation, cause, external fact,
+  evidence, or new number;
+- disclose the date-only limitation and that equal windows improve comparability but do
+  not establish a counterfactual. The deterministic Chinese/English stub renders the
+  same facts, unavailable values, exclusions, and limitations in automated tests.
+
+No-data rule: zero scoped articles, or no articles in either matched comparison window,
+returns `no_data` with a visible absence message and performs no chart or narrator
+operation. If exactly one side has zero articles, the section remains `complete`: it
+reports the observed appearance/disappearance, keeps zero-denominator shares and rate
+changes unavailable, and renders the chart honestly. Invalid input returns `failed`
+before the query runs. Query, calculation, chart, or narration errors return `failed`
+with a safe stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in
