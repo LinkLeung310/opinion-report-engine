@@ -94,6 +94,18 @@ This is section fault isolation, not a report-wide identical-snapshot guarantee.
 4. Write visible no-data/failed fragments and failure metadata for section failures.
 5. Atomically rename the temporary directory to `out/{id}` only after required bundle
    files exist.
+6. Read the exact `meta.json` back from the published bundle and atomically add it to
+   `out/index.json`; only then is the complete user flow successful.
+
+The repository did not receive the existing frontend source, its `ReportMeta` type, or
+an `index.json` sample. D-40 therefore defines the smallest replaceable local catalog
+contract: a top-level array of complete `ReportMeta` objects, newest `generatedAt`
+first. `CatalogPublisher` verifies the bundle and metadata before a locked read-modify-
+replace operation. It preserves unknown entry fields for forward compatibility, treats
+an identical report ID as an idempotent retry, and refuses malformed catalogs,
+duplicate IDs, or a conflicting reuse of one ID. A catalog error occurs after the
+bundle is safely published, leaves the previous catalog intact, and is a report-level
+publication failure rather than a false success.
 
 ## 5. Core domain models
 
@@ -333,7 +345,7 @@ These choices are deliberately explicit and form part of the project's product d
    transport retry for transient failures; the adapter records the attempt count in
    in-memory diagnostics without exposing provider payloads or credentials.
 6. **Generated-report list:** after atomic bundle publication, `CatalogPublisher`
-   atomically updates `index.json` so the report appears immediately.
+   atomically updates the D-40 `index.json` array so the report appears immediately.
 7. **Metadata failures:** append the safe `failures` array described above; preserve all
    existing required `ReportMeta` fields.
 8. **Empty charts directory:** always create `charts/`, including when every enabled

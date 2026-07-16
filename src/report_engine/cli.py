@@ -14,6 +14,7 @@ from report_engine.llm.protocol import Narrator
 from report_engine.llm.stub import StubNarrator
 from report_engine.runtime import build_report_service
 from report_engine.settings import Settings, SettingsError
+from report_engine.storage import CatalogPublicationError
 
 
 app = typer.Typer(
@@ -76,6 +77,9 @@ def generate(
             f"Database connection failed ({exc.__class__.__name__}).",
             err=True,
         )
+        raise typer.Exit(code=1) from exc
+    except CatalogPublicationError as exc:
+        typer.echo(f"Report publication failed: {exc}", err=True)
         raise typer.Exit(code=1) from exc
 
     target = out / report.report_id

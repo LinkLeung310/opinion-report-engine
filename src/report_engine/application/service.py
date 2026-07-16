@@ -22,7 +22,6 @@ from report_engine.domain.results import (
 from report_engine.domain.scope import AnalysisScope
 from report_engine.presentation import failed_section_markdown
 from report_engine.rendering.assembler import ReportAssembler
-from report_engine.storage.bundle import BundlePublisher
 
 
 class SectionRunner(Protocol):
@@ -37,6 +36,20 @@ class SectionRunner(Protocol):
 
 class PdfRenderer(Protocol):
     def render(self, markdown: str, chart_directory: Path) -> bytes: ...
+
+
+class BundlePublisherPort(Protocol):
+    def publish(
+        self,
+        report: ReportResult,
+        pdf_bytes: bytes,
+        chart_sources: dict[str, Path],
+        output_root: Path,
+    ) -> Path: ...
+
+
+class CatalogPublisherPort(Protocol):
+    def publish(self, bundle_path: Path, output_root: Path) -> Path: ...
 
 
 class ReportIdAllocator:
@@ -56,7 +69,8 @@ class ReportApplicationService:
         section_runners: Mapping[SectionId, SectionRunner],
         assembler: ReportAssembler,
         pdf_renderer: PdfRenderer,
-        publisher: BundlePublisher,
+        publisher: BundlePublisherPort,
+        catalog_publisher: CatalogPublisherPort,
         clock: Callable[[], datetime],
         id_allocator: ReportIdAllocator | None = None,
     ) -> None:
@@ -65,6 +79,7 @@ class ReportApplicationService:
         self._assembler = assembler
         self._pdf_renderer = pdf_renderer
         self._publisher = publisher
+        self._catalog_publisher = catalog_publisher
         self._clock = clock
         self._id_allocator = id_allocator or ReportIdAllocator()
 
@@ -98,12 +113,13 @@ class ReportApplicationService:
                 for result in results
                 for chart_name in result.charts
             }
-            self._publisher.publish(
+            bundle_path = self._publisher.publish(
                 report=report,
                 pdf_bytes=pdf_bytes,
                 chart_sources=chart_sources,
                 output_root=output_root,
             )
+            self._catalog_publisher.publish(bundle_path, output_root)
         return report
 
     def _run_section(
