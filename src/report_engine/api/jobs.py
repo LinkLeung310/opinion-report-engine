@@ -326,7 +326,9 @@ class JobStore:
         *,
         replace: Callable[[Path, Path], None] = os.replace,
     ) -> None:
-        self._tasks_root = Path(output_root) / ".report-jobs" / "tasks"
+        self._output_root = Path(output_root)
+        self._jobs_root = self._output_root / ".report-jobs"
+        self._tasks_root = self._jobs_root / "tasks"
         self._replace = replace
 
     def create(self, record: JobRecord) -> Path:
@@ -388,7 +390,7 @@ class JobStore:
         return self._tasks_root / f"{task_id}.json"
 
     def _ensure_tasks_root(self) -> None:
-        if self._tasks_root.is_symlink():
+        if self._jobs_root.is_symlink() or self._tasks_root.is_symlink():
             raise JobStoreError("Invalid report task storage")
         try:
             self._tasks_root.mkdir(parents=True, exist_ok=True)
@@ -405,6 +407,16 @@ class JobStore:
                     raise JobStoreError("Invalid report task storage")
                 return False
             if is_symlink or not self._tasks_root.is_dir():
+                raise JobStoreError("Invalid report task storage")
+            output_root = self._output_root.resolve(strict=True)
+            jobs_root = self._jobs_root.resolve(strict=True)
+            tasks_root = self._tasks_root.resolve(strict=True)
+            if (
+                self._jobs_root.is_symlink()
+                or self._tasks_root.is_symlink()
+                or jobs_root.parent != output_root
+                or tasks_root.parent != jobs_root
+            ):
                 raise JobStoreError("Invalid report task storage")
             return True
         except JobStoreError:

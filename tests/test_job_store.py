@@ -297,6 +297,22 @@ def test_store_rejects_a_corrupt_tasks_directory(tmp_path: Path) -> None:
         store.get(TASK_ID)
 
 
+def test_store_rejects_a_symlinked_internal_job_root(tmp_path: Path) -> None:
+    output_root = tmp_path / "out"
+    output_root.mkdir()
+    external = tmp_path / "external"
+    external.mkdir()
+    (output_root / ".report-jobs").symlink_to(
+        external,
+        target_is_directory=True,
+    )
+
+    with pytest.raises(JobStoreError, match="Invalid report task storage"):
+        JobStore(output_root).create(_queued())
+
+    assert not (external / "tasks").exists()
+
+
 def test_atomic_replace_failure_preserves_previous_job_state(tmp_path: Path) -> None:
     output_root = tmp_path / "out"
     normal_store = JobStore(output_root)

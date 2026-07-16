@@ -283,10 +283,13 @@ src/report_engine/
 │   ├── pdf.py
 │   └── templates/
 ├── storage/
-│   └── bundle.py
+│   ├── bundle.py
+│   ├── catalog.py
+│   └── archive.py
 └── api/
     ├── app.py
-    └── jobs.py
+    ├── jobs.py
+    └── manager.py
 ```
 
 This is a package-boundary proposal, not permission to create empty abstraction files.
