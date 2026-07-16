@@ -462,6 +462,67 @@ def test_cli_generates_a_complete_benchmark_only_bundle(tmp_path, monkeypatch) -
     assert meta["charts"] == 1 and meta["stats"]["articles"] == 12
 
 
+def test_cli_generates_a_complete_business_impact_only_bundle(
+    tmp_path, monkeypatch
+) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.pr.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    notes = "销量下降 20%，需结合内部转化率和客服工单核验。"
+    raw["sections"] = [
+        {"id": "biz-impact", "enabled": True, "input": {"notes": notes}}
+    ]
+    config = tmp_path / "report-config.biz-impact.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert "## 商业影响" in markdown
+    assert "### 可观测舆情信号" in markdown
+    assert "负面 7 篇（58.3%）" in markdown
+    assert "高/危负面 4 篇" in markdown
+    assert "四类存储互动计数合计 26,170" in markdown
+    provenance_line = (
+        "用户提供，数据库未验证（来源："
+        "report-config.sections[biz-impact].input.notes）："
+        f"{notes}"
+    )
+    assert provenance_line in markdown
+    assert "### 业务结果核验缺口" in markdown
+    assert "未建立因果关系" in markdown
+    assert list((target / "charts").glob("*.png")) == []
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {
+        "requested": 1,
+        "complete": 1,
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == 0
+    assert meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "58.3%",
+        "peakDay": "3/20",
+    }
+
+
 @pytest.mark.parametrize(
     ("filename", "report_type", "headings", "charts"),
     (

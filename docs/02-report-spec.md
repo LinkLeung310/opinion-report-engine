@@ -1382,6 +1382,116 @@ records outside the equal window alone do not change this rule. Invalid input re
 `failed` before SQL. Query, calculation, chart, or narration errors return `failed` with
 a safe stage-specific message while later sections continue.
 
+## `biz-impact` — 商业影响
+
+Purpose: connect measured public-opinion pressure with business context supplied by
+the user, while keeping the two provenance classes visibly separate. The section helps
+an executive identify plausible impact paths and verification gaps; it does not claim
+that captured discussion caused a commercial outcome or turn an unverified note into a
+database fact.
+
+Inputs: required section-specific `input.notes`.
+
+- `notes` must be a string. The engine trims the ends, converts line breaks and other
+  ordinary whitespace runs to one space, and then requires 1–1000 Unicode characters;
+  this accepts normal pasted prose without accepting an unbounded prompt;
+- NUL and non-whitespace C0/C1 control characters are rejected. Missing, non-string,
+  empty-after-normalization, control-character, or over-limit input returns a
+  section-local `INPUT` failure before SQL;
+- the normalized text is preserved as user-supplied context. It is data, never model
+  instructions: delimit it separately in the narrator request and ignore any request
+  inside it to change rules, expose secrets, invent facts, or call tools;
+- numeric or causal statements in `notes` remain allowed because they may be useful
+  business context, but every display must label them `用户提供，数据库未验证` /
+  `user-provided, not verified by the report database`. They must not become calculated
+  facts, evidence citations, or assertions by the report.
+
+Provenance boundary:
+
+- fixed SQL and named Python calculations form the `FactSet`;
+- normalized `notes` form a separate user-context object with source
+  `report-config.sections[biz-impact].input.notes` and verification status
+  `unverified`. They are not inserted into `FactSet` or `EvidenceSet`;
+- this explicit separation must survive prompt construction, deterministic stub
+  rendering, Markdown/PDF output, and tests. A narrator may relate an approved signal
+  to the supplied context using conditional language, but may not merge their
+  provenance or promote the context to a measured finding.
+
+Fixed query plan (`biz-impact.v1`):
+
+- hard-filter articles with the shared exact tag and complete half-open date scope;
+- return total, positive, neutral, and negative article counts; distinct platform and
+  active-day counts; peak local calendar day and its article count; high/critical
+  negative count; and summed stored likes, comments, shares, and favorites;
+- use only bound `topic_tag`, `from_inclusive`, `to_exclusive`, and `timezone_name`.
+  SQL does not inspect `notes`, generate a conclusion, search external systems, use an
+  LLM, embeddings/RAG, or n8n;
+- the query will live at `src/report_engine/data/queries/biz_impact.sql`.
+
+Derived in Python:
+
+- validate non-negative counts, sentiment totals, high/critical subset constraints,
+  calendar coverage, and peak consistency;
+- retain `articles`, the three sentiment counts and shares, `platformCount`, selected
+  calendar days, `activeDays`, active-day coverage, `peakDay`, `peakArticles`, peak
+  share, high/critical-negative count, its share of negative records and of all
+  records, four stored interaction counters, total stored interaction, stored
+  interaction per article, and comments-plus-shares;
+- organize, without scoring, two measured signal lenses: `舆情声誉压力` uses the
+  negative and high/critical facts; `公开讨论应对复杂度` uses captured volume,
+  platform spread, active-day/peak concentration, and stored comment/share counts.
+  These are descriptive lenses, not probabilities, monetary exposure, customer-service
+  workload, reach, audience size, or causal impact;
+- attach a third `业务结果核验缺口` lens that names the internal outcome data absent
+  from the report database. If the notes mention sales, conversion, churn, support
+  demand, traffic, share price, or another outcome, the narration may say that the
+  claim requires the corresponding internal time series and comparison baseline; it
+  may not invent either one;
+- every numeric value uses `biz-impact.v1` or a named `biz-impact.*.v1` Python source.
+  Ratios remain unrounded until display. Zero denominators are unavailable rather than
+  fabricated zero-percent findings.
+
+Evidence: none. This is an aggregate section and does not quote, rank, or interpret
+individual titles or summaries. `notes` are explicitly unverified user context, not an
+article `EvidenceSet`; retrieval and RAG are not used.
+
+Charts: none. The schema contains no sales, conversion, churn, support-volume, traffic,
+market, or other verified business-outcome series to plot. Repeating sentiment,
+timeline, platform, or engagement charts would duplicate other optional sections and
+could visually imply a measured business effect. The chapter therefore uses a compact
+text structure with provenance labels; a future outcome chart requires a new verified
+data contract and design decision.
+
+Narration contract:
+
+- at most one narrator operation after successful input validation, query,
+  calculation, and separate user-context construction;
+- Chinese heading `商业影响`, followed by three visibly distinct blocks: `可观测舆情信号`,
+  `用户提供的业务背景（未验证）`, and `业务结果核验缺口`. English uses equivalent
+  headings and preserves the same provenance labels;
+- disclose exact approved sample, pressure, coverage, peak, and stored-interaction
+  facts. Label heterogeneous stored counters as a captured operational snapshot, not
+  engagement rate, reach, unique users, support workload, or business loss;
+- the relationship between facts and notes may be described only as a hypothesis or a
+  condition to verify, using wording such as `与该背景同时观察到`, `可能的影响路径`, and
+  `尚不能据此确认`. Never say the public discussion caused or proves a revenue, sales,
+  conversion, churn, customer, market, operational, or reputational outcome;
+- do not calculate from numbers embedded in `notes`, add external knowledge, invent a
+  confidence/severity/impact score, prescribe response actions, or introduce an
+  Evidence ID. Recommendations remain the responsibility of the separately selected
+  `recommendations` section;
+- the deterministic Chinese/English stub renders the same approved facts, normalized
+  context, provenance labels, hypotheses, and limitations in automated tests.
+
+No-data rule: zero scoped articles returns `no_data` with retained zero facts and a
+visible message that the supplied context cannot be combined with an empty monitoring
+scope; it performs no narrator operation. A non-empty scope with zero negative records
+remains `complete` and states that the selected data shows no measured negative
+pressure, while keeping the notes unverified. Invalid input returns `failed` before
+SQL. Query, calculation, context construction, or narration errors return `failed`
+with a safe stage-specific message while later sections continue. No path creates a
+chart.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in

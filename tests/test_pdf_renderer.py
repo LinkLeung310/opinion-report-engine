@@ -69,3 +69,16 @@ def test_rejects_chart_paths_outside_the_bundle(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="charts/<filename>"):
         ReportLabPdfRenderer().render(markdown, tmp_path / "charts")
+
+
+def test_blockquote_renders_markdown_entities_as_literal_context(tmp_path) -> None:
+    markdown = (
+        "# Report\n\n"
+        "> 用户提供，数据库未验证：&lt;script&gt;&#91;not a link&#93;\n"
+    )
+
+    pdf_bytes = ReportLabPdfRenderer().render(markdown, tmp_path / "charts")
+    extracted_text = PdfReader(BytesIO(pdf_bytes)).pages[0].extract_text()
+
+    assert "<script>[not a link]" in extracted_text
+    assert "&lt;" not in extracted_text

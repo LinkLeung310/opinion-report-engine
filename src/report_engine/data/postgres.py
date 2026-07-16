@@ -11,6 +11,7 @@ from psycopg.rows import dict_row
 
 from report_engine.domain.scope import AnalysisScope
 from report_engine.sections.benchmark import BenchmarkCohort, BenchmarkSnapshot
+from report_engine.sections.biz_impact import BizImpactSnapshot
 from report_engine.sections.engagement import EngagementRecord, EngagementSnapshot
 from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.keywords import KeywordSourceRecord, KeywordsSnapshot
@@ -86,6 +87,12 @@ BENCHMARK_QUERY_ID = "benchmark.v1"
 BENCHMARK_SQL = (
     files("report_engine.data.queries")
     .joinpath("benchmark.sql")
+    .read_text(encoding="utf-8")
+)
+BIZ_IMPACT_QUERY_ID = "biz-impact.v1"
+BIZ_IMPACT_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("biz_impact.sql")
     .read_text(encoding="utf-8")
 )
 PLATFORMS_QUERY_ID = "platforms.v1"
@@ -461,6 +468,45 @@ class PostgresBenchmarkRepository:
             for row in rows
         )
         return BenchmarkSnapshot(cohorts[0], cohorts[1], BENCHMARK_QUERY_ID)
+
+
+class PostgresBizImpactRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> BizImpactSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+            "timezone_name": scope.timezone_name,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(BIZ_IMPACT_SQL, parameters)
+            row = cursor.fetchone()
+        if row is None:
+            raise RuntimeError("biz-impact query returned no aggregate row")
+
+        return BizImpactSnapshot(
+            start_day=scope.from_date,
+            end_day=scope.to_date,
+            article_count=row["article_count"],
+            positive_articles=row["positive_articles"],
+            neutral_articles=row["neutral_articles"],
+            negative_articles=row["negative_articles"],
+            platform_count=row["platform_count"],
+            active_days=row["active_days"],
+            peak_day=row["peak_day"],
+            peak_article_count=row["peak_article_count"],
+            high_critical_negative_articles=row[
+                "high_critical_negative_articles"
+            ],
+            likes=row["likes"],
+            comments=row["comments"],
+            shares=row["shares"],
+            favorites=row["favorites"],
+            query_id=BIZ_IMPACT_QUERY_ID,
+        )
 
 
 class PostgresPlatformsRepository:

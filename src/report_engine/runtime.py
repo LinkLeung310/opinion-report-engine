@@ -26,8 +26,9 @@ from report_engine.charts.timeline import TimelineChartBuilder
 from report_engine.charts.top_content import TopContentChartBuilder
 from report_engine.config import SectionId
 from report_engine.data.postgres import (
-    PostgresEngagementRepository,
     PostgresBenchmarkRepository,
+    PostgresBizImpactRepository,
+    PostgresEngagementRepository,
     PostgresKeywordsRepository,
     PostgresMediaSocialRepository,
     PostgresMetricsRepository,
@@ -48,6 +49,7 @@ from report_engine.llm.protocol import Narrator
 from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
 from report_engine.sections.engagement_runner import EngagementSectionRunner
 from report_engine.sections.benchmark_runner import BenchmarkSectionRunner
+from report_engine.sections.biz_impact_runner import BizImpactSectionRunner
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.keywords_runner import KeywordsSectionRunner
 from report_engine.sections.media_social_runner import MediaSocialSectionRunner
@@ -157,6 +159,10 @@ def build_report_service(
     benchmark_runner = BenchmarkSectionRunner(
         PostgresBenchmarkRepository(connection), BenchmarkChartBuilder(), narrator
     )
+    biz_impact_runner = BizImpactSectionRunner(
+        repository=PostgresBizImpactRepository(connection),
+        narrator=narrator,
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
         section_runners={
@@ -177,6 +183,7 @@ def build_report_service(
             SectionId.SPREAD_PATH: spread_path_runner,
             SectionId.RESPONSE: response_runner,
             SectionId.BENCHMARK: benchmark_runner,
+            SectionId.BIZ_IMPACT: biz_impact_runner,
         },
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),
