@@ -379,6 +379,60 @@ def test_cli_generates_a_complete_spread_path_only_bundle(tmp_path, monkeypatch)
     }
 
 
+def test_cli_generates_a_complete_response_only_bundle(tmp_path, monkeypatch) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.pr.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    raw["sections"] = [
+        {
+            "id": "response",
+            "enabled": True,
+            "input": {"responseDate": "2026-03-19"},
+        }
+    ]
+    config = tmp_path / "report-config.response.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert "## 回应前后对比" in markdown
+    assert "回应前等长 2 日窗口（3/17-3/18）收录 4 篇" in markdown
+    assert "回应后窗口（3/20-3/21）收录 4 篇" in markdown
+    assert "回应日整体排除：当日共有 2 篇，其中 1 篇带精确 official-response 标签" in markdown
+    assert "不建立因果关系、反事实，也不证明回应效果" in markdown
+    assert (target / "charts" / "response-window-comparison.png").is_file()
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {
+        "requested": 1,
+        "complete": 1,
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == 1
+    assert meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "暂无",
+        "peakDay": "暂无",
+    }
+
+
 @pytest.mark.parametrize(
     ("filename", "report_type", "headings", "charts"),
     (
