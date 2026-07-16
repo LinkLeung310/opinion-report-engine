@@ -8,7 +8,7 @@
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark` 与 `biz-impact` 已完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark`、`biz-impact` 与当前分支的 `recommendations` 已完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -69,7 +69,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark` 与 `biz-impact` 纵向切片。`recommendations`、完整英文矩阵和任意组合仍未完成。
+- M2 已完成并合并 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark` 与 `biz-impact` 纵向切片；`recommendations` 已在当前功能分支完成本地验收但尚未经 PR/CI 合并。完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -85,7 +85,7 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes`/`spread-path`/`response`/`benchmark`/`biz-impact` 纵向切片已经合并。当前分支 `codex/m2-recommendations-section` 从绿色 `main@eeeba95` 创建；下一阶段只先定义并实现 `recommendations` 的可审计行动建议边界。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes`/`spread-path`/`response`/`benchmark`/`biz-impact` 纵向切片已经合并。当前分支 `codex/m2-recommendations-section` 从绿色 `main@eeeba95` 创建，并已完成 `recommendations` 的本地纵向验收；下一步是提交、PR/CI 与合并，不在本分支混入英文矩阵。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## Context recovery 规则强化小步
 
@@ -311,6 +311,10 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - fixture PostgreSQL 正式验证四项行动依次为 `triage_high_risk`、`restore_user_control`、`explain_change`、`close_feedback_loop`，代表 Evidence ID 序列为 `bili-007`、`bili-005`、`bili-003`、`bili-007`；底层 `EvidenceSet` 按首次出现去重为三条。零文章返回合法空 snapshot，未命中主要行动的负面记录确定性进入人工复核回退。
 - SQL/事实小步单次检查：新模块与 PostgreSQL repository 静态编译、`git diff --check`、三个 SQL 绑定参数各出现一次，以及 recommendations 单元/真实 fixture PostgreSQL 集成测试共 7 项通过。pytest 仅提示沙箱无法写 `.pytest_cache`，不影响测试结果；本小步尚未接 runner、stub、CLI 或 PDF。
 - 规格小步单次检查：变更范围仅为逐章规格、设计决定与状态文档；`git diff --check`、唯一 `recommendations` 章节、唯一 D-36，以及固定 SQL/共享代码本/最多四项/确定性优先级/真实证据/无图表/一次 narrator/no-data/无 RAG/无外部执行合同均通过。未修改实现、fixtures 或 n8n，也未重复运行刚在 main CI 通过的 317 项测试。
+- `RecommendationsSectionRunner`、确定性中英文 stub、运行时注册和 standalone 评审配置已接通；存在负面记录时恰好一次 narrator 操作，零文章为 `no_data`、非空零负面为无 narrator 的常规监测结论。runner 逐项校验固定优先级、角色、时限、动作、核验文本、触发事实、代表原文和可重复 Evidence ID，并拒绝未知/乱序/改写引用。
+- recommendations-only 真实 fixture CLI bundle 为 1 章 complete、0 failed、0 图表，meta 显示 12 篇、负面占比 58.3%；正文按 `bili-007`、`bili-005`、`bili-003`、`bili-007` 顺序呈现四项行动，并明确建议角色、人工审核和无自动外部执行边界。
+- 产物小步单次阶段检查：`git diff --check`、全仓 Python 静态编译、`pip check`、健康 fixture PostgreSQL 下完整 pytest 330 项、真实 CLI bundle 与 Poppler A4 检查均通过。PDF 为两页，逐页原图复核无中文乱码、截断、重叠、Markdown 泄漏或孤立标题；第二页完整承载第 4 项、人工审核边界和方法说明。
+- 本小步未实现 RAG、未修改或激活 n8n，也未调用真实模型 API；真实 API 仍只留到全部本地功能完成后的最终凭据门控冒烟。
 
 ## M2 `timeline` 阶段入口
 

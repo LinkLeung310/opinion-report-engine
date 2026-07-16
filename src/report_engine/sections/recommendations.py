@@ -174,6 +174,14 @@ class RecommendationsSnapshot:
         )
 
     @property
+    def has_data(self) -> bool:
+        return self.article_count > 0
+
+    @property
+    def has_negative_articles(self) -> bool:
+        return self.negative_article_count > 0
+
+    @property
     def selected_actions(self) -> tuple[RecommendationAction, ...]:
         candidates: list[
             tuple[

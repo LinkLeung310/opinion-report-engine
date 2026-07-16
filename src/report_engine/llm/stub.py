@@ -19,6 +19,77 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.RECOMMENDATIONS:
+            evidence_by_id = {
+                evidence.record_id: evidence for evidence in request.evidence.records
+            }
+            blocks = []
+            action_count = int(values["selectedActionCount"].replace(",", ""))
+            for index in range(1, action_count + 1):
+                prefix = f"action{index}"
+                evidence = evidence_by_id[values[f"{prefix}RepresentativeId"]]
+                if request.language is Language.EN:
+                    blocks.append(
+                        f"### {index}. {values[f'{prefix}LabelEn']}\n\n"
+                        f"- Horizon: {values[f'{prefix}HorizonEn']}.\n"
+                        f"- Suggested role owners: {values[f'{prefix}OwnersEn']}.\n"
+                        f"- Trigger: {values[f'{prefix}TriggerArticles']} negative records "
+                        f"({values[f'{prefix}TriggerShare']}), including "
+                        f"{values[f'{prefix}HighCriticalArticles']} high/critical.\n"
+                        f"- Action: {values[f'{prefix}ActionEn']}\n"
+                        f"- Verification: {values[f'{prefix}VerificationEn']}\n"
+                        f"- Representative evidence: [Evidence: {evidence.record_id}] "
+                        f"{evidence.platform} | {evidence.title}: {evidence.summary}"
+                    )
+                else:
+                    blocks.append(
+                        f"### {index}. {values[f'{prefix}LabelZh']}\n\n"
+                        f"- 时限：{values[f'{prefix}HorizonZh']}。\n"
+                        f"- 建议角色：{values[f'{prefix}OwnersZh']}。\n"
+                        f"- 触发依据：负面记录 {values[f'{prefix}TriggerArticles']} 篇（"
+                        f"{values[f'{prefix}TriggerShare']}），其中高/危 "
+                        f"{values[f'{prefix}HighCriticalArticles']} 篇。\n"
+                        f"- 行动：{values[f'{prefix}ActionZh']}\n"
+                        f"- 核验：{values[f'{prefix}VerificationZh']}\n"
+                        f"- 代表证据：[Evidence: {evidence.record_id}] "
+                        f"{evidence.platform}｜{evidence.title}：{evidence.summary}"
+                    )
+            body = "\n\n".join(blocks)
+            if request.language is Language.EN:
+                return (
+                    "## Recommended actions\n\n"
+                    f"Among {values['articles']} scoped records, "
+                    f"{values['negativeArticles']} are negative "
+                    f"({values['negativeShare']}); {values['highCriticalNegativeArticles']} "
+                    f"are high/critical ({values['highCriticalNegativeShare']} of negative "
+                    f"records). The shared codebook classifies "
+                    f"{values['classifiedNegativeArticles']} negative records "
+                    f"({values['classifiedNegativeShare']}). The versioned playbook selects "
+                    f"{values['selectedActionCount']} actions, omits "
+                    f"{values['omittedActionCount']}, and allows at most "
+                    f"{values['maximumActions']}. Priority follows deterministic rule order, "
+                    "not an effectiveness, confidence, or expected-value score.\n\n"
+                    f"{body}\n\nSuggested role owners are not automatic assignments. "
+                    "Playbook horizons are response targets; human review must adapt every "
+                    "action to operational, legal, policy, and business context. The engine "
+                    "does not send messages, change the product, or open tickets."
+                )
+            return (
+                "## 行动建议\n\n"
+                f"监测范围内 {values['articles']} 篇内容中有 "
+                f"{values['negativeArticles']} 篇负面内容（{values['negativeShare']}）；"
+                f"高/危负面 {values['highCriticalNegativeArticles']} 篇，占负面记录的 "
+                f"{values['highCriticalNegativeShare']}。共享代码本分类 "
+                f"{values['classifiedNegativeArticles']} 篇负面记录（"
+                f"{values['classifiedNegativeShare']}）。版本化 playbook 选择 "
+                f"{values['selectedActionCount']} 项、遗漏 {values['omittedActionCount']} 项，"
+                f"最多 {values['maximumActions']} 项；优先级采用确定性规则排序，不是效果、"
+                "置信度或预期价值评分。\n\n"
+                f"{body}\n\n上述负责人是建议角色而非自动指派。行动时限是 playbook "
+                "响应目标，必须由人工结合运营、法律、政策和业务背景审核调整；引擎不会自动"
+                "发送消息、修改产品或创建工单。"
+            )
+
         if request.section_id is SectionId.BIZ_IMPACT:
             context = request.user_context
             if context is None:
