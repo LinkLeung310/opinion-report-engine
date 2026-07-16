@@ -20,6 +20,7 @@ from report_engine.domain.results import (
     SectionStatus,
 )
 from report_engine.domain.scope import AnalysisScope
+from report_engine.presentation import failed_section_markdown
 from report_engine.rendering.assembler import ReportAssembler
 from report_engine.storage.bundle import BundlePublisher
 
@@ -120,6 +121,7 @@ class ReportApplicationService:
                 section_id,
                 FailureStage.INPUT,
                 "; ".join(input_errors),
+                language,
             )
 
         runner = self._section_runners.get(section_id)
@@ -128,6 +130,7 @@ class ReportApplicationService:
                 section_id,
                 FailureStage.INPUT,
                 "Section is not implemented",
+                language,
             )
 
         try:
@@ -137,6 +140,7 @@ class ReportApplicationService:
                 section_id,
                 FailureStage.CALCULATION,
                 "Unexpected section execution failure",
+                language,
             )
 
     @staticmethod
@@ -144,12 +148,13 @@ class ReportApplicationService:
         section_id: SectionId,
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
     ) -> SectionResult:
         return SectionResult(
             section_id=section_id,
             status=SectionStatus.FAILED,
-            markdown=f"## {section_id.value}\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(section_id, language),
             facts=facts,
             failure=SectionFailure(stage=stage, message=message),
         )

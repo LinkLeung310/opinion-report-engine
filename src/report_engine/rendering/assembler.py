@@ -6,6 +6,7 @@ from datetime import datetime
 
 from report_engine.config import Language, ReportConfig, SectionId
 from report_engine.domain.results import ReportResult, SectionResult, SectionStatus
+from report_engine.presentation import not_available, select
 
 
 class ReportAssembler:
@@ -16,7 +17,7 @@ class ReportAssembler:
         sections: tuple[SectionResult, ...],
         generated_at: datetime,
     ) -> ReportResult:
-        title = f"{config.topic.event_title}舆情分析报告"
+        title = f"{config.topic.event_title}{select(config.language, '舆情分析报告', ' Public Opinion Analysis Report')}"
         markdown = self._markdown(config, title, sections)
         meta = self._meta(config, report_id, title, sections, generated_at)
         return ReportResult(
@@ -37,9 +38,12 @@ class ReportAssembler:
         date_range = config.date_range
         parts = [
             f"# {title}",
-            (
+            select(
+                config.language,
                 f"> 监测范围：{date_range.from_date.isoformat()} 至 "
-                f"{date_range.to_date.isoformat()}（Asia/Shanghai）"
+                f"{date_range.to_date.isoformat()}（Asia/Shanghai）",
+                f"> Monitoring scope: {date_range.from_date.isoformat()} to "
+                f"{date_range.to_date.isoformat()} (Asia/Shanghai)",
             ),
         ]
         for section in sections:
@@ -47,7 +51,11 @@ class ReportAssembler:
             chart_alt = ReportAssembler._chart_alt(section.section_id, config.language)
             parts.extend(f"![{chart_alt}](charts/{chart})" for chart in section.charts)
         parts.append(
-            "_方法说明：报告数字由固定 SQL 与 Python 计算；模型仅基于批准的事实与证据撰写文字。_"
+            select(
+                config.language,
+                "_方法说明：报告数字由固定 SQL 与 Python 计算；模型仅基于批准的事实与证据撰写文字。_",
+                "_Method: all report figures are calculated by fixed SQL and Python; the model writes only from approved facts and evidence._",
+            )
         )
         return "\n\n".join(parts) + "\n"
 
@@ -118,7 +126,7 @@ class ReportAssembler:
             },
             "sections": len(sections),
             "charts": sum(len(section.charts) for section in sections),
-            "stats": self._summary_stats(sections),
+            "stats": self._summary_stats(sections, config.language),
             "file": f"/reports/{report_id}.pdf",
             "generatedAt": generated_at.isoformat(),
             "generation": {
@@ -131,7 +139,10 @@ class ReportAssembler:
         }
 
     @staticmethod
-    def _summary_stats(sections: tuple[SectionResult, ...]) -> dict:
+    def _summary_stats(
+        sections: tuple[SectionResult, ...],
+        language: Language = Language.ZH,
+    ) -> dict:
         def first_fact(*keys: str):
             for section in sections:
                 if section.facts is None:
@@ -151,7 +162,11 @@ class ReportAssembler:
             "negativeRatio": (
                 negative_ratio.formatted_value
                 if negative_ratio is not None
-                else "暂无"
+                else not_available(language)
             ),
-            "peakDay": peak_day.formatted_value if peak_day is not None else "暂无",
+            "peakDay": (
+                peak_day.formatted_value
+                if peak_day is not None
+                else not_available(language)
+            ),
         }
