@@ -1,7 +1,7 @@
 # Current Project State
 
 最后核对日期：2026-07-16
-最后实现基线：`main@9b5046d`（PR #15，auditable top content analysis）
+最后实现基线：`main@d5d2120`（PR #16，auditable negative themes analysis）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
@@ -35,12 +35,14 @@
 - PR #13 的 M1 标准默认配置已用 merge commit 合并：`93f7d16`。
 - PR #14 的 timeline slice 已用 merge commit 合并：`26814cf`。
 - PR #15 的 top-content slice 已用 merge commit 合并：`9b5046d`。
+- PR #16 的 negative-themes slice 已用 merge commit 合并：`d5d2120`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
 - `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
 - `main@93f7d16` 的 GitHub CI：180 项测试通过（run `29425308622`）。
 - `main@26814cf` 的 GitHub CI：196 项测试通过（run `29471052154`）。
 - `main@9b5046d` 的 GitHub CI：211 项测试通过（run `29472151204`）。
+- `main@d5d2120` 的 GitHub CI：227 项测试通过（run `29473309498`）。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -59,7 +61,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline` 与 `top-content` 纵向切片；当前分支已完成 `negative-themes` 纵向切片，尚待 PR/CI/合并。其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
+- M2 已完成并合并 `timeline`、`top-content` 与 `negative-themes` 纵向切片；当前进入 `spread-path` 规格阶段。其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -75,7 +77,7 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content` 纵向切片已经合并。当前分支 `codex/m2-negative-themes-section` 从绿色 `main@9b5046d` 创建；下一阶段只定义并实现 `negative-themes` 的可审计分析切片。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes` 纵向切片已经合并。当前分支 `codex/m2-spread-path-section` 从绿色 `main@d5d2120` 创建；下一阶段只定义并实现 `spread-path` 的可审计分析切片。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## Context recovery 规则强化小步
 
@@ -125,12 +127,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 
 ## 当前阶段与下一步
 
-- PR #15 已用 merge commit `9b5046d` 合并；`main@9b5046d` 的独立 CI run `29472151204` 已通过 211 项测试。当前分支 `codex/m2-negative-themes-section` 已从该绿色基线创建并推送。
-- `timeline` 与 `top-content` 的完整纵向切片已合并；`negative-themes` 的规格、D-31、固定 SQL、Python 代码本分类/事实、runner、图表、确定性 stub、运行时与 CLI/PDF 产物均已完成，下一小步是阶段 PR/CI/合并闭环。
-- 新分支第一次检查：当前分支与 `main@9b5046d` merge-base 完全一致，工作区创建时干净，main CI 的成功状态与 head SHA 精确匹配；没有从旧功能分支串联开发。
-- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
+- PR #16 已用 merge commit `d5d2120` 合并；`main@d5d2120` 的独立 CI run `29473309498` 已通过 227 项测试。当前分支 `codex/m2-spread-path-section` 已从该绿色基线创建并推送。
+- `timeline`、`top-content` 与 `negative-themes` 的完整纵向切片已合并；下一小步只定义 `spread-path` 的独有用户价值、固定查询、事实、证据、图表、叙述与退化合同，不直接开始实现。
+- 新分支第一次检查：当前分支与 `main@d5d2120` merge-base 完全一致，工作区创建时干净，main CI 的成功状态与 head SHA 精确匹配；没有从旧功能分支串联开发。
+- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 227 项；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 `negative-themes` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 `spread-path` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
 ## M2 `top-content` 阶段入口
 
@@ -178,7 +180,15 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - PDF 经 Poppler 验证为 A4 单页；页图与图表原图人工复核显示中文、三条主题证据、洞察标题、重叠免责声明、图例、数值标签、方法框和页脚均清晰，无乱码、截断、重叠、标签遮挡或孤页。
 - 产物小步第一次检查：变更范围仅为 runner、图表、stub、运行时、图片 alt 和对应测试；`git diff --check`、Python 静态编译、唯一 narrator 调用点、唯一运行时注册及聚焦测试 13 项通过。检查过程中加固了组合覆盖数字的原子校验。
 - 产物小步第二次检查：健康 fixture PostgreSQL 下 `negative-themes` SQL + CLI 集成测试 3 项通过，完整 pytest 实际收集并通过 227 项；`pip check` 无破损依赖。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
-- 当前阶段实现与本地验收已完成；尚未创建 PR、运行分支 CI、合并到 `main` 或创建下一阶段分支。
+- PR #16 分支 CI run `29473253484` 通过后转为 ready，并用 merge commit `d5d2120` 合并；合并后独立 main CI run `29473309498` 通过 227 项测试。功能分支保留，未 squash 或删除历史。
+
+## M2 `spread-path` 阶段入口
+
+- 产品框架只把 `spread-path` 定义为“话题如何在平台与时间之间扩散”；任务书没有提供扩散边定义、跨平台因果证据、时间窗口、节点/边上限、证据选择、图表或退化行为，这些必须标为项目自主设计。
+- 本章与 `timeline` 的代表性里程碑、`trend` 的总体时间序列和 `platforms` 的平台聚合存在明显重叠。下一小步必须先定义独有用户价值和去重原则，不能把三张已有视图拼接后称为传播路径，也不能把先后出现静默解释成转发或因果扩散。
+- 任务书要求所有数字可追溯、观点来自真实摘要；因此任何可见的跨平台时序关系都必须由固定 SQL/Python 事实和真实 Evidence ID 支撑，模型最多做一次受限叙述。
+- 当前 schema 是否足以支持文章级转发链/引用边尚未审计；若只有平台与时间，就必须把结果命名为“可观测平台迁移顺序”或同等非因果口径，并在规格中明确数据能力边界。
+- 用户要求 RAG 暂不开始，本阶段先设计确定性、可测试的非 RAG 基线；不引入 embedding、vector store、retriever 或 reranker，不修改 n8n，不调用真实模型 API，也不提前实现 `response`。
 
 ## M2 `timeline` 阶段入口
 
