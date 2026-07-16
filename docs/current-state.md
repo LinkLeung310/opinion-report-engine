@@ -90,9 +90,9 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 根目录继续使用 Codex 自动识别的标准文件名 `AGENTS.md`，不另建内容重复的 `agent.md`；它是所有新会话和上下文压缩后的唯一治理入口。
 - `AGENTS.md` 已明确整理任务书、产品框架、引擎架构、逐章规格、设计决定、追踪矩阵和当前状态的文档职责，避免把项目自主设计误称为面试方要求，也避免在多处复制 19 章细节。
 - RAG 继续冻结为计划边界，未开始 embedding、vector store、retriever、reranker 或检索评测；n8n 继续是 Draft/inactive 的 M3 API 可视化编排层，本小步没有修改本机工作流或导出 JSON。
-- Git 闭环已写清：每步从规则恢复上下文、限定一个意图、做两轮检查、更新本文件、选择性提交并 push；阶段完成后才走 Draft PR/CI/merge，合并后的下一阶段必须从最新绿色 `main` 新建分支。
+- Git 闭环已写清：每步从规则恢复上下文、限定一个意图、做一次与风险相称的合并检查、更新本文件、选择性提交并 push；阶段完成后才走 Draft PR/CI/merge，合并后的下一阶段必须从最新绿色 `main` 新建分支。
 - 真实模型 API 只在全部本地功能与自动化验证完成后做凭据门控的最终冒烟测试；开发与 CI 使用可注入 stub/fake。
-- 第一次检查（静态与一致性）：`git diff --check` 通过；`AGENTS.md` 引用的 7 份框架/状态文档全部存在，RAG 延期、n8n Draft 边界、每步两轮检查、GitHub push 和最终 API 冒烟规则均可定位；`n8n/` 无变更。
+- 第一次检查（静态与一致性）：`git diff --check` 通过；`AGENTS.md` 引用的 7 份框架/状态文档全部存在，RAG 延期、n8n Draft 边界、当时的每步两轮检查规则、GitHub push 和最终 API 冒烟规则均可定位；`n8n/` 无变更。
 - 第二次检查（可执行回归）：真实 fixture PostgreSQL 下完整 pytest 160 项通过；`python -m pip check` 无破损依赖。
 
 ## 治理切片验证
@@ -101,7 +101,8 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 第二次检查（可执行回归）：真实 fixture PostgreSQL 环境下完整 pytest 为 47 项通过；`python -m pip check` 无破损依赖。
 - 小步提交：context recovery 入口、RAG/fixture 边界和 PR 证据模板分别提交，没有混入 RAG 实现或 n8n 节点修改。
 
-以后每个小步必须在本文件记录本次结果，并重新执行与该小步相称的两轮检查；历史结果不能替代当前验证。
+用户于 2026-07-16 将后续小步改为一次与风险相称的合并检查，以减少重复运行时间；专属 SQL/LLM/PDF 证据仍按变更风险保留，完整 pytest、`pip check` 和必要视觉检查集中在阶段收口。历史结果不能替代当前需要的验证。
+- 单次检查规则更新小步只修改 `AGENTS.md` 与本状态文件：`git diff --check`、固定闭环中的单次检查表述、阶段收口完整回归门禁及变更范围检查通过；这是独立 docs commit，不混入业务实现，也未因文档变更重复运行刚通过的 317 项测试。
 
 ## M1 `verdict` 规格切片
 
