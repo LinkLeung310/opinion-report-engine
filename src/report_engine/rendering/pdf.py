@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from html import unescape
 from io import BytesIO
 from pathlib import Path, PurePosixPath
 from xml.sax.saxutils import escape
@@ -178,7 +179,12 @@ class ReportLabPdfRenderer:
                 continue
             if line.startswith("> "):
                 flush_paragraph()
-                story.append(Paragraph(escape(line[2:]), self._styles["scope"]))
+                story.append(
+                    Paragraph(
+                        escape(unescape(line[2:])),
+                        self._styles["scope"],
+                    )
+                )
                 continue
 
             image_match = IMAGE_PATTERN.match(line)

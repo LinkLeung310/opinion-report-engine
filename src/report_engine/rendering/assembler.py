@@ -144,7 +144,7 @@ class ReportAssembler:
             return None
 
         articles = first_fact("articles", "articleCount", "currentArticles")
-        negative_ratio = first_fact("negativeRatio")
+        negative_ratio = first_fact("negativeRatio", "negativeShare")
         peak_day = first_fact("peakDay")
         return {
             "articles": articles.raw_value if articles is not None else 0,

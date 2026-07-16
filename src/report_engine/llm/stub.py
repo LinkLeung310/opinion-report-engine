@@ -19,6 +19,106 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.BIZ_IMPACT:
+            context = request.user_context
+            if context is None:
+                raise ValueError("Business-impact narration needs user context")
+
+            if request.language is Language.EN:
+                date_from, date_to = str(
+                    request.facts.get("dateRange").raw_value
+                ).split("/", maxsplit=1)
+                high_critical_negative_share = values[
+                    "highCriticalNegativeShare"
+                ]
+                if high_critical_negative_share == "不可用":
+                    high_critical_negative_share = "unavailable"
+                negative_pressure = (
+                    "The selected records show no measured negative pressure. "
+                    if request.facts.get("negativeArticles").raw_value == 0
+                    else ""
+                )
+                return (
+                    "## Business impact\n\n"
+                    "### Observable public-opinion signals\n\n"
+                    f"From {date_from} to {date_to}, the report database captures "
+                    f"{values['articles']} records: {values['positiveArticles']} "
+                    f"positive ({values['positiveShare']}), "
+                    f"{values['neutralArticles']} neutral "
+                    f"({values['neutralShare']}), and "
+                    f"{values['negativeArticles']} negative "
+                    f"({values['negativeShare']}). "
+                    f"{negative_pressure}High/critical negative records total "
+                    f"{values['highCriticalNegativeArticles']}, representing "
+                    f"{high_critical_negative_share} of negative records and "
+                    f"{values['highCriticalAllShare']} of all records.\n\n"
+                    f"The captured discussion spans {values['platforms']} platforms "
+                    f"and {values['activeDays']} of {values['calendarDays']} calendar "
+                    f"days ({values['activeDayCoverage']}). It peaks on "
+                    f"{values['peakDay']} with {values['peakArticles']} records "
+                    f"({values['peakShare']}). Stored counters total "
+                    f"{values['totalStoredInteraction']}: likes {values['likes']}, "
+                    f"comments {values['comments']}, shares {values['shares']}, and "
+                    f"favorites {values['favorites']}; comments plus shares total "
+                    f"{values['commentsAndShares']}, and the stored-counter average "
+                    f"is {values['storedInteractionPerArticle']} per record. These "
+                    "heterogeneous counters are a captured operational snapshot, "
+                    "not engagement rate, reach, unique users, support workload, or "
+                    "business loss.\n\n"
+                    "### User-provided business context (unverified)\n\n"
+                    f"> User-provided, not verified by the report database "
+                    f"(source: {context.source_id}): {context.markdown_safe_text}\n\n"
+                    "This context is observed alongside the approved signals and may "
+                    "describe a possible impact path. It is not a measured finding, "
+                    "and the report cannot confirm the stated outcome from these "
+                    "records.\n\n"
+                    "### Business-outcome verification gap\n\n"
+                    "The report database has no verified business-outcome series. "
+                    "The hypothesis requires the corresponding internal outcome time "
+                    "series and a comparison baseline. No causal relationship is "
+                    "established, and this section does not prescribe actions."
+                )
+
+            negative_pressure = (
+                "所选记录未显示可测量的负面舆情压力。"
+                if request.facts.get("negativeArticles").raw_value == 0
+                else ""
+            )
+            return (
+                "## 商业影响\n\n"
+                "### 可观测舆情信号\n\n"
+                f"报告数据库在 {values['dateRange']} 共收录 "
+                f"{values['articles']} 篇：正面 {values['positiveArticles']} 篇（"
+                f"{values['positiveShare']}）、中性 "
+                f"{values['neutralArticles']} 篇（{values['neutralShare']}）、"
+                f"负面 {values['negativeArticles']} 篇（"
+                f"{values['negativeShare']}）。{negative_pressure}高/危负面 "
+                f"{values['highCriticalNegativeArticles']} 篇，占负面记录的 "
+                f"{values['highCriticalNegativeShare']}、占全部记录的 "
+                f"{values['highCriticalAllShare']}。\n\n"
+                f"公开讨论覆盖 {values['platforms']} 个平台，在 "
+                f"{values['calendarDays']} 个日历日中活跃 "
+                f"{values['activeDays']} 日（{values['activeDayCoverage']}）；"
+                f"{values['peakDay']} 达峰，共 {values['peakArticles']} 篇（"
+                f"{values['peakShare']}）。四类存储互动计数合计 "
+                f"{values['totalStoredInteraction']}：点赞 {values['likes']}、"
+                f"评论 {values['comments']}、转发 {values['shares']}、收藏 "
+                f"{values['favorites']}；评论加转发 "
+                f"{values['commentsAndShares']}，篇均存储计数 "
+                f"{values['storedInteractionPerArticle']}。这些异质计数只是采集"
+                "到的运营快照，不代表互动率、真实触达、独立用户、客服工作量或"
+                "业务损失。\n\n"
+                "### 用户提供的业务背景（未验证）\n\n"
+                f"> 用户提供，数据库未验证（来源：{context.source_id}）："
+                f"{context.markdown_safe_text}\n\n"
+                "该背景与上述可观测信号同时出现，可作为可能的影响路径线索；"
+                "它不是数据库测量结论，尚不能据此确认其中描述的业务结果。\n\n"
+                "### 业务结果核验缺口\n\n"
+                "报告数据库缺少已验证的业务结果序列。该假设需要用对应的内部"
+                "结果时间序列和比较基线核验；当前未建立因果关系，本章节也不提供"
+                "行动建议。"
+            )
+
         if request.section_id is SectionId.BENCHMARK:
             if request.language is Language.EN:
                 return (

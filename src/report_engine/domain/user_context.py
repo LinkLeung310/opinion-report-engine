@@ -28,3 +28,24 @@ class UserContext:
             raise ValueError("User context text must be normalized")
         if self.verification_status is not VerificationStatus.UNVERIFIED:
             raise ValueError("User context must remain explicitly unverified")
+
+    @property
+    def markdown_safe_text(self) -> str:
+        """Render the normalized text literally in Markdown, without active markup."""
+
+        replacements = str.maketrans(
+            {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                "!": "&#33;",
+                "[": "&#91;",
+                "]": "&#93;",
+                "*": "&#42;",
+                "_": "&#95;",
+                "`": "&#96;",
+                "\\": "&#92;",
+                "~": "&#126;",
+            }
+        )
+        return self.text.translate(replacements)

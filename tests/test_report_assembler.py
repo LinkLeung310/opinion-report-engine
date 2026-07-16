@@ -154,3 +154,38 @@ def test_meta_summary_uses_available_selected_section_facts_without_false_zero()
         "negativeRatio": "暂无",
         "peakDay": "3/20",
     }
+
+
+def test_meta_summary_maps_business_impact_negative_share() -> None:
+    raw = sample_config()
+    raw["sections"] = [
+        {"id": "biz-impact", "enabled": True, "input": {"notes": "待核验"}}
+    ]
+    config = ReportConfig.model_validate(raw)
+    facts = FactSet(
+        facts=(
+            Fact("articles", 12, "12", "biz-impact.v1"),
+            Fact("negativeShare", 7 / 12, "58.3%", "biz-impact.sentiment-shares.v1"),
+            Fact("peakDay", date(2026, 3, 20), "3/20", "biz-impact.v1"),
+        )
+    )
+
+    result = ReportAssembler().assemble(
+        config,
+        "layoff-2026-03-23-v1",
+        (
+            SectionResult(
+                section_id=SectionId.BIZ_IMPACT,
+                status=SectionStatus.COMPLETE,
+                markdown="## 商业影响\n\n已生成。",
+                facts=facts,
+            ),
+        ),
+        datetime(2026, 7, 15, 2, 0, tzinfo=UTC),
+    )
+
+    assert result.meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "58.3%",
+        "peakDay": "3/20",
+    }
