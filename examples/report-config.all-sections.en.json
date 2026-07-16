@@ -1,0 +1,48 @@
+{
+  "reportType": "pr",
+  "language": "en",
+  "topic": {
+    "tag": "bilibili-dislike",
+    "displayName": "Recommendation controls",
+    "eventTitle": "Recommendation controls change"
+  },
+  "dateRange": {
+    "from": "2026-03-17",
+    "to": "2026-03-23"
+  },
+  "sections": [
+    {"id": "verdict", "enabled": true},
+    {"id": "metrics", "enabled": true},
+    {"id": "trend", "enabled": true},
+    {"id": "viewpoints", "enabled": true},
+    {"id": "platforms", "enabled": true},
+    {"id": "severity", "enabled": true},
+    {"id": "risk", "enabled": true},
+    {"id": "sentiment-evolution", "enabled": true},
+    {"id": "keywords", "enabled": true},
+    {"id": "engagement", "enabled": true},
+    {"id": "media-social", "enabled": true},
+    {"id": "timeline", "enabled": true},
+    {"id": "top-content", "enabled": true},
+    {"id": "negative-themes", "enabled": true},
+    {"id": "spread-path", "enabled": true},
+    {
+      "id": "response",
+      "enabled": true,
+      "input": {"responseDate": "2026-03-19"}
+    },
+    {
+      "id": "benchmark",
+      "enabled": true,
+      "input": {"comparisonTag": "legacy-feed-controls"}
+    },
+    {
+      "id": "biz-impact",
+      "enabled": true,
+      "input": {
+        "notes": "Customer-support volume and conversion changes require internal verification."
+      }
+    },
+    {"id": "recommendations", "enabled": true}
+  ]
+}

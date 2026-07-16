@@ -46,8 +46,11 @@ The M2 vertical slices now also implement `timeline`, `top-content`, `negative-t
 `spread-path`, `response`, `benchmark`, `biz-impact`, and `recommendations`. The last of
 these converts fixed risk/theme signals into at most four evidence-linked, human-review
 actions without assigning owners, executing work, or claiming an effectiveness score.
-Full M2 completion still requires the cross-section English and arbitrary-combination
-matrix; see `docs/current-state.md` for the exact boundary.
+The deterministic M2 acceptance matrix now covers all 19 English sections, all three
+section-specific inputs, a reordered mixed selection, all-section `no_data`, localized
+partial failure, narrator call limits, the complete bundle, 15 charts, and A4 PDF output.
+The real OpenAI-compatible narrator remains a separate unfinished integration; see
+`docs/current-state.md` for the exact boundary.
 
 From the repository root:
 
@@ -68,6 +71,12 @@ The complete eleven-section PR default uses the same engine and fixture scope:
 
 ```powershell
 .\.venv\Scripts\report.exe generate --config examples\report-config.pr.json --out out --stub-llm
+```
+
+Generate the complete 19-section English M2 review bundle:
+
+```powershell
+.\.venv\Scripts\report.exe generate --config examples\report-config.all-sections.en.json --out out --stub-llm
 ```
 
 Review the recommendation playbook as a standalone selectable section:
