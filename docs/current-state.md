@@ -226,6 +226,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - input 贯通小步第一次检查：`git diff --check`、17 个预期代码/测试文件范围、Python 静态编译、15/15 runner 签名覆盖和唯一 service 传递点均通过；新增测试覆盖配置 → planner → service → runner 的精确字典保留。
 - input 贯通小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 244 项，`pip check` 无破损依赖。本小步未新增 SQL、response runner/图表、LLM、RAG、n8n 或真实 API 调用。
 - 下一小步只实现固定 `response.sql`、输入日期解析/窗口校验、Python 聚合事实和真实 fixture PostgreSQL 集成测试；runner、图表与 narrator 仍留到后续提交。
+- 固定 `response.sql`、`PostgresResponseRepository`、严格 `YYYY-MM-DD` 解析、`ResponseWindow`、逐篇情感/标签观察、平衡前后窗口统计和可追溯 `FactSet` 已实现。SQL 只绑定 tag、半开时间边界与报告时区；回应日期不进入 SQL，也不从标签推断，Python 在查询前验证日期必须严格位于报告范围内部。
+- Python 最多取前后各 7 个完整自然日并排除回应日；事实完整保留前后日期、样本量、每日均量、三类情感计数/占比、量级差/变化率、情感占比百分点差、回应日及标签覆盖和平衡窗口外记录。单侧零样本的占比/变化率为 `不可用`，不会伪装成 0%；两侧均无比较记录仍保留可审计空事实供后续 runner 判为 `no_data`。
+- 真实 fixture 集成测试正式验证范围内 12 篇，前窗口 0/2/2、后窗口 1/1/2（正/中/负），两侧各 4 篇且日均 2.0，回应日 2 篇/精确标签 1 篇，窗口外 2 篇，负面占比差 `+0.0 个百分点`；空话题返回窗口完整的零值 snapshot。
+- SQL/事实小步第一次检查：`git diff --check`、Python 静态编译、四个 SQL 绑定参数各出现一次、无超长新增 Python 行及 response 领域 15 项测试通过；覆盖严格日期、范围边界、7 日上限、回应日排除、单侧零分母和范围外观察拒绝。
+- SQL/事实小步第二次检查：健康 fixture PostgreSQL 下 response 专属集成测试 2 项通过，完整 pytest 实际收集并通过 261 项，`pip check` 无破损依赖。本小步未接 response runner/图表/stub/运行时、RAG、n8n 或真实模型 API。
+- 下一小步只接入 fault-isolated response runner、150 dpi 对比图、确定性中英文 stub 和运行时注册，再做 response-only CLI/PDF 产物验收。
 
 ## M2 `timeline` 阶段入口
 
