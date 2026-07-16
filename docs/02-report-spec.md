@@ -788,6 +788,101 @@ with zero negative records in both populated groups also remains `complete` and 
 the valid zero-negative finding. Query, calculation, chart, or narration errors return
 `failed` with a safe stage-specific message while later sections continue.
 
+## `timeline` — 事件时间线
+
+Purpose: show a compact chronology of observable records from first capture through
+the volume peak to the last capture, with an explicitly tagged response when present.
+The section presents selected evidence milestones; it does not claim a complete event
+history, infer causality from ordering, or treat engagement as reach or impact.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`timeline.v1`):
+
+- hard-filter articles with the shared topic tag and complete half-open timestamp
+  scope, using the report timezone for local calendar days;
+- calculate scoped article count and daily counts, then choose the earliest
+  highest-volume day when multiple days tie;
+- emit four role candidates when available: the earliest scoped record
+  (`first_observed`), the earliest record carrying the exact structured tag
+  `official-response` (`tagged_response`), the peak-day record with the highest stored
+  total engagement (`peak_day_representative`), and the latest scoped record
+  (`last_observed`);
+- rank the peak-day representative by total engagement descending, then timestamp
+  ascending and external ID ascending, where total engagement is the stored
+  `likes + comments + shares + favorites` counter sum. Rank first/tagged-response candidates by
+  timestamp ascending and external ID ascending; rank the last candidate by timestamp
+  descending and external ID ascending;
+- return at most four role rows plus scoped total, peak day/count, and number of
+  response-tagged records. A record may appear in more than one role row and is merged
+  in Python rather than duplicated for readers;
+- preserve each candidate's real external ID, title, summary, platform, timestamp,
+  sentiment, and total engagement. Use only bound `topic_tag`, `from_inclusive`,
+  `to_exclusive`, and report timezone values. The query will live at
+  `src/report_engine/data/queries/timeline.sql`; it does not generate SQL, use text
+  heuristics, embeddings, RAG, an LLM, external search, or n8n.
+
+Derived in Python:
+
+- deduplicate candidates by external ID, combine their role labels in fixed role
+  priority, then display milestones by timestamp ascending and external ID ascending;
+- `articles`, `milestoneCount`, `peakDay`, `peakArticles`,
+  `responseTaggedArticles`, and `observedCalendarDays`, where the observed span is the
+  inclusive count of report-timezone calendar days from the first to last scoped
+  record;
+- user-facing role labels `首次收录`, `回应标签记录`, `峰值日代表`, and `最后收录`.
+  `回应标签记录` means only that the stored record has the exact
+  `official-response` tag; it does not independently verify speaker identity,
+  authority, or response effectiveness;
+- one `EvidenceSet` containing the deduplicated milestones in chronological display
+  order. Each fact uses `timeline.v1` or a named `timeline.*.v1` Python calculation
+  source, and selected evidence facts retain their real source IDs.
+
+Evidence: required. Every displayed milestone keeps its approved Evidence ID, exact
+title, exact summary, platform, timestamp, sentiment, and role label(s). Each narrative
+milestone must show `[Evidence: <id>]` and preserve the approved title and summary
+verbatim. Unknown, duplicate, omitted, or reordered citations, modified source text,
+or evidence outside the query result causes the section to fail safely. Selection is
+deterministic and non-RAG; a future retriever may not replace this boundary without a
+separate approved decision.
+
+Charts: one `event-timeline.png` horizontal milestone chart. All selected points use
+equal marker size on a chronological x-axis and no quantitative y-axis; marker color
+uses the required sentiment palette. Labels show local date/time, role label(s), and
+Evidence ID, with deterministic offsets for same-day or overlapping points. The title
+states the approved first-to-last observed span and milestone count, never a causal or
+effectiveness claim. The chart uses the shared white background, hidden top/right
+spines, 150 dpi theme, and embedded Chinese font. A single-point scope renders one
+clearly labelled point rather than a false multi-stage progression.
+
+Narration contract:
+
+- at most one narrator operation after successful query, calculation, evidence
+  construction, and charting;
+- Chinese heading `事件时间线`, one bounded context sentence with total records, peak
+  day/count, observed span, and milestone count, followed by milestones in exact
+  chronological EvidenceSet order;
+- each milestone states only its approved local timestamp, role label(s), platform,
+  exact title, exact summary, sentiment, and Evidence ID. Stored engagement may be
+  shown only for the peak-day representative and must be labelled a captured counter
+  snapshot rather than reach, support, or causal impact;
+- if no candidate has the response tag, say only that no scoped record carried the
+  exact `official-response` tag. Do not claim that no response occurred. If multiple
+  tagged records exist, disclose the count and identify the earliest selected record;
+- no invented phase name, cause, consequence, speaker identity, response
+  effectiveness, recommendation, external background, new evidence, or unapproved
+  number is allowed. The deterministic stub renders the same facts, source text,
+  role labels, and citation order in automated tests.
+
+No-data rule: zero scoped articles returns `no_data`, renders a visible Chinese absence
+message, and performs no evidence selection, chart, or narrator operation. One scoped
+article and an all-same-day scope remain `complete`, but explicitly describe the
+limited observed sequence and never manufacture additional stages. A missing
+response-tagged candidate also remains `complete` with the precise tag-coverage
+limitation above. Blank required source text, or query, calculation, evidence, chart,
+or narration errors return `failed` with a safe stage-specific message while later
+sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in

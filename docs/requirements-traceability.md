@@ -9,7 +9,7 @@
 | R-01 | `report-config.json` 是唯一输入；未知 `reportType` 按 `csuite` | `ReportConfig` 解析器；标准化后的类型进入执行计划 | 配置单测：未知类型生成 `csuite` 计划 | 已设计 |
 | R-02 | 19 个章节按 `sections` 数组顺序渲染 | 本项目定义 19 章注册表；仅解析 enabled ID，并严格保留配置顺序 | 章节规范审查及任意乱序配置测试 | 已决策 |
 | R-03 | 输出必须是 `out/{id}` bundle，含 md/pdf/charts/meta | `BundleWriter` 在临时目录完成后原子发布 | CLI 端到端测试检查目录及必需文件 | 已设计 |
-| R-04 | `meta.json` 与前端类型对应，包含统计、数量、路径、时间 | 固定主体字段加项目定义的 `generation`、`failures` 和版本信息 | JSON schema 和报告列表集成测试 | 已决策 |
+| R-04 | `meta.json` 与前端类型对应，包含统计、数量、路径、时间 | 固定主体字段加项目定义的 `generation`、`failures` 和版本信息；摘要字段从用户实际选择章节的可用事实逐项解析，不为缺失 metrics 伪造 0 | JSON schema、任意单章摘要回退和报告列表集成测试 | 已决策 |
 | R-05 | 每个启用章节：固定 SQL → 图表 → 一次 LLM 叙述 | 公共 Section 生命周期；SQL 不由 LLM 生成 | Stub 记录每节调用次数；集成测试验证 SQL | 已设计 |
 | R-06 | 整份报告 LLM 调用不超过章节数 | 每章一次 narrator 逻辑操作；仅瞬时传输错误可受限重试并记录 attempts | Stub 断言逻辑调用数；适配器测试最多两次传输尝试 | 已决策 |
 | R-07 | 所有数字由代码计算且可追溯 | `FactSet` 统一承载数值、格式和查询/计算来源；图表和模板共用它 | 将 markdown 数字与 fixture SQL 结果逐项比对 | 已设计 |

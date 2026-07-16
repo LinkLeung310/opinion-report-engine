@@ -171,6 +171,57 @@ def test_cli_generates_all_review_slices_in_configured_order(
     assert meta["charts"] == 9
 
 
+def test_cli_generates_a_complete_timeline_only_bundle(tmp_path, monkeypatch) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.pr.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    raw["sections"] = [{"id": "timeline", "enabled": True}]
+    config = tmp_path / "report-config.timeline.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert "## 事件时间线" in markdown
+    assert "讨论量于 3/20 达峰，当日 3 篇" in markdown
+    assert "[Evidence: bili-001]" in markdown
+    assert "[Evidence: bili-006]" in markdown
+    assert "[Evidence: bili-007]" in markdown
+    assert "[Evidence: bili-012]" in markdown
+    assert "平台回应称将持续观察用户反馈" in markdown
+    assert "回应承认处于实验阶段" in markdown
+    assert (target / "charts" / "event-timeline.png").is_file()
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {
+        "requested": 1,
+        "complete": 1,
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == 1
+    assert meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "暂无",
+        "peakDay": "3/20",
+    }
+
+
 @pytest.mark.parametrize(
     ("filename", "report_type", "headings", "charts"),
     (

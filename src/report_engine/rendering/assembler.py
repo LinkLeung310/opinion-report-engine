@@ -65,6 +65,8 @@ class ReportAssembler:
             return "互动构成与高计数内容" if language is Language.ZH else "Engagement composition and high-count records"
         if section_id is SectionId.MEDIA_SOCIAL:
             return "媒体与社交内容的量级及情感构成" if language is Language.ZH else "Media and social volume and sentiment composition"
+        if section_id is SectionId.TIMELINE:
+            return "带证据编号的事件收录时间线" if language is Language.ZH else "Evidence-linked event timeline"
         if section_id is SectionId.PLATFORMS:
             return "平台量级、情感与互动对比" if language is Language.ZH else "Platform volume, sentiment, and engagement"
         if section_id is SectionId.SEVERITY:
@@ -120,18 +122,26 @@ class ReportAssembler:
 
     @staticmethod
     def _summary_stats(sections: tuple[SectionResult, ...]) -> dict:
-        metrics = next(
-            (
-                section.facts
-                for section in sections
-                if section.section_id is SectionId.METRICS and section.facts is not None
-            ),
-            None,
-        )
-        if metrics is None:
-            return {"articles": 0, "negativeRatio": "暂无", "peakDay": "暂无"}
+        def first_fact(*keys: str):
+            for section in sections:
+                if section.facts is None:
+                    continue
+                for key in keys:
+                    try:
+                        return section.facts.get(key)
+                    except KeyError:
+                        continue
+            return None
+
+        articles = first_fact("articles", "articleCount")
+        negative_ratio = first_fact("negativeRatio")
+        peak_day = first_fact("peakDay")
         return {
-            "articles": metrics.get("articles").raw_value,
-            "negativeRatio": metrics.get("negativeRatio").formatted_value,
-            "peakDay": metrics.get("peakDay").formatted_value,
+            "articles": articles.raw_value if articles is not None else 0,
+            "negativeRatio": (
+                negative_ratio.formatted_value
+                if negative_ratio is not None
+                else "暂无"
+            ),
+            "peakDay": peak_day.formatted_value if peak_day is not None else "暂无",
         }
