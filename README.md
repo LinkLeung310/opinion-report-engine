@@ -52,6 +52,10 @@ partial failure, narrator call limits, the complete bundle, 15 charts, and A4 PD
 The CLI also wires the same engine to a minimal OpenAI-compatible Chat Completions
 adapter. The adapter is implemented and deterministically tested; a live-provider
 smoke test remains credential-gated. See `docs/current-state.md` for the exact boundary.
+M3 now exposes the same application service through four FastAPI endpoints for task
+submission, status, PDF download, and ZIP download. Task state and completed downloads
+survive a process restart; generation still uses one database connection and narrator
+per task.
 
 From the repository root:
 
@@ -87,6 +91,19 @@ Review the recommendation playbook as a standalone selectable section:
 ```powershell
 .\.venv\Scripts\report.exe generate --config examples\report-config.recommendations.json --out out --stub-llm
 ```
+
+Run the local M3 API after setting `PG_DSN`, `LLM_BASE_URL`, `LLM_API_KEY`, and
+`LLM_MODEL`:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn report_engine.api.app:create_runtime_app --factory
+```
+
+The unversioned local contract is documented in
+[`docs/api-contract.md`](docs/api-contract.md). The service intentionally has no local
+application authentication or CORS policy; that is a recorded local M3 boundary, not a
+production deployment recommendation. Automated development tests inject a stub
+narrator and do not call a paid model.
 
 Run all tests, including the real fixture SQL and CLI integration test:
 

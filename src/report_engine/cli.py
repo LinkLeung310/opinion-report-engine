@@ -9,10 +9,9 @@ import typer
 from pydantic import ValidationError
 
 from report_engine.config import ReportConfig
-from report_engine.llm.openai_compatible import OpenAICompatibleNarrator
 from report_engine.llm.protocol import Narrator
 from report_engine.llm.stub import StubNarrator
-from report_engine.runtime import build_report_service
+from report_engine.runtime import build_real_narrator, build_report_service
 from report_engine.settings import Settings, SettingsError
 from report_engine.storage import CatalogPublicationError
 
@@ -89,17 +88,4 @@ def generate(
 def _build_narrator(settings: Settings, *, stub_llm: bool) -> Narrator:
     if stub_llm:
         return StubNarrator()
-    if (
-        settings.llm_base_url is None
-        or settings.llm_api_key is None
-        or settings.llm_model is None
-    ):
-        raise SettingsError("LLM settings are required for real narration")
-    try:
-        return OpenAICompatibleNarrator(
-            base_url=settings.llm_base_url,
-            api_key=settings.llm_api_key,
-            model=settings.llm_model,
-        )
-    except ValueError as exc:
-        raise SettingsError(f"Invalid LLM settings: {exc}") from exc
+    return build_real_narrator(settings)

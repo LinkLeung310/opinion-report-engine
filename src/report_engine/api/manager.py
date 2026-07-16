@@ -37,6 +37,10 @@ class JobIdempotencyConflictError(JobManagerError):
     """An idempotency key was reused for a different request."""
 
 
+class InvalidIdempotencyKeyError(JobManagerError):
+    """An idempotency key does not satisfy the public HTTP contract."""
+
+
 class JobNotReadyError(JobManagerError):
     """A known task has not completed yet."""
 
@@ -268,7 +272,7 @@ class JobManager:
                 for character in normalized
             )
         ):
-            raise JobManagerError("Invalid idempotency key")
+            raise InvalidIdempotencyKeyError("Invalid idempotency key")
         key_hash = hashlib.sha256(normalized.encode("ascii")).hexdigest()
         canonical = json.dumps(
             config.model_dump(mode="json", by_alias=True),
