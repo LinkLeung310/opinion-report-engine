@@ -122,7 +122,7 @@ context recovery、完整中文 csuite 七章、PR 版新增四章以及两份 7
 ## 当前阶段与下一步
 
 - PR #13 已合并，`main@93f7d16` 的独立 CI 已通过 180 项测试；当前分支 `codex/m2-timeline-section` 已从该绿色基线创建。
-- M1 中文 csuite 七章与 PR 十一章的标准配置、stub CLI、固定 SQL、图表与 PDF 离线验收均已完成；下一小步先审计 schema/fixtures，并把 `timeline` 的选择规则、证据边界和退化行为写成规格与设计决定，再开始实现。
+- M1 中文 csuite 七章与 PR 十一章的标准配置、stub CLI、固定 SQL、图表与 PDF 离线验收均已完成；`timeline` 规格与 D-28 已写明，下一小步实现其固定 SQL、Python 事实和真实 fixture 集成测试。
 - 新分支第一次检查：当前分支与 `main@93f7d16` merge-base 完全一致，`git diff --check` 通过，必需阶段标记均可定位，工作区只修改本状态文件，没有触碰实现、fixtures、RAG 或 n8n。
 - 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 180 项通过；`pip check` 无破损依赖。首次命令曾误命中不含 pytest 的 Hermes Python，切换到 README 指定的项目 `.venv` 后验证成功；该环境路由问题未形成代码失败。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -134,6 +134,11 @@ context recovery、完整中文 csuite 七章、PR 版新增四章以及两份 7
 - 本阶段坚持固定 SQL + Python 确定性计算 + 可审计 Evidence ID：模型最多做一次受约束叙述，不生成 SQL、不选择事实、不推断因果，也不把时间先后包装成因果关系。
 - 下一小步只做 schema/fixture 预查与规格决策；实现前必须定义首次收录、峰值日代表、明确标记的官方回应、最后收录之间的去重/排序/上限，以及无数据、单点、同日多点和缺少官方回应时的行为。
 - 本阶段不实现或暗示 RAG，不修改 n8n 工作流，不调用真实模型 API；开发与 CI 继续使用可注入 stub，真实 API 留到全部本地功能完成后的最终冒烟测试。
+- schema 审计确认时间线可使用真实 `published_at`、结构化 `tags`、情感和四类非负互动计数；`official-response` 只作为精确标签信号，不足以独立验证发言者身份、权威性或回应效果。
+- `docs/02-report-spec.md` 与 D-28 已定义 `timeline.v1`：最多选择首次收录、最早回应标签记录、峰值日最高互动代表和最后收录四个角色，同一 Evidence ID 合并角色后按时间排序；不推断因果、不使用 RAG，并完整规定无数据、单点、同日和缺少回应标签的退化行为。
+- fixture 预查得到 12 篇范围内记录、峰值日 2026-03-20 共 3 篇；四个角色依次命中 `bili-001`、`bili-006`、`bili-007`、`bili-012`，与规格的排序和去重口径一致。
+- 规格小步第一次检查：`git diff --check`、必需合同段、唯一 `timeline` 章节、唯一 D-28、仅文档改动均通过；真实 PostgreSQL 候选查询精确返回上述四个 Evidence ID。
+- 规格小步第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 180 项通过；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 
 ## M1 标准默认配置阶段入口
 
