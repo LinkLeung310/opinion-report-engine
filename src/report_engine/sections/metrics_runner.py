@@ -16,6 +16,12 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import (
+    failed_section_markdown,
+    localize_fact_set,
+    section_heading,
+    select,
+)
 from report_engine.sections.metrics import MetricsSnapshot
 
 
@@ -24,7 +30,12 @@ class MetricsRepository(Protocol):
 
 
 class MetricsChartBuilder(Protocol):
-    def build(self, snapshot: MetricsSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: MetricsSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class MetricsSectionRunner:
@@ -48,22 +59,30 @@ class MetricsSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Metrics data query failed")
+            return self._failed(FailureStage.QUERY, "Metrics data query failed", language)
 
         if not snapshot.has_data:
             return SectionResult(
                 section_id=SectionId.METRICS,
                 status=SectionStatus.NO_DATA,
-                markdown="## 全网数据概览\n\n监测范围内暂无相关数据。",
+                markdown=(
+                    f"## {section_heading(SectionId.METRICS, language)}\n\n"
+                    + select(
+                        language,
+                        "监测范围内暂无相关数据。",
+                        "No relevant data is available for this monitoring scope.",
+                    )
+                ),
             )
 
-        facts = snapshot.to_fact_set()
+        facts = localize_fact_set(SectionId.METRICS, snapshot.to_fact_set(), language)
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
                 "Metrics chart rendering failed",
+                language,
                 facts=facts,
             )
 
@@ -80,6 +99,7 @@ class MetricsSectionRunner:
             return self._failed(
                 FailureStage.LLM,
                 "Metrics narration failed",
+                language,
                 facts=facts,
                 charts=(chart_path.name,),
             )
@@ -96,13 +116,14 @@ class MetricsSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         charts: tuple[str, ...] = (),
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.METRICS,
             status=SectionStatus.FAILED,
-            markdown="## 全网数据概览\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.METRICS, language),
             facts=facts,
             charts=charts,
             failure=SectionFailure(stage=stage, message=message),

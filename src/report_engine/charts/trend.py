@@ -12,6 +12,8 @@ from matplotlib.figure import Figure
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import sentiment_label, select
 from report_engine.sections.trend import TrendSnapshot
 
 
@@ -31,7 +33,12 @@ class TrendChartBuilder:
         positions.append(final_position)
         return tuple(positions)
 
-    def build(self, snapshot: TrendSnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: TrendSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if not snapshot.has_data:
             raise ValueError("cannot chart an empty trend snapshot")
 
@@ -60,20 +67,25 @@ class TrendChartBuilder:
             FigureCanvasAgg(figure)
             axes = figure.subplots()
             ChartTheme.apply(figure, axes)
-            axes.bar(positions, positive, color=ChartTheme.POSITIVE, label="正面")
+            axes.bar(
+                positions,
+                positive,
+                color=ChartTheme.POSITIVE,
+                label=sentiment_label("positive", language),
+            )
             axes.bar(
                 positions,
                 neutral,
                 bottom=neutral_bottom,
                 color=ChartTheme.NEUTRAL,
-                label="中性",
+                label=sentiment_label("neutral", language),
             )
             axes.bar(
                 positions,
                 negative,
                 bottom=negative_bottom,
                 color=ChartTheme.NEGATIVE,
-                label="负面",
+                label=sentiment_label("negative", language),
             )
             ticks = self.tick_positions(len(snapshot.points))
             axes.set_xticks(
@@ -84,13 +96,21 @@ class TrendChartBuilder:
                 ],
             )
             axes.set_title(
-                f"{facts.get('peakDay').formatted_value} 达峰，单日 "
-                f"{facts.get('peakArticles').formatted_value} 篇内容",
+                select(
+                    language,
+                    f"{facts.get('peakDay').formatted_value} 达峰，单日 "
+                    f"{facts.get('peakArticles').formatted_value} 篇内容",
+                    f"Peak on {facts.get('peakDay').formatted_value}: "
+                    f"{facts.get('peakArticles').formatted_value} articles",
+                ),
                 loc="left",
                 color=ChartTheme.TEXT,
                 pad=16,
             )
-            axes.set_ylabel("文章数", color=ChartTheme.MUTED)
+            axes.set_ylabel(
+                select(language, "文章数", "Articles"),
+                color=ChartTheme.MUTED,
+            )
             axes.set_ylim(
                 0,
                 max(point.article_count for point in snapshot.points) * 1.25,

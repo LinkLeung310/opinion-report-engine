@@ -12,6 +12,8 @@ from matplotlib.ticker import PercentFormatter
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import risk_signal_label, select
 from report_engine.sections.risk import RISK_BAND_LABELS, RiskBand, RiskSnapshot
 
 
@@ -23,7 +25,12 @@ class RiskChartBuilder:
         RiskBand.HIGH: ChartTheme.NEGATIVE,
     }
 
-    def build(self, snapshot: RiskSnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: RiskSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if not snapshot.has_data:
             raise ValueError("cannot chart an empty risk snapshot")
 
@@ -52,11 +59,24 @@ class RiskChartBuilder:
                 color=[self.band_colors[signal.band] for signal in signals],
                 height=0.58,
             )
-            axes.set_yticks(positions, [signal.label_zh for signal in signals])
+            axes.set_yticks(
+                positions,
+                [
+                    risk_signal_label(signal.key, signal.label_zh, language)
+                    for signal in signals
+                ],
+            )
             axes.invert_yaxis()
             axes.set_xlim(0, 1.08)
             axes.xaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=0))
-            axes.set_xlabel("信号强度（诊断指数，非概率）", color=ChartTheme.MUTED)
+            axes.set_xlabel(
+                select(
+                    language,
+                    "信号强度（诊断指数，非概率）",
+                    "Signal strength (diagnostic index, not probability)",
+                ),
+                color=ChartTheme.MUTED,
+            )
             axes.axvline(
                 snapshot.low_threshold,
                 color=ChartTheme.NEUTRAL,
@@ -74,7 +94,11 @@ class RiskChartBuilder:
             axes.bar_label(
                 bars,
                 labels=[
-                    f"{RISK_BAND_LABELS[signal.band]} {signal.ratio:.1%}"
+                    select(
+                        language,
+                        f"{RISK_BAND_LABELS[signal.band]} {signal.ratio:.1%}",
+                        f"{signal.band.value.title()} · {signal.ratio:.1%}",
+                    )
                     for signal in signals
                 ],
                 padding=4,
@@ -82,10 +106,20 @@ class RiskChartBuilder:
                 fontsize=9,
             )
             figure.suptitle(
-                (
-                    f"综合风险信号指数 {facts.get('riskSignalIndex').formatted_value}，"
-                    f"{facts.get('highSignalCount').formatted_value}/"
-                    f"{facts.get('evaluatedSignalCount').formatted_value} 项高位"
+                select(
+                    language,
+                    (
+                        "综合风险信号指数 "
+                        f"{facts.get('riskSignalIndex').formatted_value}，"
+                        f"{facts.get('highSignalCount').formatted_value}/"
+                        f"{facts.get('evaluatedSignalCount').formatted_value} 项高位"
+                    ),
+                    (
+                        "Overall risk signal index "
+                        f"{facts.get('riskSignalIndex').formatted_value}; "
+                        f"{facts.get('highSignalCount').formatted_value}/"
+                        f"{facts.get('evaluatedSignalCount').formatted_value} high"
+                    ),
                 ),
                 x=0.07,
                 ha="left",

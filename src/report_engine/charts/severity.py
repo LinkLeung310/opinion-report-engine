@@ -11,6 +11,8 @@ from matplotlib.figure import Figure
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import severity_label, select
 from report_engine.sections.severity import SeveritySnapshot
 
 
@@ -24,13 +26,21 @@ class SeverityChartBuilder:
         ChartTheme.NEGATIVE,
     )
 
-    def build(self, snapshot: SeveritySnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: SeveritySnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if not snapshot.has_data:
             raise ValueError("cannot chart an empty severity snapshot")
 
         output_directory.mkdir(parents=True, exist_ok=True)
         facts = snapshot.to_fact_set()
-        severity_labels = ("低", "中", "高", "危急")
+        severity_labels = tuple(
+            severity_label(value, language)
+            for value in ("low", "medium", "high", "critical")
+        )
         severity_counts = (
             snapshot.low_articles,
             snapshot.medium_articles,
@@ -72,8 +82,15 @@ class SeverityChartBuilder:
                 ),
                 width=0.62,
             )
-            severity_axes.set_title("严重性分级", loc="left", color=ChartTheme.TEXT)
-            severity_axes.set_ylabel("负面文章数", color=ChartTheme.MUTED)
+            severity_axes.set_title(
+                select(language, "严重性分级", "Severity classification"),
+                loc="left",
+                color=ChartTheme.TEXT,
+            )
+            severity_axes.set_ylabel(
+                select(language, "负面文章数", "Negative articles"),
+                color=ChartTheme.MUTED,
+            )
             severity_axes.set_ylim(0, max((*severity_counts, 1)) * 1.28)
             severity_axes.bar_label(
                 severity_bars,
@@ -89,9 +106,19 @@ class SeverityChartBuilder:
                 color=self.risk_colors,
                 width=0.62,
             )
-            score_axes.set_title("负面程度分数", loc="left", color=ChartTheme.TEXT)
-            score_axes.set_xlabel("分数（1–5）", color=ChartTheme.MUTED)
-            score_axes.set_ylabel("负面文章数", color=ChartTheme.MUTED)
+            score_axes.set_title(
+                select(language, "负面程度分数", "Negative score"),
+                loc="left",
+                color=ChartTheme.TEXT,
+            )
+            score_axes.set_xlabel(
+                select(language, "分数（1–5）", "Score (1–5)"),
+                color=ChartTheme.MUTED,
+            )
+            score_axes.set_ylabel(
+                select(language, "负面文章数", "Negative articles"),
+                color=ChartTheme.MUTED,
+            )
             score_axes.set_ylim(0, max((*score_counts, 1)) * 1.28)
             score_axes.bar_label(
                 score_bars,
@@ -102,7 +129,12 @@ class SeverityChartBuilder:
             )
 
             figure.suptitle(
-                f"高/危负面占比 {facts.get('highCriticalRatio').formatted_value}",
+                select(
+                    language,
+                    f"高/危负面占比 {facts.get('highCriticalRatio').formatted_value}",
+                    "High/critical negatives account for "
+                    f"{facts.get('highCriticalRatio').formatted_value}",
+                ),
                 x=0.07,
                 ha="left",
                 color=ChartTheme.TEXT,

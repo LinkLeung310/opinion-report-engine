@@ -20,7 +20,7 @@ class Repository:
 
 class Chart:
     def __init__(self, error=None): self.error, self.calls = error, 0
-    def build(self, snapshot, directory):
+    def build(self, snapshot, directory, _language: Language = Language.ZH):
         self.calls += 1
         if self.error: raise self.error
         return directory / "historical-benchmark-comparison.png"

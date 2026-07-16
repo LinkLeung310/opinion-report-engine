@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import localize_fact_set
 from report_engine.sections.response import (
     ResponseInputError,
     ResponseSnapshot,
@@ -30,7 +31,12 @@ class ResponseRepository(Protocol):
 
 
 class ResponseChartBuilder(Protocol):
-    def build(self, snapshot: ResponseSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: ResponseSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class ResponseSectionRunner:
@@ -68,7 +74,7 @@ class ResponseSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.RESPONSE, snapshot.to_fact_set(), language)
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
@@ -99,7 +105,7 @@ class ResponseSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,

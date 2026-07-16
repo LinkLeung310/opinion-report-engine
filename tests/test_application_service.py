@@ -168,3 +168,21 @@ def test_unimplemented_sections_become_visible_failures_instead_of_crashing(tmp_
             "message": "Section is not implemented",
         }
     ]
+
+
+def test_unimplemented_section_uses_the_requested_English_presentation(tmp_path) -> None:
+    raw = sample_config()
+    raw["language"] = "en"
+    raw["sections"] = [
+        {"id": "metrics", "enabled": True},
+        {"id": "trend", "enabled": True},
+    ]
+
+    result = build_service(StubNarrator()).generate(
+        ReportConfig.model_validate(raw),
+        tmp_path / "out",
+    )
+
+    assert "## Volume trend" in result.markdown
+    assert "This section could not be generated" in result.markdown
+    assert "本章节生成失败" not in result.markdown

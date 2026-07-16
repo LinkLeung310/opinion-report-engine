@@ -16,6 +16,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.platforms import PlatformsSnapshot
 
 
@@ -24,7 +25,12 @@ class PlatformsRepository(Protocol):
 
 
 class PlatformsChartBuilder(Protocol):
-    def build(self, snapshot: PlatformsSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: PlatformsSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class PlatformsSectionRunner:
@@ -48,7 +54,7 @@ class PlatformsSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Platform data query failed")
+            return self._failed(FailureStage.QUERY, "Platform data query failed", language)
 
         if not snapshot.has_data:
             heading = "Platform performance" if language is Language.EN else "平台表现"
@@ -64,16 +70,21 @@ class PlatformsSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.PLATFORMS, snapshot.to_fact_set(), language)
         except Exception:
-            return self._failed(FailureStage.CALCULATION, "Platform calculation failed")
+            return self._failed(
+                FailureStage.CALCULATION,
+                "Platform calculation failed",
+                language,
+            )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
                 "Platform chart rendering failed",
+                language,
                 facts=facts,
             )
 
@@ -85,6 +96,7 @@ class PlatformsSectionRunner:
             return self._failed(
                 FailureStage.LLM,
                 "Platform narration failed",
+                language,
                 facts=facts,
                 charts=(chart_path.name,),
             )
@@ -101,13 +113,14 @@ class PlatformsSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         charts: tuple[str, ...] = (),
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.PLATFORMS,
             status=SectionStatus.FAILED,
-            markdown="## 平台表现\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.PLATFORMS, language),
             facts=facts,
             charts=charts,
             failure=SectionFailure(stage, message),

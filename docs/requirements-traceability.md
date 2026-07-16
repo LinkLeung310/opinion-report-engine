@@ -19,7 +19,7 @@
 | R-11 | PDF 跨平台、A4、中文、分页参照 gold report | ReportLab + 项目内 Noto Sans SC 字体；参考 PDF 作为视觉基准 | A4 尺寸断言、字体嵌入、页图视觉检查、跨平台冒烟 | 实现中 |
 | R-12 | 图表 150 dpi、指定情感颜色、白底、隐藏上/右框、标题表达洞察 | `ChartTheme` 作为唯一图表入口 | 图表元数据/像素检查和视觉金样检查 | 已设计 |
 | R-13 | M1：一条 CLI 命令；csuite 7 章和 pr 11 章中文报告 | 项目创建默认示例配置；Typer 调用同一 `ReportApplicationService` | 两份 examples 配置的完整端到端测试 | 已实现（stub） |
-| R-14 | M2：19 章节、三类额外输入、英文、任意组合 | 项目定义 19 章、专属输入和中英文策略 | 19 个纵向切片的专属测试已具备；仍需参数化任意组合与完整英文 fixture 矩阵 | 实现中 |
+| R-14 | M2：19 章节、三类额外输入、英文、任意组合 | 项目定义 19 章、专属输入和 D-38 英文呈现边界；系统标签完整本地化，真实证据/用户输入/专名保留原文 | 真实 fixture PostgreSQL + stub 的 19 章完整英文、三类专属输入、混合重排、全量 no-data、局部失败、15 图和 A4 bundle 矩阵 | 已实现（stub） |
 | R-15 | M3：提交、状态、下载；两个任务互不干扰；重启后成品可下载 | FastAPI + 进程内队列 + 独立 bundle 目录 + 磁盘状态恢复 | 两任务并发及重启后的下载测试 | 已设计 |
 | R-16 | 30 分钟开发环境：fixtures Docker、`.env`、样例 SQL、gold report | 项目创建 Docker fixtures、示例配置、视觉基准和 bootstrap 命令 | 干净环境计时跑通 | 已决策 |
 | R-17 | 小步提交；SQL 集成测试；LLM stub；不静默绕过规范 | `main` 稳定、功能分支；测试分层；open-question/PR 假设记录 | Git 历史、测试报告、PR 描述 | 已启用 |
