@@ -13,6 +13,7 @@ from report_engine.charts.engagement import EngagementChartBuilder
 from report_engine.charts.metrics import MetricsChartBuilder
 from report_engine.charts.keywords import KeywordsChartBuilder
 from report_engine.charts.media_social import MediaSocialChartBuilder
+from report_engine.charts.negative_themes import NegativeThemesChartBuilder
 from report_engine.charts.platforms import PlatformsChartBuilder
 from report_engine.charts.risk import RiskChartBuilder
 from report_engine.charts.sentiment_evolution import SentimentEvolutionChartBuilder
@@ -26,6 +27,7 @@ from report_engine.data.postgres import (
     PostgresKeywordsRepository,
     PostgresMediaSocialRepository,
     PostgresMetricsRepository,
+    PostgresNegativeThemesRepository,
     PostgresPlatformsRepository,
     PostgresRiskRepository,
     PostgresSentimentEvolutionRepository,
@@ -42,6 +44,7 @@ from report_engine.sections.engagement_runner import EngagementSectionRunner
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.keywords_runner import KeywordsSectionRunner
 from report_engine.sections.media_social_runner import MediaSocialSectionRunner
+from report_engine.sections.negative_themes_runner import NegativeThemesSectionRunner
 from report_engine.sections.platforms_runner import PlatformsSectionRunner
 from report_engine.sections.registry import default_registry
 from report_engine.sections.risk_runner import RiskSectionRunner
@@ -127,6 +130,11 @@ def build_report_service(
         chart_builder=TopContentChartBuilder(),
         narrator=narrator,
     )
+    negative_themes_runner = NegativeThemesSectionRunner(
+        repository=PostgresNegativeThemesRepository(connection),
+        chart_builder=NegativeThemesChartBuilder(),
+        narrator=narrator,
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
         section_runners={
@@ -143,6 +151,7 @@ def build_report_service(
             SectionId.SENTIMENT_EVOLUTION: sentiment_evolution_runner,
             SectionId.TIMELINE: timeline_runner,
             SectionId.TOP_CONTENT: top_content_runner,
+            SectionId.NEGATIVE_THEMES: negative_themes_runner,
         },
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),

@@ -274,6 +274,58 @@ def test_cli_generates_a_complete_top_content_only_bundle(tmp_path, monkeypatch)
     }
 
 
+def test_cli_generates_a_complete_negative_themes_only_bundle(tmp_path, monkeypatch) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.pr.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    raw["sections"] = [{"id": "negative-themes", "enabled": True}]
+    config = tmp_path / "report-config.negative-themes.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert "## 负面议题拆解" in markdown
+    assert "7 篇负面内容" in markdown
+    assert "展示 3 个固定议题维度" in markdown
+    assert "用户自主权：覆盖负面内容 5/7 篇（71.4%）" in markdown
+    evidence_ids = ("bili-005", "bili-003", "bili-007")
+    positions = [markdown.index(f"[Evidence: {record_id}]") for record_id in evidence_ids]
+    assert positions == sorted(positions)
+    assert "评论集中表达对选择权被削弱的不满，并要求恢复原入口。" in markdown
+    assert "大量转发将事件描述为平台不愿听取负面反馈，情绪明显升温。" in markdown
+    assert (target / "charts" / "negative-theme-coverage.png").is_file()
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {
+        "requested": 1,
+        "complete": 1,
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == 1
+    assert meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "暂无",
+        "peakDay": "暂无",
+    }
+
+
 @pytest.mark.parametrize(
     ("filename", "report_type", "headings", "charts"),
     (

@@ -19,6 +19,79 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.NEGATIVE_THEMES:
+            labels_en = {
+                "user_agency": "User agency and control",
+                "transparency": "Transparency and explanation",
+                "feedback_effectiveness": "Feedback effectiveness",
+            }
+            evidence_by_id = {
+                evidence.record_id: evidence for evidence in request.evidence.records
+            }
+            theme_lines = []
+            theme_count = int(values["displayThemeCount"].replace(",", ""))
+            for index in range(1, theme_count + 1):
+                prefix = f"theme{index}"
+                representative_id = values[f"{prefix}RepresentativeId"]
+                evidence = evidence_by_id[representative_id]
+                if request.language is Language.EN:
+                    label = labels_en[request.facts.get(f"{prefix}Id").raw_value]
+                    theme_lines.append(
+                        f"- {label}: {values[f'{prefix}Articles']} of "
+                        f"{values['negativeArticles']} negative records "
+                        f"({values[f'{prefix}Share']}); concern "
+                        f"{values[f'{prefix}ConcernArticles']}, demand "
+                        f"{values[f'{prefix}DemandArticles']}, and high/critical "
+                        f"{values[f'{prefix}HighCriticalArticles']} "
+                        f"({values[f'{prefix}HighCriticalShare']}). Exact indicators: "
+                        f"{values[f'{prefix}Indicators']}. Representative "
+                        f"[Evidence: {evidence.record_id}] {evidence.platform} | "
+                        f"{evidence.title}: {evidence.summary}"
+                    )
+                else:
+                    theme_lines.append(
+                        f"- {values[f'{prefix}Label']}：覆盖负面内容 "
+                        f"{values[f'{prefix}Articles']}/{values['negativeArticles']} 篇（"
+                        f"{values[f'{prefix}Share']}）；关切 "
+                        f"{values[f'{prefix}ConcernArticles']} 篇、诉求 "
+                        f"{values[f'{prefix}DemandArticles']} 篇，高/危 "
+                        f"{values[f'{prefix}HighCriticalArticles']} 篇（"
+                        f"{values[f'{prefix}HighCriticalShare']}）；匹配指标："
+                        f"{values[f'{prefix}Indicators']}。代表记录 "
+                        f"[Evidence: {evidence.record_id}] {evidence.platform}｜"
+                        f"{evidence.title}：{evidence.summary}"
+                    )
+            lines = "\n".join(theme_lines)
+            if request.language is Language.EN:
+                return (
+                    "## Negative issue themes\n\n"
+                    f"Among {values['articles']} scoped records, "
+                    f"{values['negativeArticles']} are negative. The versioned exact-"
+                    f"indicator codebook classifies {values['classifiedNegativeArticles']} "
+                    f"({values['classifiedNegativeShare']}) and leaves "
+                    f"{values['unclassifiedNegativeArticles']} "
+                    f"({values['unclassifiedNegativeShare']}) unclassified. "
+                    f"{values['displayThemeCount']} fixed dimensions are displayed across "
+                    f"{values['totalThemeMemberships']} overlapping memberships.\n\n"
+                    f"{lines}\n\nThemes and concern/demand roles may overlap. This is "
+                    "a versioned exact-indicator baseline over captured summaries; it "
+                    "does not establish root causes, audience segments, verified harm, "
+                    "or prevalence outside the monitored records."
+                )
+            return (
+                "## 负面议题拆解\n\n"
+                f"监测范围内 {values['articles']} 篇内容中有 "
+                f"{values['negativeArticles']} 篇负面内容；版本化精确指标码表分类 "
+                f"{values['classifiedNegativeArticles']} 篇（"
+                f"{values['classifiedNegativeShare']}），未分类 "
+                f"{values['unclassifiedNegativeArticles']} 篇（"
+                f"{values['unclassifiedNegativeShare']}）。本章展示 "
+                f"{values['displayThemeCount']} 个固定议题维度，共记录 "
+                f"{values['totalThemeMemberships']} 次可重叠主题归属。\n\n{lines}\n\n"
+                "议题以及关切/诉求角色均可重叠。本结果是对收录摘要应用版本化精确"
+                "指标码表的基线，不代表根因、受众分群、已验证伤害或监测范围外的普遍程度。"
+            )
+
         if request.section_id is SectionId.TOP_CONTENT:
             categories_en = {
                 "dual_signal": "dual-signal representative",
