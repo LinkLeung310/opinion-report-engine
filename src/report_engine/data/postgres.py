@@ -13,6 +13,10 @@ from report_engine.sections.engagement import EngagementRecord, EngagementSnapsh
 from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.keywords import KeywordSourceRecord, KeywordsSnapshot
 from report_engine.sections.media_social import MediaSocialRow, MediaSocialSnapshot
+from report_engine.sections.negative_themes import (
+    NegativeThemesSnapshot,
+    NegativeThemeSourceRecord,
+)
 from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
 from report_engine.sections.risk import RiskSnapshot
 from report_engine.sections.severity import SeverityEvidenceRecord, SeveritySnapshot
@@ -94,6 +98,12 @@ TOP_CONTENT_QUERY_ID = "top-content.v1"
 TOP_CONTENT_SQL = (
     files("report_engine.data.queries")
     .joinpath("top_content.sql")
+    .read_text(encoding="utf-8")
+)
+NEGATIVE_THEMES_QUERY_ID = "negative-themes.v1"
+NEGATIVE_THEMES_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("negative_themes.sql")
     .read_text(encoding="utf-8")
 )
 
@@ -653,4 +663,50 @@ class PostgresTopContentRepository:
                 if row["external_id"] is not None
             ),
             query_id=TOP_CONTENT_QUERY_ID,
+        )
+
+
+class PostgresNegativeThemesRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope) -> NegativeThemesSnapshot:
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(NEGATIVE_THEMES_SQL, parameters)
+            rows = cursor.fetchall()
+
+        if not rows:
+            raise RuntimeError("negative-themes query returned no aggregate row")
+        for field in ("article_count", "negative_article_count"):
+            if len({row[field] for row in rows}) != 1:
+                raise RuntimeError(f"negative-themes query returned inconsistent {field}")
+
+        aggregate = rows[0]
+        return NegativeThemesSnapshot(
+            article_count=aggregate["article_count"],
+            negative_article_count=aggregate["negative_article_count"],
+            records=tuple(
+                NegativeThemeSourceRecord(
+                    external_id=row["external_id"],
+                    title=row["title"],
+                    summary=row["summary"],
+                    platform=row["platform"],
+                    published_at=row["published_at"],
+                    sentiment=row["sentiment"],
+                    severity=row["severity"],
+                    negative_score=row["negative_score"],
+                    likes=row["likes"],
+                    comments=row["comments"],
+                    shares=row["shares"],
+                    favorites=row["favorites"],
+                )
+                for row in rows
+                if row["external_id"] is not None
+            ),
+            query_id=NEGATIVE_THEMES_QUERY_ID,
         )

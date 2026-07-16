@@ -126,7 +126,7 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 ## 当前阶段与下一步
 
 - PR #15 已用 merge commit `9b5046d` 合并；`main@9b5046d` 的独立 CI run `29472151204` 已通过 211 项测试。当前分支 `codex/m2-negative-themes-section` 已从该绿色基线创建并推送。
-- `timeline` 与 `top-content` 的完整纵向切片已合并；`negative-themes` 规格与 D-31 已写明，下一小步实现固定 SQL、Python 代码本分类/事实和真实 fixture 集成测试。
+- `timeline` 与 `top-content` 的完整纵向切片已合并；`negative-themes` 的规格、D-31、固定 SQL、Python 代码本分类/事实和真实 fixture 集成测试已完成，下一小步接入 runner、图表、确定性 stub、运行时与 CLI/PDF 产物。
 - 新分支第一次检查：当前分支与 `main@9b5046d` merge-base 完全一致，工作区创建时干净，main CI 的成功状态与 head SHA 精确匹配；没有从旧功能分支串联开发。
 - 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -167,6 +167,11 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - fixture 预查得到三类负面覆盖 5/4/3 篇，关注/诉求计数分别为 4:2、2:2、2:1，high/critical 为 3/2/2，代表 Evidence ID 为 `bili-005`、`bili-003`、`bili-007`；7 篇负面均至少匹配一类，未分类为 0。重叠成员数不得相加解释为独立文章总量。
 - 规格小步第一次检查：仅 `docs/02-report-spec.md` 与 `docs/design-decisions.md` 改动；`git diff --check`、唯一 `negative-themes` 章节、唯一 D-31、必需合同段、无实现/n8n 变更均通过，真实 fixture PostgreSQL 精确复算上述覆盖、角色、标签和代表证据。
 - 规格小步第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。未实现主题 SQL/代码、RAG、n8n 或真实模型调用。
+- 固定 `negative_themes.sql`、`PostgresNegativeThemesRepository`、`NegativeThemesSnapshot`、版本化主题定义/角色标记、`FactSet` 和去重 `EvidenceSet` 已实现；SQL 只做 tag、半开时间与负面情感过滤，Python 才执行公开代码本、重叠分类、排序和代表选择。
+- fixture 查询正式验证 12 篇范围内内容、7 篇负面；显示主题顺序为用户自主权、透明度与解释、反馈有效性，覆盖 5/4/3，关注/诉求 4:2、2:2、2:1，high/critical 3/2/2，主题存储互动 8,965/5,405/13,020，代表 Evidence ID 为 `bili-005`、`bili-003`、`bili-007`，未分类为 0。
+- `FactSet` 保留负面人口分母、代码本分类/未分类占比、12 次重叠主题成员关系、各主题全部来源 ID 和代表 ID；`EvidenceSet` 只保留真实标题/摘要并对共享代表去重。零文章/零负面与非空但不足两篇的无显示主题范围均保留可审计基础事实。
+- SQL/事实小步第一次检查：变更范围仅为 PostgreSQL repository、固定 SQL、主题模型和两类测试；`git diff --check`、Python 静态编译、三个 SQL 绑定参数各出现一次及模型单元测试 5 项通过。
+- SQL/事实小步第二次检查：健康 fixture PostgreSQL 下专属集成测试 2 项通过，完整 pytest 实际收集并通过 218 项；`pip check` 无破损依赖。空话题返回合法聚合 snapshot；本小步未接 runner/图表、RAG、n8n 或真实模型 API。
 
 ## M2 `timeline` 阶段入口
 
