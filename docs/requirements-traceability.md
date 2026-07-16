@@ -24,7 +24,7 @@
 | R-16 | 30 分钟开发环境：fixtures Docker、`.env`、样例 SQL、gold report | 项目创建 Docker fixtures、示例配置、视觉基准和 bootstrap 命令 | 干净环境计时跑通 | 已决策 |
 | R-17 | 小步提交；SQL 集成测试；LLM stub；不静默绕过规范 | `main` 稳定、功能分支；测试分层；open-question/PR 假设记录 | Git 历史、测试报告、PR 描述 | 已启用 |
 | R-18 | 前端发布、生产部署和数据源切换不在范围 | 核心不写部署逻辑；仅保持 API/Bundle 契约 | 范围审查 | 已设计 |
-| R-19 | 最终报告应出现在读取 `index.json` 的既有列表 | `CatalogPublisher` 在 bundle 原子发布后原子更新 index | 报告生成后立即出现在目录的集成测试 | 已决策 |
+| R-19 | 最终报告应出现在读取 `index.json` 的既有列表 | `CatalogPublisher` 在 bundle 原子发布后原子更新 index | 真实 fixture CLI 生成后，目录立即包含与 bundle `meta.json` 完全相同的条目；失败注入保护旧目录并保留完整 bundle | 已实现 |
 
 ## 已采用的临时判断
 

@@ -5,8 +5,10 @@ from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
+
 from report_engine.application.planner import ReportPlanner
-from report_engine.application.service import ReportApplicationService
+from report_engine.application.service import CatalogPublisherPort, ReportApplicationService
 from report_engine.charts.metrics import MetricsChartBuilder
 from report_engine.config import ReportConfig, SectionId
 from report_engine.llm.stub import StubNarrator
@@ -15,6 +17,7 @@ from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.registry import default_registry
 from report_engine.storage.bundle import BundlePublisher
+from report_engine.storage.catalog import CatalogPublicationError, CatalogPublisher
 from tests.test_config import sample_config
 
 
@@ -81,6 +84,7 @@ def metrics_only_config(
 def build_service(
     narrator: StubNarrator,
     captured_inputs: list[dict[str, object]] | None = None,
+    catalog_publisher: CatalogPublisherPort | None = None,
 ) -> ReportApplicationService:
     metrics_runner = MetricsSectionRunner(
         repository=FakeMetricsRepository(),
@@ -98,6 +102,7 @@ def build_service(
         assembler=ReportAssembler(),
         pdf_renderer=FakePdfRenderer(),
         publisher=BundlePublisher(),
+        catalog_publisher=catalog_publisher or CatalogPublisher(),
         clock=lambda: datetime(2026, 7, 15, 2, 0, tzinfo=UTC),
     )
 
@@ -116,6 +121,10 @@ def test_generates_and_publishes_one_complete_metrics_bundle(tmp_path) -> None:
     meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
     assert meta["stats"]["articles"] == 12
     assert meta["stats"]["negativeRatio"] == "58.3%"
+    catalog = json.loads(
+        (tmp_path / "out" / "index.json").read_text(encoding="utf-8")
+    )
+    assert catalog == [meta]
 
 
 def test_allocates_a_new_human_readable_version_without_overwriting(tmp_path) -> None:
@@ -129,6 +138,30 @@ def test_allocates_a_new_human_readable_version_without_overwriting(tmp_path) ->
     assert second.report_id == "bilibili-dislike-2026-03-23-v2"
     assert (output_root / first.report_id).is_dir()
     assert (output_root / second.report_id).is_dir()
+    catalog = json.loads(
+        (output_root / "index.json").read_text(encoding="utf-8")
+    )
+    assert [entry["id"] for entry in catalog] == [first.report_id, second.report_id]
+
+
+def test_catalog_failure_is_a_report_level_failure_after_bundle_publication(
+    tmp_path,
+) -> None:
+    class FailingCatalogPublisher:
+        def publish(self, bundle_path: Path, output_root: Path) -> Path:
+            assert bundle_path.parent == output_root
+            assert (bundle_path / "meta.json").is_file()
+            raise CatalogPublicationError("safe catalog failure")
+
+    output_root = tmp_path / "out"
+
+    with pytest.raises(CatalogPublicationError, match="safe catalog failure"):
+        build_service(
+            StubNarrator(), catalog_publisher=FailingCatalogPublisher()
+        ).generate(metrics_only_config(), output_root)
+
+    assert (output_root / "bilibili-dislike-2026-03-23-v1").is_dir()
+    assert not (output_root / "index.json").exists()
 
 
 def test_passes_the_planned_section_input_to_the_runner(tmp_path) -> None:

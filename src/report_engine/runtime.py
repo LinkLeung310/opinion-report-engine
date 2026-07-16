@@ -70,7 +70,7 @@ from report_engine.sections.timeline_runner import TimelineSectionRunner
 from report_engine.sections.top_content_runner import TopContentSectionRunner
 from report_engine.sections.verdict_runner import VerdictSectionRunner
 from report_engine.sections.viewpoints_runner import ViewpointsSectionRunner
-from report_engine.storage.bundle import BundlePublisher
+from report_engine.storage import BundlePublisher, CatalogPublisher
 
 
 REPORT_TIMEZONE = ZoneInfo("Asia/Shanghai")
@@ -195,5 +195,6 @@ def build_report_service(
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),
         publisher=BundlePublisher(),
+        catalog_publisher=CatalogPublisher(),
         clock=lambda: datetime.now(REPORT_TIMEZONE),
     )

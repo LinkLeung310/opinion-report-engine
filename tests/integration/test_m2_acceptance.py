@@ -97,10 +97,13 @@ def run_cli(
     )
 
     assert result.exit_code == 0, result.output
-    bundles = tuple((tmp_path / "out").iterdir())
+    output_root = tmp_path / "out"
+    bundles = tuple(path for path in output_root.iterdir() if path.is_dir())
     assert len(bundles) == 1
     target = bundles[0]
     meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    catalog = json.loads((output_root / "index.json").read_text(encoding="utf-8"))
+    assert catalog == [meta]
     markdown = (target / "report.md").read_text(encoding="utf-8")
     return target, narrator, meta, markdown
 
