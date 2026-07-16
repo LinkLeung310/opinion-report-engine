@@ -8,7 +8,7 @@
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，以及 M2 `timeline` 已完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，以及 M2 `timeline`、`top-content` 和当前分支的 `negative-themes` 已完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -59,7 +59,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline` 与 `top-content` 纵向切片；当前进入 `negative-themes` 规格阶段。其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
+- M2 已完成并合并 `timeline` 与 `top-content` 纵向切片；当前分支已完成 `negative-themes` 纵向切片，尚待 PR/CI/合并。其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -126,7 +126,7 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 ## 当前阶段与下一步
 
 - PR #15 已用 merge commit `9b5046d` 合并；`main@9b5046d` 的独立 CI run `29472151204` 已通过 211 项测试。当前分支 `codex/m2-negative-themes-section` 已从该绿色基线创建并推送。
-- `timeline` 与 `top-content` 的完整纵向切片已合并；`negative-themes` 的规格、D-31、固定 SQL、Python 代码本分类/事实和真实 fixture 集成测试已完成，下一小步接入 runner、图表、确定性 stub、运行时与 CLI/PDF 产物。
+- `timeline` 与 `top-content` 的完整纵向切片已合并；`negative-themes` 的规格、D-31、固定 SQL、Python 代码本分类/事实、runner、图表、确定性 stub、运行时与 CLI/PDF 产物均已完成，下一小步是阶段 PR/CI/合并闭环。
 - 新分支第一次检查：当前分支与 `main@9b5046d` merge-base 完全一致，工作区创建时干净，main CI 的成功状态与 head SHA 精确匹配；没有从旧功能分支串联开发。
 - 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -172,6 +172,13 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - `FactSet` 保留负面人口分母、代码本分类/未分类占比、12 次重叠主题成员关系、各主题全部来源 ID 和代表 ID；`EvidenceSet` 只保留真实标题/摘要并对共享代表去重。零文章/零负面与非空但不足两篇的无显示主题范围均保留可审计基础事实。
 - SQL/事实小步第一次检查：变更范围仅为 PostgreSQL repository、固定 SQL、主题模型和两类测试；`git diff --check`、Python 静态编译、三个 SQL 绑定参数各出现一次及模型单元测试 5 项通过。
 - SQL/事实小步第二次检查：健康 fixture PostgreSQL 下专属集成测试 2 项通过，完整 pytest 实际收集并通过 218 项；`pip check` 无破损依赖。空话题返回合法聚合 snapshot；本小步未接 runner/图表、RAG、n8n 或真实模型 API。
+- `NegativeThemesSectionRunner`、`NegativeThemesChartBuilder`、确定性中英文 stub、运行时注册和专属图片 alt 已接入；正常路径先出图再恰好一次 narrator 操作，零负面为保留事实的 `no_data`，非空但无维度达到两篇门槛为不出图/不调用模型的 `complete` 结论，查询、计算、图表和叙述失败均限制在本章节。
+- 叙述验证按显示主题顺序校验代表 Evidence ID，可在多标签主题共享同一代表时允许按主题重复引用，同时要求每一主题行保留固定中英文标签、负面分母覆盖、关注/诉求、高/危交叉、精确指标、平台、真实标题和摘要；乱序、未知引用、改写证据或把 `5/7` 改成 `6/7` 等组合数字篡改均安全失败。
+- `negative-themes-only` 真实 CLI bundle 得到 1 章 complete、0 章 failed、1 张 150 dpi 图；`meta.stats` 为 articles 12、negativeRatio `暂无`、peakDay `暂无`，没有自动插入未选章节。Markdown 按 `bili-005`、`bili-003`、`bili-007` 顺序保留原文和 Evidence ID。
+- PDF 经 Poppler 验证为 A4 单页；页图与图表原图人工复核显示中文、三条主题证据、洞察标题、重叠免责声明、图例、数值标签、方法框和页脚均清晰，无乱码、截断、重叠、标签遮挡或孤页。
+- 产物小步第一次检查：变更范围仅为 runner、图表、stub、运行时、图片 alt 和对应测试；`git diff --check`、Python 静态编译、唯一 narrator 调用点、唯一运行时注册及聚焦测试 13 项通过。检查过程中加固了组合覆盖数字的原子校验。
+- 产物小步第二次检查：健康 fixture PostgreSQL 下 `negative-themes` SQL + CLI 集成测试 3 项通过，完整 pytest 实际收集并通过 227 项；`pip check` 无破损依赖。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
+- 当前阶段实现与本地验收已完成；尚未创建 PR、运行分支 CI、合并到 `main` 或创建下一阶段分支。
 
 ## M2 `timeline` 阶段入口
 
