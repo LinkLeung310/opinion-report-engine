@@ -17,6 +17,7 @@
 - [`design-decisions.md`](design-decisions.md)：任务书未规定部分的显式产品/架构决定。
 - [`final-framework.zh-CN.md`](final-framework.zh-CN.md)：以用户体验为核心的完整中文框架。
 - [`architecture.md`](architecture.md)：模块边界、执行流、失败语义和验证策略。
+- [`api-contract.md`](api-contract.md)：M3 HTTP 端点、状态、错误、幂等、队列和重启恢复合同。
 - [`02-report-spec.md`](02-report-spec.md)：本项目逐章补充的 19 章输入、固定 SQL、事实、证据、图表和无数据规则。该文件是项目产物，不是面试方原始附件。
 
 ## Audits and integration notes

@@ -416,6 +416,12 @@ GET  /reports/{id}/bundle.zip  → 完整报告包
 
 进程内有界队列负责调度；状态响应包含当前章节和 `completedSections/totalSections`。每个任务使用独立临时目录。已完成状态通过磁盘上的 bundle/meta 恢复，因此服务重启后仍可下载。
 
+具体 HTTP 合同以 [`api-contract.md`](api-contract.md) 为准：新任务返回 `202` 与 UUID task ID；
+状态只使用 queued/running/completed/failed；统一错误体含稳定 code 和 requestId；可选
+`Idempotency-Key` 防止 n8n/前端重试重复生成。默认两个工作线程、最多 16 个在途任务，每个
+任务独占 PostgreSQL 连接和 narrator。原子任务状态让 completed 在重启后仍可查询/下载，
+意外中断的 queued/running 会明确转为 failed，而不是假装续跑。
+
 ### n8n 演示
 
 ```text
