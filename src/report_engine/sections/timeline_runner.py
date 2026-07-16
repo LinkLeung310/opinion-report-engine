@@ -100,7 +100,13 @@ class TimelineSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.TIMELINE, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.TIMELINE,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_markdown(markdown, facts, evidence, language)
         except Exception:

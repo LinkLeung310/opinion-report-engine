@@ -78,7 +78,13 @@ class ViewpointsSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.VIEWPOINTS, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.VIEWPOINTS,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_evidence_markdown(markdown, evidence)
         except Exception:

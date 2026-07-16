@@ -183,9 +183,10 @@ The real adapter treats `LLM_BASE_URL` as the provider's versioned API base and 
 to its normalized `/chat/completions` child. It uses the configured model, a Bearer
 authorization header, and one system plus one user message. The user message is a
 deterministic JSON envelope containing only the section ID, requested language,
-canonical heading, approved formatted `FactSet` values, bounded `EvidenceSet` records,
-and any separately labelled unverified `UserContext`. API keys, DSNs, raw exceptions,
-and unrelated process environment values never enter the prompt or report metadata.
+normalized report type, canonical heading, approved formatted `FactSet` values, bounded
+`EvidenceSet` records, and any separately labelled unverified `UserContext`. API keys,
+DSNs, raw exceptions, and unrelated process environment values never enter the prompt
+or report metadata.
 
 One call to `Narrator.narrate` remains one logical model operation. A transport timeout,
 network error, HTTP 408/429, or 5xx response may make one bounded retry after an

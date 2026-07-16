@@ -98,6 +98,7 @@ class MediaSocialSectionRunner:
                     language,
                     facts,
                     EvidenceSet(),
+                    report_type=scope.report_type,
                 )
             )
             self._validate_markdown(markdown, facts, language)

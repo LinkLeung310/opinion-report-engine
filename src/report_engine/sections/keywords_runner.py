@@ -82,7 +82,13 @@ class KeywordsSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.KEYWORDS, language, facts, EvidenceSet())
+                NarrationRequest(
+                    SectionId.KEYWORDS,
+                    language,
+                    facts,
+                    EvidenceSet(),
+                    report_type=scope.report_type,
+                )
             )
         except Exception:
             return self._failed(

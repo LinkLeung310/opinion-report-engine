@@ -91,7 +91,13 @@ class RecommendationsSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.RECOMMENDATIONS, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.RECOMMENDATIONS,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_markdown(markdown, snapshot, facts, evidence, language)
         except Exception:
