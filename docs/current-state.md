@@ -1,7 +1,7 @@
 # Current Project State
 
 最后核对日期：2026-07-16
-最后实现基线：`main@26814cf`（PR #14，auditable event timeline）
+最后实现基线：`main@9b5046d`（PR #15，auditable top content analysis）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
@@ -34,11 +34,13 @@
 - PR #12 的 media-social slice 已用 merge commit 合并：`3448aa3`。
 - PR #13 的 M1 标准默认配置已用 merge commit 合并：`93f7d16`。
 - PR #14 的 timeline slice 已用 merge commit 合并：`26814cf`。
+- PR #15 的 top-content slice 已用 merge commit 合并：`9b5046d`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
 - `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
 - `main@93f7d16` 的 GitHub CI：180 项测试通过（run `29425308622`）。
 - `main@26814cf` 的 GitHub CI：196 项测试通过（run `29471052154`）。
+- `main@9b5046d` 的 GitHub CI：211 项测试通过（run `29472151204`）。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -57,7 +59,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline` 纵向切片；`top-content` 纵向切片已在功能分支完成本地验收，尚待 PR/CI/合并。其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
+- M2 已完成并合并 `timeline` 与 `top-content` 纵向切片；当前进入 `negative-themes` 规格阶段。其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -73,7 +75,7 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline` 纵向切片已经合并。当前分支 `codex/m2-top-content-section` 从绿色 `main@26814cf` 创建；下一阶段只定义并实现 `top-content` 的确定性分析切片。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content` 纵向切片已经合并。当前分支 `codex/m2-negative-themes-section` 从绿色 `main@9b5046d` 创建；下一阶段只定义并实现 `negative-themes` 的可审计分析切片。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## Context recovery 规则强化小步
 
@@ -123,12 +125,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline` 
 
 ## 当前阶段与下一步
 
-- PR #14 已合并，`main@26814cf` 的独立 CI 已通过 196 项测试；当前分支 `codex/m2-top-content-section` 已从该绿色基线创建。
-- `timeline` 的完整纵向切片已合并；`top-content` 的规格、D-30、固定 SQL、事实/证据、runner、双面板图表、确定性中英文 stub、运行时和 CLI/PDF 产物已完成本地验收。提交推送后下一步是 Draft PR 与 CI。
-- 新分支第一次检查：当前分支与 `main@26814cf` merge-base 完全一致，`git diff --check` 通过，PR #14/main CI/新阶段/RAG/n8n 标记均可定位，工作区只修改本状态文件。
-- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 196 项通过；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
+- PR #15 已用 merge commit `9b5046d` 合并；`main@9b5046d` 的独立 CI run `29472151204` 已通过 211 项测试。当前分支 `codex/m2-negative-themes-section` 已从该绿色基线创建并推送。
+- `timeline` 与 `top-content` 的完整纵向切片已合并；下一小步先为 `negative-themes` 定义独有用户价值、固定查询、Python 事实、证据、图表、一次 narrator 和 no-data 行为，再开始实现。
+- 新分支第一次检查：当前分支与 `main@9b5046d` merge-base 完全一致，工作区创建时干净，main CI 的成功状态与 head SHA 精确匹配；没有从旧功能分支串联开发。
+- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 `top-content` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 `negative-themes` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
 ## M2 `top-content` 阶段入口
 
@@ -151,6 +153,14 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline` 
 - PDF 页图验收先发现图表过高导致方法说明独占空白第 2 页，又发现缩高后图例覆盖右侧子图标题；两项均通过调整图表纵横比与顶部布局修复。最终 v4 为 A4 单页，中文、正文、四条证据、双面板、图例、坐标标签、方法框和页脚均清晰，无乱码、截断、重叠或空白尾页。
 - 产物小步第一次检查：变更范围仅为 runner、图表、stub、运行时、图片 alt 和对应测试；`git diff --check`、Python 静态编译、唯一 narrator 调用点、唯一运行时注册及聚焦测试 12 项通过。
 - 产物小步第二次检查：健康 fixture PostgreSQL 下 `top-content` SQL + CLI 集成测试 3 项通过，完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
+- PR #15 分支 CI run `29472090570` 通过后转为 ready，并用 merge commit `9b5046d` 合并；合并后独立 main CI run `29472151204` 通过 211 项测试。功能分支保留，未 squash 或删除历史。
+
+## M2 `negative-themes` 阶段入口
+
+- 产品框架只把 `negative-themes` 定义为“负面摘要中的主要原因、诉求和风险主题”；任务书没有提供主题算法、主题数、覆盖率分母、证据上限、图表或无主题退化行为，这些必须标为项目自主设计。
+- 本章与 `viewpoints` 的代表性观点、`keywords` 的精确短语覆盖、`severity` 的结构化风险分布存在重叠。下一小步必须先定义主题级独有用户价值和去重原则，不能把已有三章简单重排或让模型自由命名无证据主题。
+- 任务书要求观点来自真实摘要，因此任何主题都必须能回指真实标题/摘要与 Evidence ID；数字仍由固定 SQL/Python 计算，模型最多做一次受限叙述。
+- 用户要求 RAG 暂不开始，本阶段先设计确定性、可测试的非 RAG 基线；不引入 embedding、vector store、retriever 或 reranker，不修改 n8n，不调用真实模型 API，也不提前实现 `spread-path`。
 
 ## M2 `timeline` 阶段入口
 
