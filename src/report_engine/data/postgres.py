@@ -10,6 +10,7 @@ from psycopg import Connection
 from psycopg.rows import dict_row
 
 from report_engine.domain.scope import AnalysisScope
+from report_engine.sections.benchmark import BenchmarkCohort, BenchmarkSnapshot
 from report_engine.sections.engagement import EngagementRecord, EngagementSnapshot
 from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.keywords import KeywordSourceRecord, KeywordsSnapshot
@@ -79,6 +80,12 @@ RESPONSE_QUERY_ID = "response.v1"
 RESPONSE_SQL = (
     files("report_engine.data.queries")
     .joinpath("response.sql")
+    .read_text(encoding="utf-8")
+)
+BENCHMARK_QUERY_ID = "benchmark.v1"
+BENCHMARK_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("benchmark.sql")
     .read_text(encoding="utf-8")
 )
 PLATFORMS_QUERY_ID = "platforms.v1"
@@ -413,6 +420,47 @@ class PostgresResponseRepository:
             ),
             query_id=RESPONSE_QUERY_ID,
         )
+
+
+class PostgresBenchmarkRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope, comparison_tag: str) -> BenchmarkSnapshot:
+        calendar_days = (scope.to_date - scope.from_date).days + 1
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "comparison_tag": comparison_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+            "calendar_days": calendar_days,
+            "timezone_name": scope.timezone_name,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(BENCHMARK_SQL, parameters)
+            rows = cursor.fetchall()
+        if tuple(row["cohort"] for row in rows) != ("current", "comparison"):
+            raise RuntimeError("benchmark query returned invalid cohort rows")
+
+        cohorts = tuple(
+            BenchmarkCohort(
+                cohort=row["cohort"],
+                tag=row["tag"],
+                start_day=row["start_day"],
+                end_day=row["end_day"],
+                calendar_days=calendar_days,
+                article_count=row["article_count"],
+                positive_articles=row["positive_articles"],
+                neutral_articles=row["neutral_articles"],
+                negative_articles=row["negative_articles"],
+                platform_count=row["platform_count"],
+                high_critical_articles=row["high_critical_articles"],
+                total_engagement=row["total_engagement"],
+                excluded_later_articles=row["excluded_later_articles"],
+            )
+            for row in rows
+        )
+        return BenchmarkSnapshot(cohorts[0], cohorts[1], BENCHMARK_QUERY_ID)
 
 
 class PostgresPlatformsRepository:

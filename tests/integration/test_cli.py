@@ -433,6 +433,35 @@ def test_cli_generates_a_complete_response_only_bundle(tmp_path, monkeypatch) ->
     }
 
 
+def test_cli_generates_a_complete_benchmark_only_bundle(tmp_path, monkeypatch) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.pr.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    raw["sections"] = [{"id": "benchmark", "enabled": True,
+                        "input": {"comparisonTag": "legacy-feed-controls"}}]
+    config = tmp_path / "report-config.benchmark.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    result = CliRunner().invoke(app, ["generate", "--config", str(config),
+                                     "--out", str(tmp_path / "out"), "--stub-llm"])
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert "## 历史事件对标" in markdown
+    assert "当前 `bilibili-dislike` 窗口 3/17-3/23 共 12 篇" in markdown
+    assert "`legacy-feed-controls` 窗口 2/10-2/16 共 8 篇" in markdown
+    assert "负面占比为 58.3% 与 62.5%" in markdown
+    assert "不能证明事件本身的客观重要性、严重性或成败" in markdown
+    assert (target / "charts" / "historical-benchmark-comparison.png").is_file()
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {"requested": 1, "complete": 1,
+                                  "noData": 0, "failed": 0}
+    assert meta["charts"] == 1 and meta["stats"]["articles"] == 12
+
+
 @pytest.mark.parametrize(
     ("filename", "report_type", "headings", "charts"),
     (

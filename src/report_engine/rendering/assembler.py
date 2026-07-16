@@ -75,6 +75,8 @@ class ReportAssembler:
             return "平台首次收录与日历参与矩阵" if language is Language.ZH else "Platform first-capture and calendar participation matrix"
         if section_id is SectionId.RESPONSE:
             return "回应日前后等长窗口的量级与情感构成" if language is Language.ZH else "Matched pre/post response volume and sentiment composition"
+        if section_id is SectionId.BENCHMARK:
+            return "等长窗口的历史事件量级与情感对标" if language is Language.ZH else "Equal-window historical volume and sentiment benchmark"
         if section_id is SectionId.PLATFORMS:
             return "平台量级、情感与互动对比" if language is Language.ZH else "Platform volume, sentiment, and engagement"
         if section_id is SectionId.SEVERITY:
@@ -141,7 +143,7 @@ class ReportAssembler:
                         continue
             return None
 
-        articles = first_fact("articles", "articleCount")
+        articles = first_fact("articles", "articleCount", "currentArticles")
         negative_ratio = first_fact("negativeRatio")
         peak_day = first_fact("peakDay")
         return {

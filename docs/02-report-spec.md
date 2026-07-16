@@ -1287,6 +1287,101 @@ changes unavailable, and renders the chart honestly. Invalid input returns `fail
 before the query runs. Query, calculation, chart, or narration errors return `failed`
 with a safe stage-specific message while later sections continue.
 
+## `benchmark` — 历史事件对标
+
+Purpose: compare the current user-selected event window with an independent historical
+event over the same number of complete calendar days. Unlike `metrics`, this section
+does not restate one population; unlike `response`, it has no intervention cutpoint;
+unlike `spread-path`, it does not infer movement. It reports measured differences
+between two captured cohorts and never ranks the intrinsic importance, success, or
+severity of the underlying real-world events.
+
+Inputs: required section-specific `input.comparisonTag`. It must be a non-blank string
+without leading or trailing whitespace and must differ from `topic.tag`. Missing,
+non-string, blank, padded, or identical input returns a section-local `INPUT` failure
+before SQL. The engine must not invent, search for, or normalize a substitute event.
+
+Equal-window and independence decision:
+
+- the current cohort is the shared topic tag within the configured complete half-open
+  `dateRange`; its calendar length is the inclusive configured day count;
+- comparison candidates must contain the exact `comparisonTag` and must not contain the
+  current topic tag. This disjoint rule prevents the same source record from appearing
+  on both sides when a generic or nested tag is supplied;
+- anchor the historical comparison window at the earliest local calendar day among
+  disjoint comparison candidates, then include exactly the same number of complete
+  calendar days as the current report range. Later comparison records are outside the
+  matched lifecycle window and are counted/disclosed rather than silently included;
+- these equal durations improve calendar comparability but do not equalize collection
+  intensity, platform coverage, audience size, counterfactual conditions, or event
+  meaning. The report must disclose both exact windows and sample sizes.
+
+Fixed query plan (`benchmark.v1`):
+
+- one parameterized statement returns two fixed cohort rows in `current`, `comparison`
+  order. The current row aggregates the shared scope. A CTE finds the earliest disjoint
+  comparison day, builds the equal-day historical window, and aggregates only that
+  window while also counting later excluded comparison records;
+- each row returns tag, window boundaries, calendar days, article count, positive,
+  neutral and negative counts, distinct platform count, high/critical negative count,
+  and stored like/comment/share/favorite sum. SQL never interpolates either tag;
+- bind only `topic_tag`, `comparison_tag`, `from_inclusive`, `to_exclusive`,
+  `calendar_days`, and `timezone_name`. SQL does not generate a conclusion, use text
+  similarity, embeddings/RAG, an LLM, external search, or n8n;
+- the query will live at `src/report_engine/data/queries/benchmark.sql`.
+
+Derived in Python:
+
+- validate the two-row order, disjoint tags, exact equal calendar length, non-negative
+  counts, sentiment totals, high/critical subset, and comparison exclusion count;
+- for each cohort retain tag, exact date range, calendar days, articles, daily average,
+  sentiment counts/shares, platform count, high/critical-negative share of all articles,
+  stored engagement total, and stored engagement per article. Any zero denominator is
+  unavailable rather than a measured zero percentage or rate;
+- calculate current-minus-comparison article and daily-average deltas, negative-share
+  and high/critical-share percentage-point deltas, and stored-engagement-per-article
+  delta only when required denominators exist. Raw values remain unrounded; formatting
+  occurs only for display;
+- every fact uses `benchmark.v1` or a named `benchmark.*.v1` Python source. This is an
+  aggregate section with no `EvidenceSet`; it does not quote or rank individual records.
+
+Evidence: none. The fixed tag cohorts and aggregate facts are the complete approved
+context; retrieval and RAG are not used.
+
+Charts: one `historical-benchmark-comparison.png` two-panel chart when both cohorts have
+data. The left panel uses grouped bars for article daily average and stored engagement
+per article, with exact sample sizes and separate axes/labels rather than combining
+unlike units into one score. The right panel uses two 100% stacked sentiment bars in the
+required colors and labels the negative share and high/critical share. The title states
+one measured difference, both exact date ranges appear in a note, and the note says
+equal windows do not prove equal collection conditions or intrinsic event severity.
+Use the shared white background, hidden top/right spines, embedded Chinese font, and
+150 dpi theme.
+
+Narration contract:
+
+- at most one narrator operation after successful input validation, query,
+  calculation, and charting;
+- Chinese heading `历史事件对标`, followed by current/comparison tags, exact equal-day
+  windows, article sample sizes, platform coverage, and excluded later historical rows;
+- compare only approved daily average, sentiment composition, high/critical share, and
+  stored engagement per article with exact signed deltas when available. Always label
+  interaction values as stored counters, not reach, engagement rate, or audience size;
+- say `本次收录样本中` and `观察到的差异`. Never say one event was objectively larger,
+  more important, more harmful, more successful, or caused a business outcome. Do not
+  invent a historical event name, date, cause, audience, recommendation, source record,
+  external fact, or new number;
+- disclose that equal calendar length does not align collection intensity, platform
+  coverage, audiences, or real-world context. The deterministic Chinese/English stub
+  renders the same facts, unavailable values, and limitations in automated tests.
+
+No-data rule: zero current-cohort articles, no disjoint comparison candidates, or zero
+comparison articles inside the anchored equal window returns `no_data` with retained
+facts where available and performs no chart or narrator operation. Later comparison
+records outside the equal window alone do not change this rule. Invalid input returns
+`failed` before SQL. Query, calculation, chart, or narration errors return `failed` with
+a safe stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in
