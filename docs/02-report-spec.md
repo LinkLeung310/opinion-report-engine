@@ -19,6 +19,30 @@ The fixture data is deliberately synthetic and deterministic. It resembles a pla
 multi-platform event only so that calculations, edge cases, and visual output can be
 reviewed without leaking production data.
 
+## Shared language contract
+
+`language` applies to the complete user-visible bundle, not only the model-written
+paragraphs. For `en`, the report title suffix, monitoring-scope banner, method note,
+section headings, deterministic/no-data/failed messages, computed labels and units,
+chart title/axes/legends/annotations/captions, and PDF document metadata are English.
+The stable public JSON field names, section IDs, Evidence IDs, SQL/query identifiers,
+ISO dates, and filesystem paths do not change with language.
+
+Source truth is never translated silently. Real titles, summaries, platform/proper
+names, versioned exact-indicator keywords, and user-provided context remain verbatim and
+may therefore contain Chinese inside an English report; surrounding prose must identify
+them as source data. Computed labels such as phase names, direction bands, severity,
+sentiment, percentage-point units, unavailable placeholders, and chart annotations are
+localized by deterministic code rather than by the narrator.
+
+M2 language acceptance uses one enabled-all 19-section English config with all three
+section inputs plus a deterministic combination matrix covering single sections,
+reordered mixed sections, report-type independence, missing/valid inputs, no-data, and
+injected section failure. It verifies enabled-only execution, exact configured order,
+at most one narrator operation per executed data-bearing section, localized artifacts,
+truthful metadata, chart/file counts, and section-level isolation. This is risk-based
+coverage rather than an impractical enumeration of all `2^19` subsets.
+
 ## `metrics` — 全网数据概览
 
 Purpose: give the reader a compact, auditable overview of the selected monitoring scope.
