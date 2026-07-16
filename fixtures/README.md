@@ -2,6 +2,10 @@
 
 The fixture database is synthetic, deterministic, and safe to publish. Start it with:
 
+The seed contains a 12-record `bilibili-dislike` report cohort and a separate
+8-record `legacy-feed-controls` historical cohort used only for deterministic
+benchmark integration tests. Neither cohort represents production or real historical data.
+
 ```powershell
 docker compose -f fixtures\docker-compose.yml up -d --wait
 ```

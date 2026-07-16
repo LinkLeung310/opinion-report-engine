@@ -254,6 +254,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 为使固定 SQL 集成测试有真实的双组数据，后续 SQL/事实小步将新增一个与现有标签完全不重叠、日期更早的合成历史事件 cohort；它必须明确标为 synthetic fixture，且不得改变现有主话题 12 篇及其所有已验证口径。
 - 规格小步第一次检查：仅逐章规格、设计决定和状态文档改动；`git diff --check`、唯一 `benchmark` 章节、唯一 D-34、必需输入/等长窗口/独立 cohort/一次 narrator/no-data/无 RAG 边界均通过。真实 PostgreSQL 审计复现当前无可用独立历史 cohort 的数据缺口。
 - 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 274 项，`pip check` 无破损依赖。本小步未修改 fixtures/实现、RAG、n8n 或真实模型 API；下一小步才新增独立 synthetic cohort、固定 SQL、Python 事实和数据库集成测试。
+- fixtures 新增完全独立的 `legacy-feed-controls` synthetic cohort：2026-02-10 至 2/16 共 8 篇，正/中/负 1/2/5，覆盖 4 个平台，高/危负面 3 篇，存储互动计数和 9,500；fixture README 明确两组均非生产或真实历史数据。现有 `bilibili-dislike` 报告范围仍为 12 篇且所有既有测试口径未改变。
+- 固定 `benchmark.sql`、`PostgresBenchmarkRepository`、严格 `comparisonTag` 解析、`BenchmarkCohort`、`BenchmarkSnapshot` 和可追溯 `FactSet` 已实现。SQL 返回固定 current/comparison 两行，比较组排除任何同时带当前 tag 的记录，并用首次独立记录锚定 7 日等长窗口。
+- Python 验证 cohort 顺序、tag 独立、等长日历、情感合计、高/危子集和非负计数；事实保留两侧日期/样本/日均/平台/情感/高危/存储互动及 current-minus-comparison 差值，零分母显示 `不可用`。
+- 真实 fixture 集成测试正式验证当前/历史 12/8 篇、日均 1.7/1.1、负面 7/5（58.3%/62.5%）、高/危 4/3（33.3%/37.5%）、平台 4/4、存储互动 26,170/9,500，负面占比差与高/危占比差均为 `-4.2 个百分点`；重叠 `algorithm` tag 被排除为零比较样本。
+- SQL/事实小步第一次检查：`git diff --check`、Python 静态编译、无超长新增 Python 行及 benchmark 专属单元/真实数据库测试 11 项通过；首次集成失败只因测试沿用占位 tag `layoff`，显式改为 fixture 主 tag 后同一 SQL 断言全部通过，未修改实现迎合错误输入。
+- SQL/事实小步第二次检查：重建并健康启动仓库专用 fixture PostgreSQL 后，完整 pytest 实际收集并通过 285 项，`pip check` 无破损依赖。本小步未接 runner/图表/stub/运行时、RAG、n8n 或真实模型 API。
 
 ## M2 `timeline` 阶段入口
 
