@@ -10,6 +10,7 @@ from psycopg import Connection
 from report_engine.application.planner import ReportPlanner
 from report_engine.application.service import ReportApplicationService
 from report_engine.charts.engagement import EngagementChartBuilder
+from report_engine.charts.benchmark import BenchmarkChartBuilder
 from report_engine.charts.metrics import MetricsChartBuilder
 from report_engine.charts.keywords import KeywordsChartBuilder
 from report_engine.charts.media_social import MediaSocialChartBuilder
@@ -26,6 +27,7 @@ from report_engine.charts.top_content import TopContentChartBuilder
 from report_engine.config import SectionId
 from report_engine.data.postgres import (
     PostgresEngagementRepository,
+    PostgresBenchmarkRepository,
     PostgresKeywordsRepository,
     PostgresMediaSocialRepository,
     PostgresMetricsRepository,
@@ -45,6 +47,7 @@ from report_engine.data.postgres import (
 from report_engine.llm.protocol import Narrator
 from report_engine.rendering import ReportAssembler, ReportLabPdfRenderer
 from report_engine.sections.engagement_runner import EngagementSectionRunner
+from report_engine.sections.benchmark_runner import BenchmarkSectionRunner
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.keywords_runner import KeywordsSectionRunner
 from report_engine.sections.media_social_runner import MediaSocialSectionRunner
@@ -151,6 +154,9 @@ def build_report_service(
         chart_builder=ResponseChartBuilder(),
         narrator=narrator,
     )
+    benchmark_runner = BenchmarkSectionRunner(
+        PostgresBenchmarkRepository(connection), BenchmarkChartBuilder(), narrator
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
         section_runners={
@@ -170,6 +176,7 @@ def build_report_service(
             SectionId.NEGATIVE_THEMES: negative_themes_runner,
             SectionId.SPREAD_PATH: spread_path_runner,
             SectionId.RESPONSE: response_runner,
+            SectionId.BENCHMARK: benchmark_runner,
         },
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),

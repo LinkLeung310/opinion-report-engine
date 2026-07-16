@@ -19,6 +19,35 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.BENCHMARK:
+            if request.language is Language.EN:
+                return (
+                    "## Historical benchmark\n\n"
+                    f"The current cohort `{values['currentTag']}` covers {values['currentDateRange']} "
+                    f"with {values['currentArticles']} records across {values['currentPlatforms']} platforms; "
+                    f"the independent `{values['comparisonTag']}` cohort covers {values['comparisonDateRange']} "
+                    f"with {values['comparisonArticles']} records across {values['comparisonPlatforms']} platforms. "
+                    f"Daily averages are {values['currentDailyAverage']} and {values['comparisonDailyAverage']}; "
+                    f"negative shares are {values['currentNegativeShare']} and {values['comparisonNegativeShare']} "
+                    f"({values['negativeShareDelta']}). Stored engagement per record is "
+                    f"{values['currentEngagementPerArticle']} versus {values['comparisonEngagementPerArticle']} "
+                    f"({values['engagementPerArticleDelta']}). Equal calendar windows do not align collection "
+                    "intensity, platform coverage, audiences, or real-world context, and do not establish intrinsic event severity."
+                )
+            return (
+                "## 历史事件对标\n\n"
+                f"本次收录样本中，当前 `{values['currentTag']}` 窗口 {values['currentDateRange']} 共 "
+                f"{values['currentArticles']} 篇、覆盖 {values['currentPlatforms']} 个平台；独立历史组 "
+                f"`{values['comparisonTag']}` 窗口 {values['comparisonDateRange']} 共 "
+                f"{values['comparisonArticles']} 篇、覆盖 {values['comparisonPlatforms']} 个平台。"
+                f"两组日均收录为 {values['currentDailyAverage']} 与 {values['comparisonDailyAverage']} 篇；"
+                f"负面占比为 {values['currentNegativeShare']} 与 {values['comparisonNegativeShare']}，"
+                f"观察到的差异为 {values['negativeShareDelta']}。篇均存储互动为 "
+                f"{values['currentEngagementPerArticle']} 与 {values['comparisonEngagementPerArticle']}，"
+                f"差值 {values['engagementPerArticleDelta']}。等长日历不等于采集强度、平台覆盖、受众或"
+                "现实背景相同，也不能证明事件本身的客观重要性、严重性或成败。"
+            )
+
         if request.section_id is SectionId.RESPONSE:
             if request.language is Language.EN:
                 return (

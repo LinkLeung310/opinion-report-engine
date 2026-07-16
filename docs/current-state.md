@@ -260,6 +260,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 真实 fixture 集成测试正式验证当前/历史 12/8 篇、日均 1.7/1.1、负面 7/5（58.3%/62.5%）、高/危 4/3（33.3%/37.5%）、平台 4/4、存储互动 26,170/9,500，负面占比差与高/危占比差均为 `-4.2 个百分点`；重叠 `algorithm` tag 被排除为零比较样本。
 - SQL/事实小步第一次检查：`git diff --check`、Python 静态编译、无超长新增 Python 行及 benchmark 专属单元/真实数据库测试 11 项通过；首次集成失败只因测试沿用占位 tag `layoff`，显式改为 fixture 主 tag 后同一 SQL 断言全部通过，未修改实现迎合错误输入。
 - SQL/事实小步第二次检查：重建并健康启动仓库专用 fixture PostgreSQL 后，完整 pytest 实际收集并通过 285 项，`pip check` 无破损依赖。本小步未接 runner/图表/stub/运行时、RAG、n8n 或真实模型 API。
+- `BenchmarkSectionRunner`、双面板 `BenchmarkChartBuilder`、确定性中英文 stub、运行时注册和专属图片 alt 已接入；正常路径只调用一次 narrator 并传空 EvidenceSet，缺失/相同 tag 在查询前失败，无独立样本为保留事实的 `no_data`，各阶段错误均限制在本章节。
+- benchmark-only CLI 首次验收发现通用 `meta.stats` 未识别 `currentArticles` 而错误显示 0；按 D-29 将该可审计事实加入候选后为 12，没有插入未选 metrics 或复制计算。
+- 实际 bundle 为 1 章 complete、0 failed、1 张 150 dpi 图和 A4 单页 PDF；正文准确披露 7 日等长窗口、12/8 篇、日均 1.7/1.1、负面 58.3%/62.5% 与篇均存储互动 2,180.8/1,187.5，并保留不可推断事件客观重要性/严重性/成败的边界。
+- 首次图表视觉检查发现图例压住横轴标签；移至图外右上方并缩小绘图区后重新生成。最终图表原图与 Poppler PDF 页均无中文乱码、截断、重叠、图例遮挡或孤页。
+- 产物小步第一次检查：Python 静态编译、`git diff --check` 和 benchmark 模型/SQL/runner/图表/CLI 聚焦 15 项通过。
+- 产物小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 289 项，`pip check` 无破损依赖，最终 v2 bundle 视觉验收通过。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
 
 ## M2 `timeline` 阶段入口
 
