@@ -56,7 +56,13 @@ class BenchmarkSectionRunner:
             return self._failed(FailureStage.CHART, "Benchmark chart rendering failed", language, facts)
         try:
             markdown = self.narrator.narrate(
-                NarrationRequest(SectionId.BENCHMARK, language, facts, EvidenceSet())
+                NarrationRequest(
+                    SectionId.BENCHMARK,
+                    language,
+                    facts,
+                    EvidenceSet(),
+                    report_type=scope.report_type,
+                )
             )
         except Exception:
             return self._failed(FailureStage.LLM, "Benchmark narration failed", language,

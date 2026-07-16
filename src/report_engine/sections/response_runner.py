@@ -116,7 +116,13 @@ class ResponseSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.RESPONSE, language, facts, EvidenceSet())
+                NarrationRequest(
+                    SectionId.RESPONSE,
+                    language,
+                    facts,
+                    EvidenceSet(),
+                    report_type=scope.report_type,
+                )
             )
         except Exception:
             return self._failed(

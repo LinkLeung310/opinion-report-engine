@@ -116,7 +116,13 @@ class SpreadPathSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.SPREAD_PATH, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.SPREAD_PATH,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_markdown(markdown, facts, evidence, language)
         except Exception:

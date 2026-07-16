@@ -177,6 +177,25 @@ Narrator protocol
   └── StubNarrator               # deterministic automated tests
 ```
 
+### OpenAI-compatible transport contract
+
+The real adapter treats `LLM_BASE_URL` as the provider's versioned API base and posts
+to its normalized `/chat/completions` child. It uses the configured model, a Bearer
+authorization header, and one system plus one user message. The user message is a
+deterministic JSON envelope containing only the section ID and purpose, requested
+language, normalized report type, canonical heading, approved formatted `FactSet`
+values, bounded `EvidenceSet` records, and any separately labelled unverified
+`UserContext`. API keys, DSNs, raw exceptions, and unrelated process environment values
+never enter the prompt or report metadata.
+
+One call to `Narrator.narrate` remains one logical model operation. A transport timeout,
+network error, HTTP 408/429, or 5xx response may make one bounded retry after an
+injectable backoff; all other 4xx responses and malformed successful responses fail
+immediately. The adapter accepts only a non-empty `choices[0].message.content` string.
+Provider response bodies are not copied into exceptions, logs, or section failure
+metadata. Automated tests inject a deterministic transport and sleeper; real provider
+access remains a final credential-gated smoke test.
+
 ## 7. Failure semantics
 
 | Failure | Section result | Report behavior |
@@ -311,7 +330,8 @@ These choices are deliberately explicit and form part of the project's product d
    `-3`, ... suffix when the same report is generated concurrently or repeatedly. A
    task ID remains separate from a report ID in M3.
 5. **LLM attempts:** one narrator operation per section, with at most one bounded
-   transport retry for transient failures; attempts are recorded in diagnostics.
+   transport retry for transient failures; the adapter records the attempt count in
+   in-memory diagnostics without exposing provider payloads or credentials.
 6. **Generated-report list:** after atomic bundle publication, `CatalogPublisher`
    atomically updates `index.json` so the report appears immediately.
 7. **Metadata failures:** append the safe `failures` array described above; preserve all

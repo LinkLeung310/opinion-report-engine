@@ -158,6 +158,7 @@ def test_all_section_english_example_generates_the_complete_m2_bundle(
     target, narrator, meta, markdown = run_cli(raw, tmp_path, monkeypatch)
 
     assert tuple(request.section_id for request in narrator.requests) == tuple(SectionId)
+    assert {request.report_type for request in narrator.requests} == {ReportType.PR}
     assert markdown_headings(markdown) == tuple(
         f"## {ENGLISH_HEADINGS[section_id]}" for section_id in SectionId
     )

@@ -96,7 +96,13 @@ class SeveritySectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.SEVERITY, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.SEVERITY,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_evidence_markdown(markdown, evidence)
         except Exception:

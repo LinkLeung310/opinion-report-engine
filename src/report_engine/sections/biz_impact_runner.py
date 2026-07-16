@@ -98,6 +98,7 @@ class BizImpactSectionRunner:
                     facts,
                     EvidenceSet(),
                     user_context=user_context,
+                    report_type=scope.report_type,
                 )
             )
             self._validate_markdown(markdown, facts, user_context, language)

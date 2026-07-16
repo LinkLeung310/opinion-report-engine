@@ -117,7 +117,13 @@ class NegativeThemesSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.NEGATIVE_THEMES, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.NEGATIVE_THEMES,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_markdown(markdown, snapshot, facts, evidence, language)
         except Exception:

@@ -126,7 +126,13 @@ class TopContentSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.TOP_CONTENT, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.TOP_CONTENT,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_markdown(markdown, facts, evidence, language)
         except Exception:

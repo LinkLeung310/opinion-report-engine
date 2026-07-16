@@ -70,6 +70,7 @@ class VerdictSectionRunner:
                     language=language,
                     facts=facts,
                     evidence=EvidenceSet(),
+                    report_type=scope.report_type,
                 )
             )
         except Exception:

@@ -93,7 +93,13 @@ class TrendSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.TREND, language, facts, EvidenceSet())
+                NarrationRequest(
+                    SectionId.TREND,
+                    language,
+                    facts,
+                    EvidenceSet(),
+                    report_type=scope.report_type,
+                )
             )
         except Exception:
             return self._failed(

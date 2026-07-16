@@ -90,7 +90,13 @@ class RiskSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.RISK, language, facts, EvidenceSet())
+                NarrationRequest(
+                    SectionId.RISK,
+                    language,
+                    facts,
+                    EvidenceSet(),
+                    report_type=scope.report_type,
+                )
             )
         except Exception:
             return self._failed(

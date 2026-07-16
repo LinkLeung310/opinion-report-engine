@@ -109,7 +109,13 @@ class EngagementSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.ENGAGEMENT, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.ENGAGEMENT,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_evidence_markdown(markdown, evidence, facts)
         except Exception:
