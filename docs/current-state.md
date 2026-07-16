@@ -194,7 +194,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - fixture 真实查询得到 12 篇、4 个平台；首次收录顺序为 B站/微博/知乎/新闻，对应 Evidence ID `bili-001`/`bili-002`/`bili-003`/`bili-004`，文章量 4/4/1/3、负面量 2/3/1/1、活跃日 4/4/1/3。最早到最后新平台首次收录间隔 32.5 小时，4 个日期有多平台记录，3 月 20 日以 3 个平台达到单日最大覆盖。
 - 规格小步第一次检查：仅 `docs/02-report-spec.md` 与 `docs/design-decisions.md` 改动；`git diff --check`、唯一 `spread-path` 章节、唯一 D-32、必需合同段、无实现/n8n 变更均通过。
 - 规格小步第二次检查：真实 fixture PostgreSQL 用 Unicode 安全断言精确复算上述平台、Evidence ID、计数、活跃日、32.5 小时和多平台日期；项目 `.venv` 完整 pytest 实际收集并通过 227 项，`pip check` 无破损依赖。首次内联断言因 PowerShell 转码中文源码产生假阴性，改用 Unicode 转义后同一数据断言通过，未发现产品口径冲突。
-- 本小步未创建固定 SQL 或实现代码，未实现 RAG、修改 n8n 或调用真实模型 API；下一小步才实现 `spread-path.v1` 查询、Python 事实与真实数据库集成测试。
+- 固定 `spread_path.sql`、`PostgresSpreadPathRepository`、`SpreadPathSnapshot`、平台观察对象、完整日历矩阵、物质性平台选择、首收录 EvidenceSet 和可追溯 FactSet 已实现；SQL 只绑定 tag 与半开时间边界，Python 才计算平台排名、显示顺序、同刻波次和非因果时序事实。
+- fixture 集成测试正式验证 12 篇、B站/微博/知乎/新闻 4 个平台，首收录 Evidence ID `bili-001`/`bili-002`/`bili-003`/`bili-004`，文章量 4/4/1/3、负面量 2/3/1/1、活跃日 4/4/1/3、存储互动 6,610/15,715/1,420/2,425，以及 32.5 小时、4 个多平台日和 3 月 20 日 3 平台最大覆盖。
+- `FactSet` 保留完整报告日历、显示/省略平台数、单日最大覆盖并列日期、首次收录间隔、首/末新平台并列、每平台全部来源 ID 和首记录 ID；`relationshipEdges` 明确为不可用。空话题返回 7 日合法空 snapshot，单平台与精确同刻首次收录均有确定性事实。
+- SQL/事实小步第一次检查：变更范围仅为 PostgreSQL repository、固定 SQL、事实模型和两类测试；`git diff --check`、Python 静态编译、三个 SQL 绑定参数各出现一次及模型单元测试 6 项通过。
+- SQL/事实小步第二次检查：提交前将并列日期/平台集合从 tuple 修正为符合 `FactValue` 的稳定字符串标量，并精确断言同刻平台的确定性显示顺序；修订后模型 + 真实数据库聚焦测试 8 项通过，完整 pytest 实际收集并通过 235 项，`pip check` 无破损依赖。本小步未接 runner/图表、RAG、n8n 或真实模型 API。
+- 下一小步接入 runner、时间×平台矩阵图、确定性中英文 stub、运行时与 CLI/PDF 产物。
 
 ## M2 `timeline` 阶段入口
 
