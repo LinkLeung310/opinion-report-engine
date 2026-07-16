@@ -523,6 +523,62 @@ def test_cli_generates_a_complete_business_impact_only_bundle(
     }
 
 
+def test_cli_generates_a_complete_recommendations_only_bundle(
+    tmp_path, monkeypatch
+) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.pr.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    raw["sections"] = [{"id": "recommendations", "enabled": True}]
+    config = tmp_path / "report-config.recommendations.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert "## 行动建议" in markdown
+    assert "选择 4 项、遗漏 0 项，最多 4 项" in markdown
+    assert "### 1. 核验高风险记录" in markdown
+    assert "### 4. 建立反馈闭环" in markdown
+    citations = tuple(
+        match for match in ("bili-007", "bili-005", "bili-003", "bili-007")
+    )
+    cursor = 0
+    for evidence_id in citations:
+        cursor = markdown.index(f"[Evidence: {evidence_id}]", cursor) + 1
+    assert "不会自动发送消息、修改产品或创建工单" in markdown
+    assert list((target / "charts").glob("*.png")) == []
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {
+        "requested": 1,
+        "complete": 1,
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == 0
+    assert meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "58.3%",
+        "peakDay": "暂无",
+    }
+
+
 @pytest.mark.parametrize(
     ("filename", "report_type", "headings", "charts"),
     (

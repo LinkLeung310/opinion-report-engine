@@ -34,6 +34,7 @@ from report_engine.data.postgres import (
     PostgresMetricsRepository,
     PostgresNegativeThemesRepository,
     PostgresPlatformsRepository,
+    PostgresRecommendationsRepository,
     PostgresRiskRepository,
     PostgresResponseRepository,
     PostgresSentimentEvolutionRepository,
@@ -55,6 +56,7 @@ from report_engine.sections.keywords_runner import KeywordsSectionRunner
 from report_engine.sections.media_social_runner import MediaSocialSectionRunner
 from report_engine.sections.negative_themes_runner import NegativeThemesSectionRunner
 from report_engine.sections.platforms_runner import PlatformsSectionRunner
+from report_engine.sections.recommendations_runner import RecommendationsSectionRunner
 from report_engine.sections.registry import default_registry
 from report_engine.sections.risk_runner import RiskSectionRunner
 from report_engine.sections.response_runner import ResponseSectionRunner
@@ -163,6 +165,10 @@ def build_report_service(
         repository=PostgresBizImpactRepository(connection),
         narrator=narrator,
     )
+    recommendations_runner = RecommendationsSectionRunner(
+        repository=PostgresRecommendationsRepository(connection),
+        narrator=narrator,
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
         section_runners={
@@ -184,6 +190,7 @@ def build_report_service(
             SectionId.RESPONSE: response_runner,
             SectionId.BENCHMARK: benchmark_runner,
             SectionId.BIZ_IMPACT: biz_impact_runner,
+            SectionId.RECOMMENDATIONS: recommendations_runner,
         },
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),

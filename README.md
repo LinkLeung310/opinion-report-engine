@@ -42,8 +42,12 @@ instead of guessing executive association or rumor status from text.
 `viewpoints` separates population sentiment shares from a deterministic, cross-platform
 evidence shortlist and validates every displayed Evidence ID plus the original source text;
 this baseline does not claim RAG or semantic retrieval.
-The remaining section IDs are registered but deliberately reported as visible failures
-until their own vertical slices are implemented.
+The M2 vertical slices now also implement `timeline`, `top-content`, `negative-themes`,
+`spread-path`, `response`, `benchmark`, `biz-impact`, and `recommendations`. The last of
+these converts fixed risk/theme signals into at most four evidence-linked, human-review
+actions without assigning owners, executing work, or claiming an effectiveness score.
+Full M2 completion still requires the cross-section English and arbitrary-combination
+matrix; see `docs/current-state.md` for the exact boundary.
 
 From the repository root:
 
@@ -64,6 +68,12 @@ The complete eleven-section PR default uses the same engine and fixture scope:
 
 ```powershell
 .\.venv\Scripts\report.exe generate --config examples\report-config.pr.json --out out --stub-llm
+```
+
+Review the recommendation playbook as a standalone selectable section:
+
+```powershell
+.\.venv\Scripts\report.exe generate --config examples\report-config.recommendations.json --out out --stub-llm
 ```
 
 Run all tests, including the real fixture SQL and CLI integration test:

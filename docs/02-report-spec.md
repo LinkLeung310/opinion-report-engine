@@ -1492,9 +1492,112 @@ SQL. Query, calculation, context construction, or narration errors return `faile
 with a safe stage-specific message while later sections continue. No path creates a
 chart.
 
-## Remaining project-defined sections
+## `recommendations` — 行动建议
 
-The authoritative IDs and user-facing purposes are defined in
-`docs/final-framework.zh-CN.md`. Each section will be expanded here, before its code is
-implemented, with inputs, fixed SQL, derived facts, evidence selection, charts,
-narration contract, and no-data behavior.
+Purpose: turn approved, observable negative-pressure signals into a short, prioritized
+human-review plan. The section answers what the responsible team should verify or
+prepare next and why that action was selected. It is a versioned decision-support
+playbook, not autonomous execution, legal advice, a guarantee of outcome, or a place for
+the narrator to invent generic public-relations tactics.
+
+Inputs: no section-specific input. The section uses only the shared exact tag and complete
+date range. It must work when selected by itself and must not depend on another section
+being enabled or silently read another section's rendered text.
+
+Fixed query plan (`recommendations.v1`):
+
+- hard-filter articles with the shared exact tag and half-open timestamp range;
+- return scoped article count and every negative record's real external ID, title,
+  summary, platform, timestamp, sentiment, supplied severity/negative score, and four
+  stored interaction counters in chronological/ID order;
+- use only bound `topic_tag`, `from_inclusive`, and `to_exclusive`. SQL does not create an
+  action, priority, owner, deadline, theme, score, or conclusion; call an LLM; use
+  embeddings/RAG; search externally; or use n8n;
+- the query will live at `src/report_engine/data/queries/recommendations.sql`.
+
+Derived in Python:
+
+- validate population counts, unique chronological source records, non-empty source
+  text, supplied labels/scores, and non-negative stored counters;
+- reuse the public `negative-themes.codebook.v1` exact-indicator definitions and its
+  minimum two-record display threshold. Reuse is deliberate: recommendations may act on
+  an approved issue dimension but must not introduce a second hidden classifier or let
+  the model rename/merge dimensions;
+- calculate scoped and negative counts/shares, high/critical-negative count/share,
+  codebook-classified and unclassified negative counts/shares, candidate/selected/
+  omitted action counts, and at most four selected actions;
+- build candidates from this fixed action codebook:
+  - `triage_high_risk`: eligible when any negative record has supplied `high` or
+    `critical` severity; suggested owners `公关负责人、事件责任人` / `PR lead, incident
+    owner`; horizon `立即` / `immediate`; action is to assign each high/critical record an
+    owner/status and document whether escalation is required;
+  - `restore_user_control`: eligible when the `user_agency` dimension covers at least two
+    negative records; suggested owners `产品/体验、客服` / `Product/UX, Support`; action is
+    to validate the affected control path, prepare step-by-step guidance, and log
+    unresolved cases;
+  - `explain_change`: eligible when the `transparency` dimension covers at least two
+    negative records; suggested owners `产品、公关` / `Product, PR`; action is to prepare
+    one source of truth covering changed/unchanged scope and feedback or rollback
+    boundaries;
+  - `close_feedback_loop`: eligible when the `feedback_effectiveness` dimension covers
+    at least two negative records; suggested owners `公关、客服运营` / `PR, Support
+    operations`; action is to acknowledge the approved concern, publish an intake/
+    response cadence, and maintain a visible status;
+  - `review_unresolved_negative`: eligible only when negative records exist but none of
+    the preceding candidates qualify; suggested owners `舆情分析、事件责任人` /
+    `Analyst, incident owner`; horizon `72小时内` / `within 72 hours`; action is to
+    manually review the highest-ranked unresolved record and decide whether a versioned
+    playbook/codebook extension is warranted;
+- select `triage_high_risk` first, then eligible theme actions in the existing transparent
+  theme order (matched records, high/critical records, stored interaction, fixed codebook
+  order). Use the fallback only if no other candidate exists, retain at most four, and
+  expose omitted candidate count. This lexicographic order is the displayed priority; do
+  not create a composite risk, confidence, impact, or expected-value score;
+- theme-action horizon is `24小时内` / `within 24 hours` when its matched records include
+  any high/critical label or explicit demand marker, otherwise `72小时内` / `within 72
+  hours`. Horizon is a playbook response target, not an observed event deadline;
+- choose the high-risk/fallback representative by supplied severity, negative score,
+  stored interaction, recency, and ID; theme actions use their existing deterministic
+  representative. Every action fact carries all trigger record IDs and the representative
+  ID. Fixed action/owner/horizon/verification text is itself versioned codebook data.
+
+Evidence: required for every selected action. Each action cites exactly one approved
+representative and preserves its real external ID, title, summary, platform, timestamp,
+and negative sentiment. The `EvidenceSet` deduplicates shared representatives, while the
+expected action citation sequence may repeat an ID when the same record truthfully
+supports multiple actions. Missing, unknown, extra, or reordered citations, changed
+source text, or an action without its approved trigger records causes safe section
+failure. This deterministic baseline does not use retrieval or RAG.
+
+Charts: none. The ranked action blocks already express decision order. A bar, scorecard,
+or traffic light would imply quantified effectiveness/confidence and duplicate risk/theme
+charts without outcome data. Each text block shows priority rank, horizon, fixed action,
+suggested role owners, trigger facts, representative evidence, and verification checklist.
+
+Narration contract:
+
+- at most one narrator operation after successful query, action construction, `FactSet`,
+  and `EvidenceSet` validation;
+- Chinese heading `行动建议` and English `Recommended actions`; disclose scoped/negative/
+  high-critical sample facts, codebook coverage, selected/omitted action counts, the
+  four-action maximum, and that priority is deterministic rather than a score;
+- render every selected action in exact priority order without changing its approved ID,
+  label, horizon, suggested role owners, action, trigger counts/shares, verification
+  checklist, Evidence ID, title, or summary. The narrator may only add connective prose;
+- state that role owners are suggestions, horizons are playbook targets, and a human must
+  approve/adapt any action to operational, legal, policy, and business context before
+  execution. The engine itself sends no message, changes no product, and opens no ticket;
+- do not add an action, numeric target, named employee/vendor, causal claim, external fact,
+  legal conclusion, guaranteed outcome, or advice derived only from the representative
+  text. Do not prescribe a business claim that `biz-impact` left unverified;
+- the deterministic Chinese/English stub renders the same approved plan, evidence,
+  limitations, and shared-representative citation sequence in automated tests.
+
+No-data rule: zero scoped articles returns `no_data` with retained zero facts and no
+narrator operation. A non-empty scope with zero negative records remains `complete` and
+renders a deterministic no-escalation finding plus routine-monitoring boundary without
+evidence or narrator cost. Negative records always yield at least the deterministic
+fallback action; one or more selected actions perform exactly one narrator operation.
+Query, calculation/action-selection, evidence, or narration errors return `failed` with a
+safe stage-specific message while later sections continue. No path creates a chart or
+external side effect.
