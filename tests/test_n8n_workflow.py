@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from uuid import UUID
 
+from report_engine.config import ReportConfig
+
 
 WORKFLOW_PATH = (
     Path(__file__).parents[1] / "n8n" / "report-generation-orchestrator.json"
@@ -62,3 +64,47 @@ def test_status_branches_complete_fail_or_poll_again() -> None:
     assert connections["Report Complete?"]["main"][1][0]["node"] == "Report Failed?"
     assert connections["Report Failed?"]["main"][0][0]["node"] == "Report Failed"
     assert connections["Report Failed?"]["main"][1][0]["node"] == "Wait Before Poll"
+
+
+def test_failure_terminals_mark_the_execution_failed() -> None:
+    workflow = load_workflow()
+    nodes_by_name = {node["name"]: node for node in workflow["nodes"]}
+
+    for node_name in ("Report Failed", "API Error"):
+        node = nodes_by_name[node_name]
+        assert node["type"] == "n8n-nodes-base.stopAndError"
+        assert node["typeVersion"] == 1
+        assert node["parameters"]["errorMessage"]
+
+
+def test_submit_body_and_status_url_match_the_m3_contract() -> None:
+    workflow = load_workflow()
+    nodes_by_name = {node["name"]: node for node in workflow["nodes"]}
+
+    submit = nodes_by_name["Submit Report"]
+    report_config = json.loads(submit["parameters"]["jsonBody"])
+    parsed_config = ReportConfig.model_validate(report_config)
+    assert set(report_config) == {
+        "reportType",
+        "language",
+        "topic",
+        "dateRange",
+        "sections",
+    }
+    assert tuple(
+        section.id.value for section in parsed_config.sections if section.enabled
+    ) == (
+        "verdict",
+        "metrics",
+        "trend",
+        "viewpoints",
+        "platforms",
+        "severity",
+        "risk",
+    )
+    assert submit["parameters"]["url"].endswith("/reports")
+
+    status = nodes_by_name["Get Report Status"]
+    status_url = status["parameters"]["url"]
+    assert "$('Submit Report').item.json.taskId" in status_url
+    assert status_url.endswith("/status")
