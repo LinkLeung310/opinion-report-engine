@@ -49,8 +49,9 @@ actions without assigning owners, executing work, or claiming an effectiveness s
 The deterministic M2 acceptance matrix now covers all 19 English sections, all three
 section-specific inputs, a reordered mixed selection, all-section `no_data`, localized
 partial failure, narrator call limits, the complete bundle, 15 charts, and A4 PDF output.
-The real OpenAI-compatible narrator remains a separate unfinished integration; see
-`docs/current-state.md` for the exact boundary.
+The CLI also wires the same engine to a minimal OpenAI-compatible Chat Completions
+adapter. The adapter is implemented and deterministically tested; a live-provider
+smoke test remains credential-gated. See `docs/current-state.md` for the exact boundary.
 
 From the repository root:
 
@@ -64,8 +65,10 @@ $env:PG_DSN='postgresql://report:report_local_only@localhost:55432/opinion_fixtu
 
 The command prints the created `out/{id}` directory. It contains `report.md`,
 `report.pdf`, `charts/*.png`, and `meta.json`. `--stub-llm` is an explicit offline mode
-for deterministic review. Development and CI stay on the injectable stub; the real
-OpenAI-compatible model is reserved for a final credential-gated smoke test.
+for deterministic review. Without that flag, the CLI requires `LLM_BASE_URL`,
+`LLM_API_KEY`, and `LLM_MODEL` and uses the OpenAI-compatible adapter. Development and
+CI stay on the injectable stub; a real-provider request is reserved for a final
+credential-gated smoke test.
 
 The complete eleven-section PR default uses the same engine and fixture scope:
 

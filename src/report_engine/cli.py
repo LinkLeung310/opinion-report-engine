@@ -9,6 +9,8 @@ import typer
 from pydantic import ValidationError
 
 from report_engine.config import ReportConfig
+from report_engine.llm.openai_compatible import OpenAICompatibleNarrator
+from report_engine.llm.protocol import Narrator
 from report_engine.llm.stub import StubNarrator
 from report_engine.runtime import build_report_service
 from report_engine.settings import Settings, SettingsError
@@ -53,25 +55,19 @@ def generate(
 ) -> None:
     """Generate one report from the fixed JSON input contract."""
 
-    if not stub_llm:
-        typer.echo(
-            "Real LLM narration is not wired in this milestone; use --stub-llm.",
-            err=True,
-        )
-        raise typer.Exit(code=2)
-
     try:
         parsed_config = ReportConfig.model_validate_json(
             config.read_text(encoding="utf-8")
         )
-        settings = Settings.from_environment(require_llm=False)
+        settings = Settings.from_environment(require_llm=not stub_llm)
+        narrator = _build_narrator(settings, stub_llm=stub_llm)
     except (OSError, ValidationError, SettingsError) as exc:
         typer.echo(f"Configuration error: {exc}", err=True)
         raise typer.Exit(code=2) from exc
 
     try:
         with psycopg.connect(settings.pg_dsn, connect_timeout=5) as connection:
-            report = build_report_service(connection, StubNarrator()).generate(
+            report = build_report_service(connection, narrator).generate(
                 parsed_config,
                 out,
             )
@@ -84,3 +80,22 @@ def generate(
 
     target = out / report.report_id
     typer.echo(f"Report generated: {target}")
+
+
+def _build_narrator(settings: Settings, *, stub_llm: bool) -> Narrator:
+    if stub_llm:
+        return StubNarrator()
+    if (
+        settings.llm_base_url is None
+        or settings.llm_api_key is None
+        or settings.llm_model is None
+    ):
+        raise SettingsError("LLM settings are required for real narration")
+    try:
+        return OpenAICompatibleNarrator(
+            base_url=settings.llm_base_url,
+            api_key=settings.llm_api_key,
+            model=settings.llm_model,
+        )
+    except ValueError as exc:
+        raise SettingsError(f"Invalid LLM settings: {exc}") from exc
