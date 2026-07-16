@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Protocol
+from typing import Any, Protocol
 
 from report_engine.application.planner import ReportPlanner
 from report_engine.config import Language, ReportConfig, SectionId
@@ -30,6 +30,7 @@ class SectionRunner(Protocol):
         scope: AnalysisScope,
         language: Language,
         chart_directory: Path,
+        section_input: Mapping[str, Any] | None = None,
     ) -> SectionResult: ...
 
 
@@ -80,6 +81,7 @@ class ReportApplicationService:
                     plan.scope,
                     config.language,
                     chart_directory,
+                    section.input,
                 )
                 for section in plan.sections
             )
@@ -111,6 +113,7 @@ class ReportApplicationService:
         scope: AnalysisScope,
         language: Language,
         chart_directory: Path,
+        section_input: Mapping[str, Any],
     ) -> SectionResult:
         if not can_execute:
             return self._failed_section(
@@ -128,7 +131,7 @@ class ReportApplicationService:
             )
 
         try:
-            return runner.run(scope, language, chart_directory)
+            return runner.run(scope, language, chart_directory, section_input)
         except Exception:
             return self._failed_section(
                 section_id,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from importlib.resources import files
 from typing import Any
 
@@ -18,6 +19,11 @@ from report_engine.sections.negative_themes import (
     NegativeThemeSourceRecord,
 )
 from report_engine.sections.platforms import PlatformRow, PlatformsSnapshot
+from report_engine.sections.response import (
+    ResponseObservation,
+    ResponseSnapshot,
+    ResponseWindow,
+)
 from report_engine.sections.risk import RiskSnapshot
 from report_engine.sections.severity import SeverityEvidenceRecord, SeveritySnapshot
 from report_engine.sections.sentiment_evolution import (
@@ -67,6 +73,12 @@ SENTIMENT_EVOLUTION_QUERY_ID = "sentiment-evolution.v1"
 SENTIMENT_EVOLUTION_SQL = (
     files("report_engine.data.queries")
     .joinpath("sentiment_evolution.sql")
+    .read_text(encoding="utf-8")
+)
+RESPONSE_QUERY_ID = "response.v1"
+RESPONSE_SQL = (
+    files("report_engine.data.queries")
+    .joinpath("response.sql")
     .read_text(encoding="utf-8")
 )
 PLATFORMS_QUERY_ID = "platforms.v1"
@@ -366,6 +378,40 @@ class PostgresSentimentEvolutionRepository:
                 for row in rows
             ),
             query_id=SENTIMENT_EVOLUTION_QUERY_ID,
+        )
+
+
+class PostgresResponseRepository:
+    def __init__(self, connection: Connection[Any]) -> None:
+        self._connection = connection
+
+    def fetch(self, scope: AnalysisScope, response_date: date) -> ResponseSnapshot:
+        window = ResponseWindow.build(
+            scope.from_date,
+            scope.to_date,
+            response_date,
+        )
+        parameters = {
+            "topic_tag": scope.topic_tag,
+            "from_inclusive": scope.from_inclusive,
+            "to_exclusive": scope.to_exclusive,
+            "timezone_name": scope.timezone_name,
+        }
+        with self._connection.cursor(row_factory=dict_row) as cursor:
+            cursor.execute(RESPONSE_SQL, parameters)
+            rows = cursor.fetchall()
+
+        return ResponseSnapshot(
+            window=window,
+            observations=tuple(
+                ResponseObservation(
+                    day=row["published_day"],
+                    sentiment=row["sentiment"],
+                    response_tagged=row["response_tagged"],
+                )
+                for row in rows
+            ),
+            query_id=RESPONSE_QUERY_ID,
         )
 
 

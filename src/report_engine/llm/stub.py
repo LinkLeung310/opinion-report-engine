@@ -19,6 +19,66 @@ class StubNarrator:
             raise TimeoutError("synthetic provider response containing secret details")
 
         values = request.facts.prompt_values()
+        if request.section_id is SectionId.RESPONSE:
+            if request.language is Language.EN:
+                return (
+                    "## Response comparison\n\n"
+                    f"The user-supplied response date is {values['responseDate']}. "
+                    f"The matched {values['windowDays']}-day pre-response window "
+                    f"({values['preDateRange']}) contains {values['preArticles']} records "
+                    f"({values['preDailyAverage']} per day): positive "
+                    f"{values['prePositiveArticles']} ({values['prePositiveShare']}), "
+                    f"neutral {values['preNeutralArticles']} "
+                    f"({values['preNeutralShare']}), and negative "
+                    f"{values['preNegativeArticles']} ({values['preNegativeShare']}). "
+                    f"The matched post-response window ({values['postDateRange']}) "
+                    f"contains {values['postArticles']} records "
+                    f"({values['postDailyAverage']} per day): positive "
+                    f"{values['postPositiveArticles']} ({values['postPositiveShare']}), "
+                    f"neutral {values['postNeutralArticles']} "
+                    f"({values['postNeutralShare']}), and negative "
+                    f"{values['postNegativeArticles']} ({values['postNegativeShare']}).\n\n"
+                    f"Observed volume changes by {values['articleDelta']} records "
+                    f"({values['articlePercentChange']}); daily average changes by "
+                    f"{values['dailyAverageDelta']}. Positive, neutral, and negative "
+                    f"share differences are {values['positiveShareDelta']}, "
+                    f"{values['neutralShareDelta']}, and "
+                    f"{values['negativeShareDelta']}, respectively. The entire response "
+                    f"date is excluded because the input has date-only precision: "
+                    f"{values['responseDayArticles']} records appear that day, including "
+                    f"{values['responseDayOfficialTaggedArticles']} with the exact "
+                    f"official-response tag; {values['outsideMatchedWindowsArticles']} "
+                    "other scoped records fall outside the matched windows.\n\n"
+                    "These equal-window figures are an observed before/after comparison "
+                    "only. They do not establish causality, a counterfactual, or response "
+                    "effectiveness."
+                )
+            return (
+                "## 回应前后对比\n\n"
+                f"用户给定的回应日期为 {values['responseDate']}。回应前等长 "
+                f"{values['windowDays']} 日窗口（{values['preDateRange']}）收录 "
+                f"{values['preArticles']} 篇，日均 {values['preDailyAverage']} 篇；"
+                f"正面 {values['prePositiveArticles']} 篇（{values['prePositiveShare']}）、"
+                f"中性 {values['preNeutralArticles']} 篇（{values['preNeutralShare']}）、"
+                f"负面 {values['preNegativeArticles']} 篇（{values['preNegativeShare']}）。"
+                f"回应后窗口（{values['postDateRange']}）收录 "
+                f"{values['postArticles']} 篇，日均 {values['postDailyAverage']} 篇；"
+                f"正面 {values['postPositiveArticles']} 篇（{values['postPositiveShare']}）、"
+                f"中性 {values['postNeutralArticles']} 篇（{values['postNeutralShare']}）、"
+                f"负面 {values['postNegativeArticles']} 篇（{values['postNegativeShare']}）。\n\n"
+                f"观察到收录量变化 {values['articleDelta']} 篇（"
+                f"{values['articlePercentChange']}），日均变化 "
+                f"{values['dailyAverageDelta']} 篇；正面、中性、负面占比差依次为 "
+                f"{values['positiveShareDelta']}、{values['neutralShareDelta']}、"
+                f"{values['negativeShareDelta']}。由于输入仅精确到日期，回应日整体排除："
+                f"当日共有 {values['responseDayArticles']} 篇，其中 "
+                f"{values['responseDayOfficialTaggedArticles']} 篇带精确 "
+                f"official-response 标签；另有 {values['outsideMatchedWindowsArticles']} "
+                "篇在匹配窗口之外。\n\n"
+                "以上等长窗口数据仅为回应前后观察对比，不建立因果关系、反事实，"
+                "也不证明回应效果。"
+            )
+
         if request.section_id is SectionId.SPREAD_PATH:
             sentiments_en = {
                 "positive": "positive",

@@ -1,14 +1,14 @@
 # Current Project State
 
 最后核对日期：2026-07-16
-最后实现基线：`main@d5d2120`（PR #16，auditable negative themes analysis）
+最后实现基线：`main@1a047b4`（PR #17，observable platform migration analysis）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，以及 M2 `timeline`、`top-content` 和当前分支的 `negative-themes` 已完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`，以及当前分支的 `response` 已完成 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -36,6 +36,7 @@
 - PR #14 的 timeline slice 已用 merge commit 合并：`26814cf`。
 - PR #15 的 top-content slice 已用 merge commit 合并：`9b5046d`。
 - PR #16 的 negative-themes slice 已用 merge commit 合并：`d5d2120`。
+- PR #17 的 spread-path slice 已用 merge commit 合并：`1a047b4`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
 - `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
@@ -43,6 +44,7 @@
 - `main@26814cf` 的 GitHub CI：196 项测试通过（run `29471052154`）。
 - `main@9b5046d` 的 GitHub CI：211 项测试通过（run `29472151204`）。
 - `main@d5d2120` 的 GitHub CI：227 项测试通过（run `29473309498`）。
+- `main@1a047b4` 的 GitHub CI：243 项测试通过（run `29474436518`）。
 - 本地真实 CLI 验收得到 12 篇、负面占比 58.3%、失败章节 0 的完整 metrics bundle。
 - PR #3 本地真实 CLI 验收得到 `verdict` + `metrics` 2 章 complete、0 章 failed、1 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
 - PR #4 本地真实 CLI 验收得到 `verdict` + `metrics` + `trend` 3 章 complete、0 章 failed、2 张图表的完整 bundle；`generatedAt` 为 `+08:00`。
@@ -61,7 +63,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline`、`top-content` 与 `negative-themes` 纵向切片；当前进入 `spread-path` 规格阶段。其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
+- M2 已完成并合并 `timeline`、`top-content`、`negative-themes` 与 `spread-path` 纵向切片；当前分支已完成 `response` 纵向切片并等待 PR 闭环。`benchmark`、`biz-impact`、`recommendations`、完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -77,7 +79,7 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes` 纵向切片已经合并。当前分支 `codex/m2-spread-path-section` 从绿色 `main@d5d2120` 创建；下一阶段只定义并实现 `spread-path` 的可审计分析切片。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes`/`spread-path` 纵向切片已经合并。当前分支 `codex/m2-response-section` 从绿色 `main@1a047b4` 创建，`response` 已完成本地纵向验收，下一步只做本分支提交、PR、CI 与合并闭环。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
 
 ## Context recovery 规则强化小步
 
@@ -127,12 +129,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 
 ## 当前阶段与下一步
 
-- PR #16 已用 merge commit `d5d2120` 合并；`main@d5d2120` 的独立 CI run `29473309498` 已通过 227 项测试。当前分支 `codex/m2-spread-path-section` 已从该绿色基线创建并推送。
-- `timeline`、`top-content` 与 `negative-themes` 的完整纵向切片已合并；下一小步只定义 `spread-path` 的独有用户价值、固定查询、事实、证据、图表、叙述与退化合同，不直接开始实现。
-- 新分支第一次检查：当前分支与 `main@d5d2120` merge-base 完全一致，工作区创建时干净，main CI 的成功状态与 head SHA 精确匹配；没有从旧功能分支串联开发。
-- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 227 项；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
+- PR #17 已用 merge commit `1a047b4` 合并；`main@1a047b4` 的独立 CI run `29474436518` 已通过 243 项测试。当前分支 `codex/m2-response-section` 已从该绿色基线创建并推送。
+- `timeline`、`top-content`、`negative-themes` 与 `spread-path` 的完整纵向切片已合并；`response` 的专属输入、固定查询、事实、图表、叙述与退化合同已在当前分支完成并通过本地验收，下一步只做 GitHub PR 闭环。
+- 新分支第一次检查：当前分支与 `main@1a047b4` merge-base 完全一致，工作区创建时干净，main CI 的成功状态与 head SHA 精确匹配；没有从旧功能分支串联开发。
+- 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 243 项；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 `spread-path` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前 `response` 阶段实现；n8n 保持 Draft，等待 M3 API。
 
 ## M2 `top-content` 阶段入口
 
@@ -205,7 +207,37 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 首次 PDF 视觉检查发现 3.59 英寸矩阵被整体推到 A4 第 2 页；缩短 4 行矩阵后恢复单页。v2 又发现图内“报告日历”轴标题与底部非因果注释重叠，移除冗余轴标题后 v3 页图与图表原图人工复核通过：正文、四条证据、矩阵、波次描边、图例、日期、非因果注释、图片说明、方法框和页脚均清晰，无乱码、截断、重叠或孤页。
 - 产物小步第一次检查：变更范围仅为 runner、图表、stub、运行时、图片 alt 和对应测试；`git diff --check`、Python 静态编译、唯一 narrator 调用点、唯一运行时注册及聚焦测试 13 项通过。首次检查发现并移除了内嵌字体不支持的粗体请求。
 - 产物小步第二次检查：健康 fixture PostgreSQL 下 `spread-path` SQL + CLI 集成测试 3 项通过；最终 v3 后完整 pytest 实际收集并通过 243 项，`pip check` 无破损依赖。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
-- 当前阶段实现与本地验收已完成；尚未创建 PR、运行分支 CI、合并到 `main` 或创建下一阶段分支。
+- PR #17 分支 CI run `29474385184` 通过后转为 ready，并用 merge commit `1a047b4` 合并；合并后独立 main CI run `29474436518` 通过 243 项测试。功能分支保留，未 squash 或删除历史。
+
+## M2 `response` 阶段入口
+
+- 产品框架只把 `response` 定义为“根据 `responseDate` 比较回应前后热度与情感”；任务书没有定义回应日归属、前后窗口长度、非对称日历、零样本侧、效果阈值、证据或图表，这些必须标为项目自主设计。
+- `responseDate` 是任务书固定公共配置中该章节的专属输入，不能改名、移到环境变量或从 `official-response` 标签静默推断；缺失输入只让本章节进入可行动的 `failed`，不能影响其他章节。
+- 本章与 `trend` 的总量时间序列、`sentiment-evolution` 的阶段情感构成和 `timeline` 的回应标签记录存在重叠。下一小步必须先定义“以用户给定切点做平衡前后比较”的独有价值，不能把时间先后或下降直接称为回应造成的效果。
+- fixture 中 `responseDate=2026-03-19` 可与精确 `official-response` 标签记录 `bili-006` 对照，但用户输入仍是分析切点，标签只可作为数据覆盖说明，不能替代输入或证明发言权威性。
+- 用户要求 RAG 暂不开始，本阶段先设计确定性、可测试的非 RAG 基线；不引入 embedding、vector store、retriever 或 reranker，不修改 n8n，不调用真实模型 API，也不提前实现 `benchmark`。
+- `docs/02-report-spec.md` 与 D-33 已定义 `response.v1`：排除只有日期精度的回应日，以用户给定 `responseDate` 为切点，取范围内前后各最多 7 个且长度完全相同的完整自然日；只比较观察到的热度与情感，不把时间相关性表述为回应效果或因果。
+- 规格明确披露回应日记录、回应日精确标签覆盖和平衡窗口外记录；一侧零样本仍可诚实完成但分母相关比例为 `unavailable`，两侧均无比较记录返回 `no_data`，非法/边界日期在查询前返回章节级 `INPUT` 失败。本章是聚合比较，不创建 `EvidenceSet`，不重复 `timeline` 的回应记录选择。
+- 真实 fixture PostgreSQL 预查确认：`responseDate=2026-03-19` 时匹配窗口为 3/17–3/18 与 3/20–3/21，各 2 天、各 4 篇、各 2 篇负面（50%）；回应日 2 篇，其中 1 篇带精确 `official-response` 标签；3/22–3/23 的 2 篇因平衡窗口被明确排除。
+- 规格小步第一次检查：仅 `docs/02-report-spec.md` 与 `docs/design-decisions.md` 改动；`git diff --check`、唯一 `response` 章节、唯一 D-33、必需合同段和无实现/n8n 变更均通过。
+- 规格小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 243 项，`pip check` 无破损依赖。本小步未实现 runner/图表、RAG、n8n 或真实模型 API。
+- 实现前审计发现 planner 已保留 `SectionConfig.input`，但 application service 当前未把章节 input 传给 runner。下一小步先以向后兼容的可选参数显式贯通该输入，再实现 `response.sql` 与 Python 事实；不得让 response runner 静默重读配置或从标签推断日期。
+- 章节 input 贯通小步已修复上述断层：application service 现在把 planner 保留的原始章节 input 显式传给统一 runner lifecycle；全部 15 个现有 runner 以可选参数向后兼容原三参数调用，后续 `response`、`benchmark`、`biz-impact` 无需各自重读配置或建立隐藏执行路径。
+- input 贯通小步第一次检查：`git diff --check`、17 个预期代码/测试文件范围、Python 静态编译、15/15 runner 签名覆盖和唯一 service 传递点均通过；新增测试覆盖配置 → planner → service → runner 的精确字典保留。
+- input 贯通小步第二次检查：健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 244 项，`pip check` 无破损依赖。本小步未新增 SQL、response runner/图表、LLM、RAG、n8n 或真实 API 调用。
+- 下一小步只实现固定 `response.sql`、输入日期解析/窗口校验、Python 聚合事实和真实 fixture PostgreSQL 集成测试；runner、图表与 narrator 仍留到后续提交。
+- 固定 `response.sql`、`PostgresResponseRepository`、严格 `YYYY-MM-DD` 解析、`ResponseWindow`、逐篇情感/标签观察、平衡前后窗口统计和可追溯 `FactSet` 已实现。SQL 只绑定 tag、半开时间边界与报告时区；回应日期不进入 SQL，也不从标签推断，Python 在查询前验证日期必须严格位于报告范围内部。
+- Python 最多取前后各 7 个完整自然日并排除回应日；事实完整保留前后日期、样本量、每日均量、三类情感计数/占比、量级差/变化率、情感占比百分点差、回应日及标签覆盖和平衡窗口外记录。单侧零样本的占比/变化率为 `不可用`，不会伪装成 0%；两侧均无比较记录仍保留可审计空事实供后续 runner 判为 `no_data`。
+- 真实 fixture 集成测试正式验证范围内 12 篇，前窗口 0/2/2、后窗口 1/1/2（正/中/负），两侧各 4 篇且日均 2.0，回应日 2 篇/精确标签 1 篇，窗口外 2 篇，负面占比差 `+0.0 个百分点`；空话题返回窗口完整的零值 snapshot。
+- SQL/事实小步第一次检查：`git diff --check`、Python 静态编译、四个 SQL 绑定参数各出现一次、无超长新增 Python 行及 response 领域 15 项测试通过；覆盖严格日期、范围边界、7 日上限、回应日排除、单侧零分母和范围外观察拒绝。
+- SQL/事实小步第二次检查：健康 fixture PostgreSQL 下 response 专属集成测试 2 项通过，完整 pytest 实际收集并通过 261 项，`pip check` 无破损依赖。本小步未接 response runner/图表/stub/运行时、RAG、n8n 或真实模型 API。
+- `ResponseSectionRunner`、`ResponseChartBuilder`、确定性中英文 stub、运行时注册和专属图片 alt 已接入。严格日期/范围输入错误在查询前进入章节级 `INPUT` 失败；零范围记录或等长窗口均无记录为保留事实的 `no_data`；单侧零样本仍完整生成并将无分母比例标为 `不可用`；query/calculation/chart/LLM 失败均限制在本章节。
+- 正常路径只调用一次 narrator，输入仅为可追溯聚合 `FactSet` 与空 `EvidenceSet`；正文逐项披露前后日期、量级、日均、三类情感、回应日/精确标签/窗口外记录，并明确等长窗口差异不建立因果、反事实或回应效果。
+- response-only 真实 fixture CLI bundle 得到 1 章 complete、0 章 failed、1 张 150 dpi 图；`meta.stats` 为 articles 12、negativeRatio `暂无`、peakDay `暂无`。Markdown 准确显示前后各 4 篇/日均 2.0、负面各 2 篇/50.0%，回应日 2 篇/精确标签 1 篇、窗口外 2 篇。
+- 图表原图与 Poppler 渲染的 A4 单页 PDF 已逐项目视复核：标题、图例、堆叠情感计数、两侧注释、日期标签、回应日排除和非因果脚注完整清晰，无中文乱码、截断、重叠、图例遮挡或孤页。
+- 产物小步第一次检查：`git diff --check`、Python 静态编译和 response 领域/runner/图表聚焦 27 项测试通过；项目未配置 Ruff 且虚拟环境未安装 Ruff，因此未把该命令作为虚假通过证据。
+- 产物小步第二次检查：健康 fixture PostgreSQL 下 response-only CLI 集成测试通过，完整 pytest 实际收集并通过 274 项，`pip check` 无破损依赖，实际单页 bundle 与图表视觉验收通过。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
+- 下一步只提交并推送当前产物小步，走 Draft PR、分支 CI、ready、merge commit 和合并后 main CI；其后从最新绿色 main 创建 `benchmark` 阶段分支。
 
 ## M2 `timeline` 阶段入口
 
