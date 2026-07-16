@@ -14,7 +14,7 @@
 | R-06 | 整份报告 LLM 调用不超过章节数 | 每章一次 narrator 逻辑操作；仅瞬时传输错误可受限重试并记录 attempts | Stub 断言逻辑调用数；适配器测试最多两次传输尝试 | 已决策 |
 | R-07 | 所有数字由代码计算且可追溯 | `FactSet` 统一承载数值、格式和查询/计算来源；图表和模板共用它 | 将 markdown 数字与 fixture SQL 结果逐项比对 | 已设计 |
 | R-08 | 主要观点来自真实摘要、标题 | `EvidenceSet` 保留文章 ID、标题、摘要和平台；prompt 只接收这些证据 | Stub prompt 测试及证据引用测试 | 已设计 |
-| R-09 | SQL 空结果/LLM 超时只影响该章节，章节标注缺失，失败写入 meta | 区分 `no_data` 与 `failed`；两者均显示说明，失败写入安全 metadata | 故障注入测试：其它章节仍生成，meta 有失败记录 | 已决策 |
+| R-09 | SQL 空结果/LLM 超时只影响该章节，章节标注缺失，失败写入 meta | 区分 `no_data` 与 `failed`；固定 SQL 使用短事务，查询错误先回滚再返回章节失败；两者均显示说明，失败写入安全 metadata | 真实 fixture PostgreSQL 故障注入：首章 SQL 失败后，同连接后续章节仍生成，meta 仅记录首章失败 | 已实现 |
 | R-10 | `.env` 提供 PG/LLM 全部配置，仓库无真实凭据 | `Settings` 仅读取 `PG_DSN`、`LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL`；提交 `.env.example` | secret 扫描、缺配置启动错误测试 | 已设计 |
 | R-11 | PDF 跨平台、A4、中文、分页参照 gold report | ReportLab + 项目内 Noto Sans SC 字体；参考 PDF 作为视觉基准 | A4 尺寸断言、字体嵌入、页图视觉检查、跨平台冒烟 | 实现中 |
 | R-12 | 图表 150 dpi、指定情感颜色、白底、隐藏上/右框、标题表达洞察 | `ChartTheme` 作为唯一图表入口 | 图表元数据/像素检查和视觉金样检查 | 已设计 |

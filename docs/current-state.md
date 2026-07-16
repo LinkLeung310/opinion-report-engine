@@ -1,14 +1,14 @@
 # Current Project State
 
-最后核对日期：2026-07-16
-最后实现基线：`main@eeeba95`（PR #20，auditable business impact）
+最后核对日期：2026-07-17
+最后实现基线：`main@5909005`（PR #21，evidence-linked recommendations）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark`、`biz-impact` 与当前分支的 `recommendations` 已完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark`、`biz-impact` 与 `recommendations` 已完成并合并 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
@@ -40,6 +40,7 @@
 - PR #18 的 response slice 已用 merge commit 合并：`ad1e414`。
 - PR #19 的 benchmark slice 已用 merge commit 合并：`542196c`。
 - PR #20 的 biz-impact slice 已用 merge commit 合并：`eeeba95`。
+- PR #21 的 recommendations slice 已用 merge commit 合并：`5909005`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
 - `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
@@ -69,7 +70,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark` 与 `biz-impact` 纵向切片；`recommendations` 已在当前功能分支完成本地验收但尚未经 PR/CI 合并。完整英文矩阵和任意组合仍未完成。
+- M2 的 19 个章节纵向切片均已完成并合并；完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -85,7 +86,15 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes`/`spread-path`/`response`/`benchmark`/`biz-impact` 纵向切片已经合并。当前分支 `codex/m2-recommendations-section` 从绿色 `main@eeeba95` 创建，并已完成 `recommendations` 的本地纵向验收；下一步是提交、PR/CI 与合并，不在本分支混入英文矩阵。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整 M1 离线实现与默认配置、以及 M2 的 19 个章节纵向切片已经合并。当前分支 `codex/fix-section-transaction-isolation` 从本地 `main@5909005` 创建，只修复 PostgreSQL 查询失败污染后续章节的问题；不在本分支混入英文矩阵、RAG、M3 或 n8n 修改。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+
+## PostgreSQL 章节事务隔离修复
+
+- 本小步映射任务书 R-09“单章节失败不中断整体”：所有 19 个 PostgreSQL repository 的固定只读 SQL 统一通过短事务执行，事务在取数结束后关闭，不跨越图表或 narrator 阶段。
+- 真实 fixture PostgreSQL 故障注入先复现：第一章执行除零 SQL 后，第一章与第二章均错误进入 `failed`；修复后第一章保持 query `failed`，同一连接上的第二章为 `complete` 并生成 `daily-sentiment-trend.png`。
+- PostgreSQL repository 专属集成范围 38 项通过，覆盖 19 个现有固定 SQL 和新增的跨章节事务污染回归；健康 fixture PostgreSQL 下完整 pytest 331 项通过，Python 静态编译与 `git diff --check` 通过。项目 `.venv` 未安装 `pip` 模块，故 `.venv/bin/python -m pip check` 无法启动；当前系统 Python 的 `pip check` 返回 `No broken requirements found.`。
+- D-37 明确这是项目自主事务策略：每章短事务保证故障隔离，但不宣称整份报告使用同一个数据库快照；公共输入、输出、SQL、事实口径、RAG 和 n8n 均未改变。
+- 开工时本地 `main` 与缓存的 `origin/main` 同为 `5909005`；`git fetch --prune origin` 返回 `Repository not found`，因此最新远程 CI 和 push 能力当前无法核验。未跟踪 `.codegraph/` 属于既有用户文件，本小步不修改、不暂存。
 
 ## Context recovery 规则强化小步
 
@@ -136,11 +145,11 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 
 ## 当前阶段与下一步
 
-- PR #20 已用 merge commit `eeeba95` 合并；`main@eeeba95` 的独立 CI run `29499194452` 已通过 317 项测试。当前分支 `codex/m2-recommendations-section` 已从该绿色基线创建。
-- `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark` 与 `biz-impact` 的完整纵向切片已合并；下一小步只定义 `recommendations` 的事实来源、行动分类、优先级、证据、图表、一次 narrator 与 no-data 合同，不直接开始实现。
-- 新分支单次检查：当前分支、`origin/main` 和 merge-base 均精确指向 `eeeba95`，创建时工作区干净；PR #20 merge commit 与独立 main CI 均可核验，没有从旧功能分支串联开发，也未修改实现、fixtures、RAG 或 n8n。
+- PR #21 已用 merge commit `5909005` 合并；当前事务隔离修复分支从该本地基线创建。由于远程当前返回 `Repository not found`，本轮不能把缓存的远程引用当成最新远程或 CI 证据。
+- 当前小步只完成 PostgreSQL 章节查询事务隔离、真实数据库故障注入回归、D-37/追踪矩阵和状态更新；不修改19章业务口径，也不开始英文矩阵、RAG、M3 或 n8n。
+- 本分支已完成最终合并检查；代码、测试和文档由本小步本地提交承载，远程权限恢复后再 push；是否创建 Draft PR 仍需用户明确授权。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 `recommendations` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期，不在当前事务隔离修复中实现；n8n 保持 Draft，等待 M3 API。
 
 ## M2 `top-content` 阶段入口
 

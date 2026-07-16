@@ -80,6 +80,12 @@ The engine catches errors at the section boundary and continues with the next se
 Internal shared calculations may be cached, but must never change which public sections
 are rendered or their configured order.
 
+Each PostgreSQL repository fetch opens a short transaction around its one fixed,
+read-only SQL statement. The transaction closes before charting or narration begins.
+If the statement fails, psycopg rolls that transaction back before the section runner
+converts the error to `failed`, so the connection remains usable by later sections.
+This is section fault isolation, not a report-wide identical-snapshot guarantee.
+
 ### Phase C: assemble and publish
 
 1. Assemble complete, no-data, and visible-failed section fragments in config order.
@@ -183,6 +189,10 @@ Narrator protocol
 | PDF render error | report-level failure | Preserve Markdown and diagnostics |
 
 Only failures that prevent the required bundle contract are report-level failures.
+
+A caught PostgreSQL error must never leave the shared connection in an aborted
+transaction. Real fixture integration tests inject a failing first-section SQL query
+and require a later section to complete on that same connection.
 
 `meta.json` keeps the required frontend fields and adds a `generation` summary plus a
 `failures` array when one or more sections fail. Each entry contains `sectionId`,
