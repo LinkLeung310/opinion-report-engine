@@ -57,7 +57,7 @@
 ## 明确未完成
 
 - M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成 `timeline` 纵向切片并进入 `top-content` 规格阶段：其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
+- M2 已完成并合并 `timeline` 纵向切片；`top-content` 纵向切片已在功能分支完成本地验收，尚待 PR/CI/合并。其余章节、3 类章节专属输入的完整行为、完整英文矩阵和任意组合仍未完成。
 - 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
 - M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
@@ -124,7 +124,7 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline` 
 ## 当前阶段与下一步
 
 - PR #14 已合并，`main@26814cf` 的独立 CI 已通过 196 项测试；当前分支 `codex/m2-top-content-section` 已从该绿色基线创建。
-- `timeline` 的完整纵向切片已合并；`top-content` 的规格、D-30、固定 SQL、Python 事实/证据模型和真实 fixture 集成测试已完成并验证。下一小步接入 runner、双面板图表、确定性 stub、运行时与 CLI/PDF 产物。
+- `timeline` 的完整纵向切片已合并；`top-content` 的规格、D-30、固定 SQL、事实/证据、runner、双面板图表、确定性中英文 stub、运行时和 CLI/PDF 产物已完成本地验收。提交推送后下一步是 Draft PR 与 CI。
 - 新分支第一次检查：当前分支与 `main@26814cf` merge-base 完全一致，`git diff --check` 通过，PR #14/main CI/新阶段/RAG/n8n 标记均可定位，工作区只修改本状态文件。
 - 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 196 项通过；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -145,6 +145,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline` 
 - fixture 查询精确返回 12 篇、正互动记录 12 篇、高风险信号候选 4 篇、总存储互动 26,170；入选顺序为 `bili-007`、`bili-005`、`bili-010`、`bili-003`，分类计数 2/1/1，去重入选互动 16,890（64.5%），所有入选项保留真实 Evidence ID。
 - SQL/事实小步第一次检查：变更范围仅为 PostgreSQL repository、固定 SQL、事实模型和两类测试；`git diff --check`、Python 静态编译、三个 SQL 绑定参数各出现一次及 `top-content` 单元测试 5 项通过。
 - SQL/事实小步第二次检查：健康 fixture PostgreSQL 下专属集成测试 2 项通过，完整 pytest 实际收集并通过 203 项；`pip check` 无破损依赖。空话题返回合法空 snapshot；本小步未接 runner/图表、RAG、n8n 或真实模型 API。
+- `TopContentSectionRunner`、`TopContentChartBuilder`、确定性中英文 stub、运行时注册和专属图片 alt 已接入；正常有候选路径先出图再恰好一次 narrator 操作，零文章为 `no_data`，非空但无候选为不出图/不调用模型的 `complete` 结论，查询、计算、图表和叙述失败均限制在本章节。
+- 叙述验证要求四条 Evidence ID 顺序与固定清单完全一致，并逐条保留真实标题、摘要、平台、情感、双信号分类、两类排名、存储互动、严重性与负面分；乱序、未知引用或任一批准字段改写都会安全失败。
+- `top-content-only` 真实 CLI bundle 得到 1 章 complete、0 章 failed、1 张 150 dpi 图；`meta.stats` 为 articles 12、negativeRatio `暂无`、peakDay `暂无`，没有自动插入未选章节。Markdown 按 `bili-007`、`bili-005`、`bili-010`、`bili-003` 顺序保留原文和 Evidence ID。
+- PDF 页图验收先发现图表过高导致方法说明独占空白第 2 页，又发现缩高后图例覆盖右侧子图标题；两项均通过调整图表纵横比与顶部布局修复。最终 v4 为 A4 单页，中文、正文、四条证据、双面板、图例、坐标标签、方法框和页脚均清晰，无乱码、截断、重叠或空白尾页。
+- 产物小步第一次检查：变更范围仅为 runner、图表、stub、运行时、图片 alt 和对应测试；`git diff --check`、Python 静态编译、唯一 narrator 调用点、唯一运行时注册及聚焦测试 12 项通过。
+- 产物小步第二次检查：健康 fixture PostgreSQL 下 `top-content` SQL + CLI 集成测试 3 项通过，完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
 
 ## M2 `timeline` 阶段入口
 

@@ -19,6 +19,7 @@ from report_engine.charts.sentiment_evolution import SentimentEvolutionChartBuil
 from report_engine.charts.severity import SeverityChartBuilder
 from report_engine.charts.trend import TrendChartBuilder
 from report_engine.charts.timeline import TimelineChartBuilder
+from report_engine.charts.top_content import TopContentChartBuilder
 from report_engine.config import SectionId
 from report_engine.data.postgres import (
     PostgresEngagementRepository,
@@ -31,6 +32,7 @@ from report_engine.data.postgres import (
     PostgresSeverityRepository,
     PostgresTrendRepository,
     PostgresTimelineRepository,
+    PostgresTopContentRepository,
     PostgresVerdictRepository,
     PostgresViewpointsRepository,
 )
@@ -49,6 +51,7 @@ from report_engine.sections.sentiment_evolution_runner import (
 from report_engine.sections.severity_runner import SeveritySectionRunner
 from report_engine.sections.trend_runner import TrendSectionRunner
 from report_engine.sections.timeline_runner import TimelineSectionRunner
+from report_engine.sections.top_content_runner import TopContentSectionRunner
 from report_engine.sections.verdict_runner import VerdictSectionRunner
 from report_engine.sections.viewpoints_runner import ViewpointsSectionRunner
 from report_engine.storage.bundle import BundlePublisher
@@ -119,6 +122,11 @@ def build_report_service(
         chart_builder=TimelineChartBuilder(),
         narrator=narrator,
     )
+    top_content_runner = TopContentSectionRunner(
+        repository=PostgresTopContentRepository(connection),
+        chart_builder=TopContentChartBuilder(),
+        narrator=narrator,
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
         section_runners={
@@ -134,6 +142,7 @@ def build_report_service(
             SectionId.RISK: risk_runner,
             SectionId.SENTIMENT_EVOLUTION: sentiment_evolution_runner,
             SectionId.TIMELINE: timeline_runner,
+            SectionId.TOP_CONTENT: top_content_runner,
         },
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),

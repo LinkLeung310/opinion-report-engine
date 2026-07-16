@@ -222,6 +222,58 @@ def test_cli_generates_a_complete_timeline_only_bundle(tmp_path, monkeypatch) ->
     }
 
 
+def test_cli_generates_a_complete_top_content_only_bundle(tmp_path, monkeypatch) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    source = Path(__file__).parents[2] / "examples" / "report-config.pr.json"
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    raw["sections"] = [{"id": "top-content", "enabled": True}]
+    config = tmp_path / "report-config.top-content.json"
+    config.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    markdown = (target / "report.md").read_text(encoding="utf-8")
+    assert "## 代表性内容" in markdown
+    assert "入选 4 篇去重代表内容" in markdown
+    assert "双信号 2 篇、仅高互动 1 篇、仅高风险 1 篇" in markdown
+    assert "16,890（占全部存储互动 64.5%）" in markdown
+    evidence_ids = ("bili-007", "bili-005", "bili-010", "bili-003")
+    positions = [markdown.index(f"[Evidence: {record_id}]") for record_id in evidence_ids]
+    assert positions == sorted(positions)
+    assert "话题登上热搜后争议扩大" in markdown
+    assert "讨论认为减少负反馈入口可能影响推荐透明度和用户控制感。" in markdown
+    assert (target / "charts" / "top-content-signals.png").is_file()
+    assert (target / "report.pdf").read_bytes().startswith(b"%PDF-")
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {
+        "requested": 1,
+        "complete": 1,
+        "noData": 0,
+        "failed": 0,
+    }
+    assert meta["charts"] == 1
+    assert meta["stats"] == {
+        "articles": 12,
+        "negativeRatio": "暂无",
+        "peakDay": "暂无",
+    }
+
+
 @pytest.mark.parametrize(
     ("filename", "report_type", "headings", "charts"),
     (
