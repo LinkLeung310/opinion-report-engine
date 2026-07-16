@@ -71,6 +71,8 @@ class ReportAssembler:
             return "代表内容的互动与结构化风险信号" if language is Language.ZH else "Representative content interaction and structured risk signals"
         if section_id is SectionId.NEGATIVE_THEMES:
             return "负面议题覆盖与结构化风险信号" if language is Language.ZH else "Negative issue coverage and structured risk signals"
+        if section_id is SectionId.SPREAD_PATH:
+            return "平台首次收录与日历参与矩阵" if language is Language.ZH else "Platform first-capture and calendar participation matrix"
         if section_id is SectionId.PLATFORMS:
             return "平台量级、情感与互动对比" if language is Language.ZH else "Platform volume, sentiment, and engagement"
         if section_id is SectionId.SEVERITY:

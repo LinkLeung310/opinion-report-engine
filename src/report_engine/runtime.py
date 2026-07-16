@@ -18,6 +18,7 @@ from report_engine.charts.platforms import PlatformsChartBuilder
 from report_engine.charts.risk import RiskChartBuilder
 from report_engine.charts.sentiment_evolution import SentimentEvolutionChartBuilder
 from report_engine.charts.severity import SeverityChartBuilder
+from report_engine.charts.spread_path import SpreadPathChartBuilder
 from report_engine.charts.trend import TrendChartBuilder
 from report_engine.charts.timeline import TimelineChartBuilder
 from report_engine.charts.top_content import TopContentChartBuilder
@@ -32,6 +33,7 @@ from report_engine.data.postgres import (
     PostgresRiskRepository,
     PostgresSentimentEvolutionRepository,
     PostgresSeverityRepository,
+    PostgresSpreadPathRepository,
     PostgresTrendRepository,
     PostgresTimelineRepository,
     PostgresTopContentRepository,
@@ -52,6 +54,7 @@ from report_engine.sections.sentiment_evolution_runner import (
     SentimentEvolutionSectionRunner,
 )
 from report_engine.sections.severity_runner import SeveritySectionRunner
+from report_engine.sections.spread_path_runner import SpreadPathSectionRunner
 from report_engine.sections.trend_runner import TrendSectionRunner
 from report_engine.sections.timeline_runner import TimelineSectionRunner
 from report_engine.sections.top_content_runner import TopContentSectionRunner
@@ -135,6 +138,11 @@ def build_report_service(
         chart_builder=NegativeThemesChartBuilder(),
         narrator=narrator,
     )
+    spread_path_runner = SpreadPathSectionRunner(
+        repository=PostgresSpreadPathRepository(connection),
+        chart_builder=SpreadPathChartBuilder(),
+        narrator=narrator,
+    )
     return ReportApplicationService(
         planner=ReportPlanner(default_registry()),
         section_runners={
@@ -152,6 +160,7 @@ def build_report_service(
             SectionId.TIMELINE: timeline_runner,
             SectionId.TOP_CONTENT: top_content_runner,
             SectionId.NEGATIVE_THEMES: negative_themes_runner,
+            SectionId.SPREAD_PATH: spread_path_runner,
         },
         assembler=ReportAssembler(),
         pdf_renderer=ReportLabPdfRenderer(),

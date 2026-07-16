@@ -199,7 +199,13 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - `FactSet` 保留完整报告日历、显示/省略平台数、单日最大覆盖并列日期、首次收录间隔、首/末新平台并列、每平台全部来源 ID 和首记录 ID；`relationshipEdges` 明确为不可用。空话题返回 7 日合法空 snapshot，单平台与精确同刻首次收录均有确定性事实。
 - SQL/事实小步第一次检查：变更范围仅为 PostgreSQL repository、固定 SQL、事实模型和两类测试；`git diff --check`、Python 静态编译、三个 SQL 绑定参数各出现一次及模型单元测试 6 项通过。
 - SQL/事实小步第二次检查：提交前将并列日期/平台集合从 tuple 修正为符合 `FactValue` 的稳定字符串标量，并精确断言同刻平台的确定性显示顺序；修订后模型 + 真实数据库聚焦测试 8 项通过，完整 pytest 实际收集并通过 235 项，`pip check` 无破损依赖。本小步未接 runner/图表、RAG、n8n 或真实模型 API。
-- 下一小步接入 runner、时间×平台矩阵图、确定性中英文 stub、运行时与 CLI/PDF 产物。
+- `SpreadPathSectionRunner`、`SpreadPathChartBuilder`、确定性中英文 stub、运行时注册和专属图片 alt 已接入；正常多平台路径先出图再恰好一次 narrator 操作，零文章为保留事实的 `no_data`，单平台为不出图/不调用模型的 `complete` 结论，查询、计算、图表和叙述失败均限制在本章节。
+- 叙述验证要求四条首收录 Evidence ID 按显示平台顺序出现，并逐条保留波次、平台、首末时间、文章/负面/活跃日/存储互动、首记录情感、真实标题和摘要；乱序、未知引用、证据改写、波次或组合计数篡改均安全失败。中英文正文都强制披露缺少转载/引用/父子/引流/来源关系边。
+- `spread-path-only` 真实 CLI bundle 得到 1 章 complete、0 章 failed、1 张 150 dpi 图；`meta.stats` 为 articles 12、negativeRatio `暂无`、peakDay `暂无`，没有自动插入未选章节。Markdown 按 `bili-001`、`bili-002`、`bili-003`、`bili-004` 顺序保留首收录原文和 Evidence ID。
+- 首次 PDF 视觉检查发现 3.59 英寸矩阵被整体推到 A4 第 2 页；缩短 4 行矩阵后恢复单页。v2 又发现图内“报告日历”轴标题与底部非因果注释重叠，移除冗余轴标题后 v3 页图与图表原图人工复核通过：正文、四条证据、矩阵、波次描边、图例、日期、非因果注释、图片说明、方法框和页脚均清晰，无乱码、截断、重叠或孤页。
+- 产物小步第一次检查：变更范围仅为 runner、图表、stub、运行时、图片 alt 和对应测试；`git diff --check`、Python 静态编译、唯一 narrator 调用点、唯一运行时注册及聚焦测试 13 项通过。首次检查发现并移除了内嵌字体不支持的粗体请求。
+- 产物小步第二次检查：健康 fixture PostgreSQL 下 `spread-path` SQL + CLI 集成测试 3 项通过；最终 v3 后完整 pytest 实际收集并通过 243 项，`pip check` 无破损依赖。本小步未实现 RAG、修改 n8n 或调用真实模型 API。
+- 当前阶段实现与本地验收已完成；尚未创建 PR、运行分支 CI、合并到 `main` 或创建下一阶段分支。
 
 ## M2 `timeline` 阶段入口
 
