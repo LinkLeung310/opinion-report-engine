@@ -126,7 +126,7 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 ## 当前阶段与下一步
 
 - PR #15 已用 merge commit `9b5046d` 合并；`main@9b5046d` 的独立 CI run `29472151204` 已通过 211 项测试。当前分支 `codex/m2-negative-themes-section` 已从该绿色基线创建并推送。
-- `timeline` 与 `top-content` 的完整纵向切片已合并；下一小步先为 `negative-themes` 定义独有用户价值、固定查询、Python 事实、证据、图表、一次 narrator 和 no-data 行为，再开始实现。
+- `timeline` 与 `top-content` 的完整纵向切片已合并；`negative-themes` 规格与 D-31 已写明，下一小步实现固定 SQL、Python 代码本分类/事实和真实 fixture 集成测试。
 - 新分支第一次检查：当前分支与 `main@9b5046d` merge-base 完全一致，工作区创建时干净，main CI 的成功状态与 head SHA 精确匹配；没有从旧功能分支串联开发。
 - 新分支第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。未修改实现、fixtures、RAG 或 n8n，也未调用真实模型 API。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
@@ -161,6 +161,12 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 - 本章与 `viewpoints` 的代表性观点、`keywords` 的精确短语覆盖、`severity` 的结构化风险分布存在重叠。下一小步必须先定义主题级独有用户价值和去重原则，不能把已有三章简单重排或让模型自由命名无证据主题。
 - 任务书要求观点来自真实摘要，因此任何主题都必须能回指真实标题/摘要与 Evidence ID；数字仍由固定 SQL/Python 计算，模型最多做一次受限叙述。
 - 用户要求 RAG 暂不开始，本阶段先设计确定性、可测试的非 RAG 基线；不引入 embedding、vector store、retriever 或 reranker，不修改 n8n，不调用真实模型 API，也不提前实现 `spread-path`。
+- 去重审计将本章限定为负面人口的议题维度交叉表：不重复 `viewpoints` 的情感代表样本，不重复 `keywords` 的原文短语排行，也不重复 `severity` 的总体标签分布；固定维度只回答负面摘要聚焦什么，以及哪些维度承载明确诉求和 high/critical 标签。
+- `docs/02-report-spec.md` 与 D-31 已定义 `negative-themes.v1` / `negative-themes.codebook.v1`：只用摘要的 NFKC 规范化文本和文档中公开的精确指标，将记录多标签映射为 `用户自主权`、`透明度与解释`、`反馈有效性`；主题与关注/诉求角色均可重叠，未分类负面记录必须显式披露。
+- 显示主题至少覆盖两篇负面记录，最多三类；按覆盖篇数、high/critical 篇数、存储互动和固定代码本顺序排名。每类选择一条按严重性、负面分、互动、时间和 ID 排序的真实代表证据；模型不得重命名、合并或生成主题。
+- fixture 预查得到三类负面覆盖 5/4/3 篇，关注/诉求计数分别为 4:2、2:2、2:1，high/critical 为 3/2/2，代表 Evidence ID 为 `bili-005`、`bili-003`、`bili-007`；7 篇负面均至少匹配一类，未分类为 0。重叠成员数不得相加解释为独立文章总量。
+- 规格小步第一次检查：仅 `docs/02-report-spec.md` 与 `docs/design-decisions.md` 改动；`git diff --check`、唯一 `negative-themes` 章节、唯一 D-31、必需合同段、无实现/n8n 变更均通过，真实 fixture PostgreSQL 精确复算上述覆盖、角色、标签和代表证据。
+- 规格小步第二次检查：项目 `.venv` 在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 211 项；`pip check` 无破损依赖。未实现主题 SQL/代码、RAG、n8n 或真实模型调用。
 
 ## M2 `timeline` 阶段入口
 

@@ -982,6 +982,113 @@ states that cross-signal overlap is unavailable/zero rather than inventing the m
 type. Query, calculation, evidence, chart, or narration errors return `failed` with a
 safe stage-specific message while later sections continue.
 
+## `negative-themes` — 负面议题拆解
+
+Purpose: explain which decision-relevant issue dimensions appear in negative summaries,
+how much of the negative population each dimension covers, what explicit concerns or
+requests are present, and where supplied high/critical labels concentrate. Unlike
+`viewpoints`, this is a population cross-tab rather than a representative sentiment
+sample; unlike `keywords`, it maps synonymous exact indicators into versioned dimensions
+rather than ranking raw recurring phrases; unlike `severity`, it asks which issue
+dimension carries the structured labels rather than restating their overall distribution.
+It does not establish root cause, audience intent, actual harm, or a universal taxonomy.
+
+Inputs: no section-specific input.
+
+Fixed query plan (`negative-themes.v1`):
+
+- hard-filter articles with the shared topic tag and complete half-open timestamp scope;
+  return scoped article count and negative article count plus every negative record's real
+  external ID, title, summary, platform, timestamp, severity, negative score, and four
+  stored interaction counters;
+- order negative records by timestamp ascending and external ID ascending. SQL performs
+  scope/sentiment filtering only; it does not assign themes, generate labels, use text
+  search extensions, call an LLM, use embeddings/RAG, search externally, or use n8n;
+- use only bound `topic_tag`, `from_inclusive`, and `to_exclusive`. The query will live at
+  `src/report_engine/data/queries/negative_themes.sql` and always returns one aggregate row
+  so zero-article and zero-negative scopes remain distinguishable.
+
+Derived in Python with versioned codebook `negative-themes.codebook.v1`:
+
+- normalize summary text with Unicode NFKC; titles remain evidence but never drive theme
+  assignment. Assign a negative record to each dimension whose exact indicator occurs in
+  its normalized summary. One record counts at most once per dimension and may belong to
+  multiple dimensions;
+- fixed dimensions and exact indicators are:
+  - `user_agency` / `用户自主权`: `负反馈入口`, `表达不喜欢`, `用户控制感`, `选择权`,
+    `纠偏成本`, `恢复原入口`, `恢复入口`;
+  - `transparency` / `透明度与解释`: `推荐透明度`, `推荐原因不透明`, `说明实验范围`,
+    `公开推荐与实验规则`;
+  - `feedback_effectiveness` / `反馈有效性`: `不愿听取负面反馈`, `反馈是否生效`,
+    `反馈机制`;
+- independently mark `concern` when the same summary contains any of `担心`, `认为`,
+  `质疑`, `不满`, `焦虑`, `担忧`, `困难`, `削弱`, `不愿`, `影响`, `增加`; mark
+  `demand` for any of `要求`, `呼吁`, `希望`, `应当`, `需要`, `诉求`, `恢复`, `公开`,
+  `说明`. A record may carry both roles, so role counts are not stacked or treated as
+  mutually exclusive;
+- a display theme requires at least two distinct negative records. Rank display themes by
+  matched negative records descending, high/critical matched records descending, summed
+  stored interaction descending, then fixed codebook order; retain at most three;
+- for each displayed theme calculate matched negative records and negative-population
+  share, concern/demand record counts, high/critical count and within-theme share, stored
+  interaction total, platform count, matched indicator list, and all supporting source
+  IDs. Also calculate scoped `articles`, `negativeArticles`, codebook-classified and
+  unclassified negative counts/shares, display theme count, and total theme memberships;
+- choose one representative source per displayed theme by severity `critical > high >
+  medium > low > missing`, negative score descending with missing last, total stored
+  interaction descending, timestamp descending, and external ID ascending. A source may
+  truthfully represent more than one multi-label theme; the underlying `EvidenceSet` is
+  deduplicated while the expected per-theme citation sequence may repeat its ID;
+- every number is a `FactSet` value sourced from `negative-themes.v1` or a named
+  `negative-themes.*.v1` Python calculation. Theme facts carry every matching source ID;
+  representative facts carry the selected real source ID.
+
+Evidence: required whenever a display theme exists. Each representative preserves its
+real external ID, exact title and summary, platform, timestamp, and negative sentiment.
+Each theme block must show its approved fixed label and one `[Evidence: <id>]` citation,
+preserve the representative title/summary verbatim, and cite IDs in fixed theme order.
+Unknown, missing, extra, or reordered theme citations, modified source text, a generated
+theme label, or a citation outside the query result causes safe section failure. Repeated
+citations are permitted only when the deterministic representative ID is shared by
+multiple themes. This baseline is rule-based classification, not RAG or semantic
+clustering; unmatched negative records remain visible as a limitation.
+
+Charts: one `negative-theme-coverage.png` horizontal stacked bar chart for displayed
+themes. Each bar splits matched records into high/critical (`#DC2626`) and other negative
+records (a lighter red), so the total remains the theme's negative-document coverage.
+Labels show matched count / all negative records, percentage, concern count, and demand
+count; they explicitly note that roles and themes overlap. The title states the leading
+fixed dimension and its negative-population coverage rather than a generic chart name.
+Use the shared white background, hidden top/right spines, 150 dpi theme, and embedded
+Chinese font. Do not stack concern and demand counts because the same source may be both.
+
+Narration contract:
+
+- at most one narrator operation after successful query, classification, fact/evidence
+  construction, and charting;
+- Chinese heading `负面议题拆解`, followed by scoped/negative counts, codebook classified
+  and unclassified counts/shares, displayed theme count, and explicit disclosure that
+  theme memberships and concern/demand roles overlap;
+- render theme blocks in fixed ranked order. Each states only approved label, matched
+  count/share with the negative denominator, concern/demand counts, high/critical count
+  and within-theme share, matched indicator(s), and its representative evidence bullet;
+- call these `议题维度` or `摘要信号`, not root causes, audience segments, prevalence
+  outside the monitored records, or verified harm. The model may not rename dimensions,
+  merge/split themes, invent an explanation, recommendation, demographic, external fact,
+  or new number;
+- disclose that this is a versioned exact-indicator baseline whose unmatched count bounds
+  coverage. The deterministic Chinese/English stub renders the same facts, labels,
+  limitations, exact source text, and citation sequence in automated tests.
+
+No-data rule: zero negative records returns `no_data` with `监测范围内未发现负面内容。`
+and performs no theme classification output, chart, evidence narration, or narrator
+operation. A non-empty negative scope in which no dimension reaches two records remains
+`complete` and renders a deterministic no-qualifying-theme/codebook-coverage message
+without chart or narrator cost. One or more displayed themes remain `complete` even when
+some negative records are unclassified; the unmatched count/share must stay visible.
+Blank required source text, or query, classification, evidence, chart, or narration
+errors return `failed` with a safe stage-specific message while later sections continue.
+
 ## Remaining project-defined sections
 
 The authoritative IDs and user-facing purposes are defined in
