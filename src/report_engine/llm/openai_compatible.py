@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -26,6 +27,15 @@ facts, causal claims, or actions that are absent from the approved input. Keep e
 required limitation explicit."""
 
 RETRYABLE_STATUS_CODES = frozenset({408, 429})
+EVIDENCE_CITATION = re.compile(r"\[Evidence:\s*([^\]]+)]")
+NUMBER_TOKEN = re.compile(
+    r"(?<![\w])[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?(?![\w])"
+)
+CAUSAL_MARKER = re.compile(
+    r"\b(?:because|caused? by|causes?|led to|leads? to|results? in|"
+    r"resulted in|therefore|due to)\b|因为|由于|导致|造成|引发|因此",
+    re.IGNORECASE,
+)
 SECTION_PURPOSES = {
     SectionId.VERDICT: "State the code-computed executive judgment and momentum.",
     SectionId.METRICS: "Summarize the auditable monitoring-scope overview.",
@@ -180,6 +190,7 @@ class OpenAICompatibleNarrator:
                     )
 
                 markdown = self._extract_markdown(response.body)
+                self._validate_markdown(markdown, request)
                 succeeded = True
                 return markdown
             raise AssertionError("Narration retry loop exhausted unexpectedly")
@@ -276,6 +287,76 @@ class OpenAICompatibleNarrator:
                 "Narration provider returned an invalid response"
             )
         return content.strip()
+
+    @staticmethod
+    def _validate_markdown(markdown: str, request: NarrationRequest) -> None:
+        required_heading = f"## {section_heading(request.section_id, request.language)}"
+        headings = re.findall(r"^## .+$", markdown, flags=re.MULTILINE)
+        if not headings or headings != [required_heading]:
+            OpenAICompatibleNarrator._raise_output_contract_error()
+        if markdown.splitlines()[0] != required_heading:
+            OpenAICompatibleNarrator._raise_output_contract_error()
+        if "```" in markdown or "![" in markdown or re.search(
+            r"<img\b", markdown, flags=re.IGNORECASE
+        ):
+            OpenAICompatibleNarrator._raise_output_contract_error()
+
+        approved_evidence = {
+            evidence.record_id: evidence for evidence in request.evidence.records
+        }
+        approved_order = {
+            evidence.record_id: index
+            for index, evidence in enumerate(request.evidence.records)
+        }
+        last_evidence_index = -1
+        for evidence_id in EVIDENCE_CITATION.findall(markdown):
+            evidence = approved_evidence.get(evidence_id)
+            if evidence is None:
+                OpenAICompatibleNarrator._raise_output_contract_error()
+            evidence_index = approved_order[evidence_id]
+            if evidence_index < last_evidence_index:
+                OpenAICompatibleNarrator._raise_output_contract_error()
+            if evidence.title not in markdown or evidence.summary not in markdown:
+                OpenAICompatibleNarrator._raise_output_contract_error()
+            last_evidence_index = evidence_index
+
+        approved_text = [fact.formatted_value for fact in request.facts.facts]
+        for evidence in request.evidence.records:
+            approved_text.extend(
+                (
+                    evidence.title,
+                    evidence.summary,
+                    evidence.platform,
+                    evidence.published_at.isoformat(),
+                    evidence.sentiment,
+                )
+            )
+        if request.user_context is not None:
+            approved_text.append(request.user_context.markdown_safe_text)
+        approved_corpus = "\n".join(approved_text)
+
+        markdown_without_citations = EVIDENCE_CITATION.sub("", markdown)
+        approved_numbers = set(NUMBER_TOKEN.findall(approved_corpus))
+        if any(
+            token not in approved_numbers
+            for token in NUMBER_TOKEN.findall(markdown_without_citations)
+        ):
+            OpenAICompatibleNarrator._raise_output_contract_error()
+
+        approved_causal_markers = {
+            match.group(0).casefold() for match in CAUSAL_MARKER.finditer(approved_corpus)
+        }
+        if any(
+            match.group(0).casefold() not in approved_causal_markers
+            for match in CAUSAL_MARKER.finditer(markdown)
+        ):
+            OpenAICompatibleNarrator._raise_output_contract_error()
+
+    @staticmethod
+    def _raise_output_contract_error() -> None:
+        raise NarrationProviderError(
+            "Narration provider output violated the approved output contract"
+        )
 
     @staticmethod
     def _is_retryable(status_code: int) -> bool:

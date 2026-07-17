@@ -1,7 +1,7 @@
 # Current Project State
 
 最后核对日期：2026-07-17
-最后实现基线：`codex/local-integration@9b31452`（n8n Draft 演示层已本地合并；`main` 仍为 `5909005`）
+最后实现基线：`codex/local-integration@416c9c6`（n8n Draft 演示层已推送至 PR #22；`main` 仍为 `5909005`）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
@@ -86,7 +86,14 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 的 19 个章节纵向切片已经合并。用户于 2026-07-17 明确要求忽略 push、只做本地工作；因此当前任务改用 `codex/local-integration` 承载各阶段的本地验证与集成，`main@5909005` 保持不动，不执行 push、PR 或远程 CI。后续阶段仍按一个意图一笔本地提交、阶段间本地 merge commit 和完整验收证据推进。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；M3 API 已完成，n8n canonical JSON 的独立本地静态验收也已完成并继续保持 Draft/inactive。
+context recovery、完整 M1 离线实现与默认配置、以及 M2 的 19 个章节纵向切片已经合并。用户随后授权 push 与合并；`codex/local-integration@416c9c6` 已推送至 Draft PR #22，GitHub Linux CI run `29570354174` 已通过完整 Python 3.12 + PostgreSQL fixtures 检查。`main@5909005` 暂时保持不动，须先关闭合并前复审发现的阻断项。后续仍按一个意图一笔提交、阶段收口完整验收和 merge commit 推进。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；M3 API 已完成，n8n canonical JSON 继续保持 Draft/inactive。
+
+## 合并门禁：真实 narrator 输出边界
+
+- 本小步映射任务书“所有数字由代码计算”和“观点必须来自数据”：OpenAI-compatible adapter 在接受成功响应前统一校验唯一且精确的章节标题、批准数字、Evidence ID/顺序及其原始标题和摘要，并拒绝图片、代码围栏、额外二级章节和输入中不存在的因果标记。
+- 对抗测试先证明旧实现会接受错误标题、额外 `99.9%`、虚构 Evidence ID、远程图片、无来源因果表述和额外章节；修复后同一范围连同批准数字/证据正例共 28 项通过，`git diff --check` 通过。
+- 输出边界失败使用安全的 `NarrationProviderError`，该章节仍由既有 runner 进入 `failed`，不会重试确定性的无效成功响应，也不会把模型原文写入错误信息。
+- 尚未解除合并门禁：HTTP 重定向不得转发 Authorization、n8n 提交重试需要稳定幂等键；完成两项独立小步、完整回归和复审前不合并 `main`。
 
 ## PostgreSQL 章节事务隔离修复
 

@@ -325,6 +325,54 @@ def test_rejects_malformed_or_incomplete_success_without_retry(
 
 
 @pytest.mark.parametrize(
+    "content",
+    [
+        "## Invented heading\n\nApproved narrative",
+        "## Main viewpoints\n\nAn invented 99.9% appears here.",
+        "## Main viewpoints\n\n[Evidence: invented-99] Unsupported source.",
+        "## Main viewpoints\n\n![remote](https://example.invalid/chart.png)",
+        "## Main viewpoints\n\nThis happened because the algorithm changed.",
+        "## Main viewpoints\n\nApproved narrative\n\n## Extra section\n\nMore text.",
+    ],
+)
+def test_rejects_success_that_crosses_the_approved_output_boundary(
+    content: str,
+) -> None:
+    transport = FakeTransport(completion(content))
+    narrator = OpenAICompatibleNarrator(
+        base_url="https://provider.example/v1",
+        api_key="test-key",
+        model="test-model",
+        transport=transport,
+        sleep=lambda _: pytest.fail("invalid success must not sleep"),
+    )
+
+    with pytest.raises(NarrationProviderError, match="output contract"):
+        narrator.narrate(narration_request())
+
+    assert len(transport.calls) == 1
+    assert narrator.diagnostics[0].succeeded is False
+
+
+def test_accepts_only_approved_numbers_evidence_and_source_text() -> None:
+    request = narration_request()
+    record = request.evidence.records[0]
+    content = (
+        "## Main viewpoints\n\n"
+        "The approved share is 58.3%. "
+        f"{record.title}: {record.summary} [Evidence: source-1]"
+    )
+    narrator = OpenAICompatibleNarrator(
+        base_url="https://provider.example/v1",
+        api_key="test-key",
+        model="test-model",
+        transport=FakeTransport(completion(content)),
+    )
+
+    assert narrator.narrate(request) == content
+
+
+@pytest.mark.parametrize(
     "base_url",
     [
         "",
