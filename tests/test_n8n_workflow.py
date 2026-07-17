@@ -108,3 +108,20 @@ def test_submit_body_and_status_url_match_the_m3_contract() -> None:
     status_url = status["parameters"]["url"]
     assert "$('Submit Report').item.json.taskId" in status_url
     assert status_url.endswith("/status")
+
+
+def test_submit_retries_share_one_execution_scoped_idempotency_key() -> None:
+    workflow = load_workflow()
+    nodes_by_name = {node["name"]: node for node in workflow["nodes"]}
+    submit_parameters = nodes_by_name["Submit Report"]["parameters"]
+
+    assert submit_parameters["sendHeaders"] is True
+    assert submit_parameters["headerParameters"] == {
+        "parameters": [
+            {
+                "name": "Idempotency-Key",
+                "value": "={{ $execution.id }}",
+            }
+        ]
+    }
+    assert "sendHeaders" not in nodes_by_name["Get Report Status"]["parameters"]

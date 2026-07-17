@@ -20,3 +20,7 @@ Both HTTP nodes retry transient failures and route persistent failures to a visi
 the same, while `completed` preserves the API response with its PDF and ZIP download
 paths. After importing or updating the workflow, inspect its connections in n8n before
 any manual execution.
+
+`Submit Report` sends `Idempotency-Key: {{ $execution.id }}`. Retries inside one n8n
+execution therefore resolve to the same M3 task, while a later manual execution remains
+a distinct report request. This identifier is not an authentication credential.
