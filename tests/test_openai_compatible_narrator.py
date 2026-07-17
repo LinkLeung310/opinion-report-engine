@@ -126,12 +126,18 @@ def test_stdlib_transport_encodes_json_without_network(monkeypatch) -> None:
         def read() -> bytes:
             return b'{"choices": []}'
 
-    def fake_urlopen(request, *, timeout):
-        captured["request"] = request
-        captured["timeout"] = timeout
-        return Response()
+    class FakeOpener:
+        @staticmethod
+        def open(request, *, timeout):
+            captured["request"] = request
+            captured["timeout"] = timeout
+            return Response()
 
-    monkeypatch.setattr(adapter_module, "urlopen", fake_urlopen)
+    def fake_build_opener(*handlers):
+        captured["handlers"] = handlers
+        return FakeOpener()
+
+    monkeypatch.setattr(adapter_module, "build_opener", fake_build_opener)
 
     response = UrllibJsonHttpTransport().post_json(
         "https://provider.example/v1/chat/completions",
@@ -147,7 +153,43 @@ def test_stdlib_transport_encodes_json_without_network(monkeypatch) -> None:
     assert request.get_header("Content-type") == "application/json"
     assert json.loads(request.data) == {"model": "test-model", "messages": []}
     assert captured["timeout"] == 7.5
+    assert len(captured["handlers"]) == 1
+    assert isinstance(captured["handlers"][0], adapter_module._NoRedirectHandler)
     assert response == TransportResponse(200, b'{"choices": []}')
+
+
+@pytest.mark.parametrize(
+    ("source_url", "redirect_url"),
+    [
+        (
+            "https://provider.example/v1/chat/completions",
+            "https://attacker.example/collect",
+        ),
+        (
+            "https://provider.example/v1/chat/completions",
+            "http://provider.example/v1/chat/completions",
+        ),
+    ],
+)
+def test_transport_refuses_redirects_before_authorization_can_be_forwarded(
+    source_url: str,
+    redirect_url: str,
+) -> None:
+    request = adapter_module.Request(
+        source_url,
+        headers={"Authorization": "Bearer test-key"},
+    )
+
+    redirected = adapter_module._NoRedirectHandler().redirect_request(
+        request,
+        None,
+        302,
+        "Found",
+        {},
+        redirect_url,
+    )
+
+    assert redirected is None
 
 
 def test_sends_only_approved_context_through_minimal_chat_completion_request() -> None:

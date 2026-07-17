@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit, urlunsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from report_engine.config import SectionId
 from report_engine.llm.protocol import NarrationRequest
@@ -83,6 +83,13 @@ class JsonHttpTransport(Protocol):
     ) -> TransportResponse: ...
 
 
+class _NoRedirectHandler(HTTPRedirectHandler):
+    """Do not reissue credentialed provider requests at redirected URLs."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 class UrllibJsonHttpTransport:
     """Small stdlib transport so the provider contract stays SDK-independent."""
 
@@ -100,7 +107,8 @@ class UrllibJsonHttpTransport:
             method="POST",
         )
         try:
-            with urlopen(request, timeout=timeout_seconds) as response:
+            opener = build_opener(_NoRedirectHandler())
+            with opener.open(request, timeout=timeout_seconds) as response:
                 return TransportResponse(response.status, response.read())
         except HTTPError as exc:
             status_code = exc.code
