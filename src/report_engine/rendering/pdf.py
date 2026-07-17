@@ -36,6 +36,7 @@ class ReportLabPdfRenderer:
 
     def render(self, markdown: str, chart_directory: Path) -> bytes:
         buffer = BytesIO()
+        document_title = self._document_title(markdown)
         document = SimpleDocTemplate(
             buffer,
             pagesize=A4,
@@ -43,7 +44,7 @@ class ReportLabPdfRenderer:
             leftMargin=18 * mm,
             topMargin=18 * mm,
             bottomMargin=18 * mm,
-            title="舆情分析报告",
+            title=document_title,
             author="Opinion Report Engine",
         )
         story = self._build_story(markdown, chart_directory, document.width)
@@ -53,6 +54,16 @@ class ReportLabPdfRenderer:
             onLaterPages=self._draw_page_frame,
         )
         return buffer.getvalue()
+
+    @staticmethod
+    def _document_title(markdown: str) -> str:
+        for raw_line in markdown.splitlines():
+            line = raw_line.strip()
+            if line.startswith("# "):
+                title = line[2:].strip()
+                if title:
+                    return title
+        return "Opinion Analysis Report"
 
     @staticmethod
     def _register_font() -> None:

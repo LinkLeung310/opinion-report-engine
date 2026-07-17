@@ -12,6 +12,8 @@ from matplotlib.ticker import PercentFormatter
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import phase_label, sentiment_label, select
 from report_engine.sections.sentiment_evolution import SentimentEvolutionSnapshot
 
 
@@ -22,6 +24,7 @@ class SentimentEvolutionChartBuilder:
         self,
         snapshot: SentimentEvolutionSnapshot,
         output_directory: Path,
+        language: Language = Language.ZH,
     ) -> Path:
         if not snapshot.has_data:
             raise ValueError("cannot chart an empty sentiment-evolution snapshot")
@@ -47,38 +50,54 @@ class SentimentEvolutionChartBuilder:
                 "axes.unicode_minus": False,
             }
         ):
-            figure = Figure(figsize=(6.8, 3.55))
+            figure = Figure(
+                figsize=(6.8, 3.85 if language is Language.EN else 3.55)
+            )
             FigureCanvasAgg(figure)
             axes = figure.subplots()
             ChartTheme.apply(figure, axes)
-            axes.bar(positions, positive, color=ChartTheme.POSITIVE, label="正面")
+            axes.bar(
+                positions,
+                positive,
+                color=ChartTheme.POSITIVE,
+                label=sentiment_label("positive", language),
+            )
             axes.bar(
                 positions,
                 neutral,
                 bottom=positive,
                 color=ChartTheme.NEUTRAL,
-                label="中性",
+                label=sentiment_label("neutral", language),
             )
             axes.bar(
                 positions,
                 negative,
                 bottom=negative_bottom,
                 color=ChartTheme.NEGATIVE,
-                label="负面",
+                label=sentiment_label("negative", language),
             )
             axes.set_xticks(
                 positions,
                 [
-                    f"{phase.label} {phase.date_range_label}\nn={phase.article_count}"
+                    f"{phase_label(phase.label, language)} "
+                    f"{phase.date_range_label}\nn={phase.article_count}"
                     for phase in phases
                 ],
             )
             axes.set_ylim(0, 1)
             axes.yaxis.set_major_formatter(PercentFormatter(1, decimals=0))
-            axes.set_ylabel("情感构成占比", color=ChartTheme.MUTED)
+            axes.set_ylabel(
+                select(language, "情感构成占比", "Sentiment composition"),
+                color=ChartTheme.MUTED,
+            )
             figure.suptitle(
-                f"{last.label}负面占比 {last.share('negative'):.1%}，样本 "
-                f"{last.article_count} 篇",
+                select(
+                    language,
+                    f"{last.label}负面占比 {last.share('negative'):.1%}，样本 "
+                    f"{last.article_count} 篇",
+                    f"{phase_label(last.label, language)} negative share "
+                    f"{last.share('negative'):.1%}; n={last.article_count}",
+                ),
                 x=0.08,
                 y=0.98,
                 ha="left",
@@ -91,10 +110,14 @@ class SentimentEvolutionChartBuilder:
                 labels,
                 frameon=False,
                 ncol=3,
-                loc="upper right",
-                bbox_to_anchor=(0.97, 0.98),
+                loc="upper center" if language is Language.EN else "upper right",
+                bbox_to_anchor=(
+                    (0.72, 0.86) if language is Language.EN else (0.97, 0.98)
+                ),
             )
-            figure.tight_layout(rect=(0, 0, 1, 0.88))
+            figure.tight_layout(
+                rect=(0, 0, 1, 0.70 if language is Language.EN else 0.88)
+            )
 
             output_path = output_directory / self.filename
             figure.savefig(

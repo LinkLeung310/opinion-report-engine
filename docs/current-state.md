@@ -1,21 +1,22 @@
 # Current Project State
 
-最后核对日期：2026-07-16
-最后实现基线：`main@eeeba95`（PR #20，auditable business impact）
+最后核对日期：2026-07-17
+最后实现基线：`codex/local-integration@b77a4a4`（PR #22 合并门禁修复进行中；`main` 仍为 `5909005`）
 
 本文件只记录已验证事实。任务要求以原始任务书为准，长期规则以根目录 `AGENTS.md` 为准。
 
 ## 已验证完成
 
 - 固定 `ReportConfig` 的严格解析、未知 `reportType` 回退和 enabled 章节顺序规划。
-- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark`、`biz-impact` 与当前分支的 `recommendations` 已完成 stub 模式端到端实现。
+- 19 个章节 ID 注册表；中文 csuite 的 `verdict`、`metrics`、`trend`、`viewpoints`、`platforms`、`severity` 与 `risk` 七章，PR 版新增的 `sentiment-evolution`、`keywords`、`engagement`、`media-social`，M2 的 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark`、`biz-impact` 与 `recommendations` 已完成并合并 stub 模式端到端实现。
 - 项目提供的合成 PostgreSQL fixtures、固定 metrics SQL 和真实数据库集成测试。
 - `FactSet`、章节级 `complete` / `no_data` / `failed` 语义及安全失败 metadata。
 - metrics 的 150 dpi 图表、项目内 Noto Sans SC 字体和 A4 ReportLab PDF。
-- 原子发布 `report.md`、`report.pdf`、`charts/*.png`、`meta.json` bundle。
-- `report generate` CLI 的显式 `--stub-llm` 离线验证路径。
+- 原子发布 `report.md`、`report.pdf`、`charts/*.png`、`meta.json` bundle，并在其后原子更新 `index.json` 报告目录。
+- `report generate` CLI 默认接入 OpenAI-compatible narrator，并保留显式 `--stub-llm` 离线验证路径。
+- M3 FastAPI 提交、状态、PDF/ZIP 下载、双任务隔离和 completed 重启恢复。
 - GitHub Actions 在 Python 3.12 + PostgreSQL fixtures 上运行完整测试。
-- n8n Draft 工作流 JSON：提交 M3 API、等待、轮询和成功/失败分支；未激活。
+- n8n Draft 工作流 JSON：提交 M3 API、等待、轮询和成功/失败分支；失败终点会明确终止执行，规范版本保持未激活。
 - 仓库级 context recovery：`AGENTS.md`、文档导航、状态快照和 PR 模板。
 
 ## 当前证据
@@ -40,6 +41,7 @@
 - PR #18 的 response slice 已用 merge commit 合并：`ad1e414`。
 - PR #19 的 benchmark slice 已用 merge commit 合并：`542196c`。
 - PR #20 的 biz-impact slice 已用 merge commit 合并：`eeeba95`。
+- PR #21 的 recommendations slice 已用 merge commit 合并：`5909005`。
 - `main@1ee06f4` 的 GitHub CI：146 项测试通过（run `29420845303`）。
 - `main@9e157c5` 的 GitHub CI：160 项测试通过（run `29423229549`）。
 - `main@3448aa3` 的 GitHub CI：175 项测试通过（run `29424655431`）。
@@ -68,13 +70,12 @@
 
 ## 明确未完成
 
-- M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；真实 OpenAI-compatible narrator 尚未实现和冒烟，仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
-- M2 已完成并合并 `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark` 与 `biz-impact` 纵向切片；`recommendations` 已在当前功能分支完成本地验收但尚未经 PR/CI 合并。完整英文矩阵和任意组合仍未完成。
-- 真实 OpenAI-compatible narrator 未实现；真实模型未做冒烟验证。
+- M1 离线实现与验收已完成：中文 csuite 7 章与 PR 11 章的标准配置、stub CLI、真实 fixture SQL、图表和 PDF 均已通过；OpenAI-compatible narrator 已实现并接入默认 CLI，但真实 provider 尚未做凭据门控冒烟。仓库也未收到任务书引用的 gold-report HTML/CSS 资产用于直接像素对比。
+- M2 的 19 个章节纵向切片、完整英文 stub 矩阵、三类专属输入和代表性任意重排组合均已完成本地验收；真实 narrator 的传输与 CLI 边界已用 fake/stub 验证，尚未验证真实模型输出质量。
+- 真实模型 provider 冒烟未执行；没有可用于此次本地开发验收的外部凭据，也不会以 fake/stub 结果冒充真实模型质量证据。
 - RAG 未实现：没有 embedding、vector store、retriever、reranker 或检索质量评测；现有 Evidence ID 引用验证属于非 RAG 的确定性证据边界。RAG 只在 `AGENTS.md` 和 D-17 中定义计划边界。
-- M3 未开始：FastAPI、任务队列、并发隔离、状态和下载接口均不存在。
-- n8n 不能端到端运行，因为其调用的 M3 API 尚不存在；不得激活或声称集成完成。
-- `CatalogPublisher` / `index.json` 列表更新尚未实现。
+- M3 已完成本地实现与验收；真实模型仍遵守凭据门控，不属于日常 M3 确定性验收。
+- n8n 的 canonical JSON 已按当前节点 schema、表达式、连接和错误路径完成本地静态验收；没有导入或执行本机 n8n 实例，因真实执行会提交生成任务且需要用户另行确认。规范版本继续保持 inactive；n8n 是项目演示层，不是任务书 M3 完成条件。
 - gold-report 视觉资产尚未交付。
 
 ## 已知文档差异
@@ -85,7 +86,37 @@
 
 ## 当前范围约束
 
-context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/`top-content`/`negative-themes`/`spread-path`/`response`/`benchmark`/`biz-impact` 纵向切片已经合并。当前分支 `codex/m2-recommendations-section` 从绿色 `main@eeeba95` 创建，并已完成 `recommendations` 的本地纵向验收；下一步是提交、PR/CI 与合并，不在本分支混入英文矩阵。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；n8n 继续保持 Draft/inactive，等待 M3 API。
+context recovery、完整 M1 离线实现与默认配置、以及 M2 的 19 个章节纵向切片已经合并。用户随后授权 push 与合并；`codex/local-integration@416c9c6` 已推送至 Draft PR #22，GitHub Linux CI run `29570354174` 已通过完整 Python 3.12 + PostgreSQL fixtures 检查。`main@5909005` 暂时保持不动，须先关闭合并前复审发现的阻断项。后续仍按一个意图一笔提交、阶段收口完整验收和 merge commit 推进。用户要求暂不开始 RAG，因此不会新增 embedding、vector store、retriever 或 reranker；M3 API 已完成，n8n canonical JSON 继续保持 Draft/inactive。
+
+## 合并门禁：真实 narrator 输出边界
+
+- 本小步映射任务书“所有数字由代码计算”和“观点必须来自数据”：OpenAI-compatible adapter 在接受成功响应前统一校验唯一且精确的章节标题、批准数字、Evidence ID/顺序及其原始标题和摘要，并拒绝图片、代码围栏、额外二级章节和输入中不存在的因果标记。
+- 对抗测试先证明旧实现会接受错误标题、额外 `99.9%`、虚构 Evidence ID、远程图片、无来源因果表述和额外章节；修复后同一范围连同批准数字/证据正例共 28 项通过，`git diff --check` 通过。
+- 输出边界失败使用安全的 `NarrationProviderError`，该章节仍由既有 runner 进入 `failed`，不会重试确定性的无效成功响应，也不会把模型原文写入错误信息。
+- 尚未解除合并门禁：HTTP 重定向不得转发 Authorization、n8n 提交重试需要稳定幂等键；完成两项独立小步、完整回归和复审前不合并 `main`。
+
+## 合并门禁：provider 重定向安全
+
+- 本小步不改变 provider 配置或重试语义，只在标准库 HTTP 边界安装拒绝所有重定向的 handler；因此带 `Authorization` 的 POST 不会被重新发送到跨域地址，也不会从 HTTPS 降级到 HTTP。
+- 对抗测试分别覆盖 `provider.example` → `attacker.example` 和 HTTPS → HTTP，两种目标都无法产生新的请求；传输层测试同时确认实际 opener 安装了拒绝重定向 handler，并保留 JSON 编码、超时和安全状态码行为。
+- narrator adapter 专属范围 30 项通过，目标模块静态编译和 `git diff --check` 通过。
+- 仍未解除合并门禁：n8n 提交重试需要稳定幂等键；完成该独立小步、完整回归和复审前不合并 `main`。
+
+## 合并门禁：n8n 提交幂等
+
+- `Submit Report` 现在发送 `Idempotency-Key: {{ $execution.id }}`：同一次 n8n execution 内的 HTTP 节点重试复用同一键，新的手动 execution 使用新键；该值是请求去重标识，不是认证凭据。
+- 规范 JSON 继续使用 HTTP Request v4.4、三次重试和显式错误输出；GET 状态节点不发送幂等头。JSON 重新解析成功，人工复核 `connections` 后确认成功、API 错误、报告失败和继续轮询的连接均未改变。
+- n8n 结构与 M3 API 合同组合范围 11 项通过，`git diff --check` 通过。第一次扩展检查因 Windows 系统 pytest 临时目录无访问权在 setup 前失败；切换到仓库内已忽略的临时目录后原范围全部通过，没有业务断言失败。
+- 本地 `localhost:5678` 当前未响应，且本会话没有 n8n MCP validator，因此未执行或激活工作流，也不把静态检查冒充 live 执行证据。规范 JSON 仍保持 inactive；合并前还需完整回归、独立复审与 GitHub CI。
+
+## PostgreSQL 章节事务隔离修复
+
+- 本小步映射任务书 R-09“单章节失败不中断整体”：所有 19 个 PostgreSQL repository 的固定只读 SQL 统一通过短事务执行，事务在取数结束后关闭，不跨越图表或 narrator 阶段。
+- 真实 fixture PostgreSQL 故障注入先复现：第一章执行除零 SQL 后，第一章与第二章均错误进入 `failed`；修复后第一章保持 query `failed`，同一连接上的第二章为 `complete` 并生成 `daily-sentiment-trend.png`。
+- PostgreSQL repository 专属集成范围 38 项通过，覆盖 19 个现有固定 SQL 和新增的跨章节事务污染回归；健康 fixture PostgreSQL 下完整 pytest 331 项通过，Python 静态编译与 `git diff --check` 通过。项目 `.venv` 未安装 `pip` 模块，故 `.venv/bin/python -m pip check` 无法启动；当前系统 Python 的 `pip check` 返回 `No broken requirements found.`。
+- D-37 明确这是项目自主事务策略：每章短事务保证故障隔离，但不宣称整份报告使用同一个数据库快照；公共输入、输出、SQL、事实口径、RAG 和 n8n 均未改变。
+- 开工时本地 `main` 与缓存的 `origin/main` 同为 `5909005`；`git fetch --prune origin` 返回 `Repository not found`，因此最新远程 CI 和 push 能力当前无法核验。未跟踪 `.codegraph/` 属于既有用户文件，本小步不修改、不暂存。
+- 用户授权本地继续后，从 `ceceb53` 建立 `codex/local-integration`，没有移动 `main`。健康 fixture PostgreSQL 下重新运行全部 repository 集成测试及跨章节故障隔离回归，共 38 项通过；Python 静态编译和 `git diff --check` 通过。该结果只证明本地基线可继续开发，不冒充远程 CI 或 PR 证据。
 
 ## Context recovery 规则强化小步
 
@@ -130,17 +161,107 @@ context recovery、完整 M1 离线实现与默认配置、以及 M2 `timeline`/
 
 1. 读取根目录 `AGENTS.md`。
 2. 读取原始任务书、本文件、需求追踪矩阵和设计决定。
-3. 检查 Git 分支、工作区、远程和最新 CI。
+3. 检查 Git 分支、工作区；当前用户授权的本地阶段不依赖远程和最新 CI。
 4. 重新运行与下一目标相关的测试。
 5. 向用户报告已完成、未完成和任何冲突，再开始修改。
 
 ## 当前阶段与下一步
 
-- PR #20 已用 merge commit `eeeba95` 合并；`main@eeeba95` 的独立 CI run `29499194452` 已通过 317 项测试。当前分支 `codex/m2-recommendations-section` 已从该绿色基线创建。
-- `timeline`、`top-content`、`negative-themes`、`spread-path`、`response`、`benchmark` 与 `biz-impact` 的完整纵向切片已合并；下一小步只定义 `recommendations` 的事实来源、行动分类、优先级、证据、图表、一次 narrator 与 no-data 合同，不直接开始实现。
-- 新分支单次检查：当前分支、`origin/main` 和 merge-base 均精确指向 `eeeba95`，创建时工作区干净；PR #20 merge commit 与独立 main CI 均可核验，没有从旧功能分支串联开发，也未修改实现、fixtures、RAG 或 n8n。
+- PR #21 已用 merge commit `5909005` 合并；事务隔离修复提交 `ceceb53` 已作为 `codex/local-integration` 的本地基线，`main` 保持在 `5909005`。
+- 事务隔离基线之后的英文 19 章矩阵、代表性任意组合、OpenAI-compatible narrator、CatalogPublisher、M3 与 n8n Draft 静态验收均已在各自本地功能分支完成并合入 `codex/local-integration`；最新本地 merge commit 为 `9b31452`，`main@5909005` 未移动。
+- 用户明确要求忽略 push、只做本地工作；因此当前执行不等待远程权限，不创建或更新 PR，也不把缓存远程引用当作 CI 证据。阶段收口使用本地测试、真实产物、本地提交和本地 merge commit 留痕。
 - 真实 OpenAI-compatible narrator 只在最后做凭据门控的冒烟验证；开发与 CI 继续使用 stub。
-- RAG 继续延期，不在当前 `recommendations` 阶段实现；n8n 保持 Draft，等待 M3 API。
+- RAG 继续延期；n8n canonical JSON 已完成 schema、连接和错误路径静态验收并保持 Draft/inactive。真实模型与真实 n8n 执行仍分别受凭据和副作用确认门控。
+
+## M2 英文与任意组合阶段
+
+- 本阶段映射任务书 R-14/M2：在不改变公共配置或 bundle 契约的前提下，补齐 19 章英文、`responseDate` / `comparisonTag` / `notes` 三类专属输入、任意启用组合与配置顺序的统一验收。
+- D-38 与 `docs/02-report-spec.md` 的共享语言合同明确：英文模式必须翻译所有引擎自有标题、状态、事实枚举、图表和 PDF metadata；真实标题/摘要、用户输入、平台/专名及从原文抽取的词组保留原语言。保留原文不等于允许系统中文静默回退。
+- 共享 presentation 模块已集中 19 章中英文标题、情感/严重性基础标签、不可用值、百分点格式和安全失败片段。报告标题后缀、监测范围、方法说明、缺失摘要字段、应用层未知/异常章节兜底以及 PDF metadata title 已按 `language` 本地化。
+- 报告外壳聚焦检查覆盖 assembler、application service 和 ReportLab renderer，共 15 项通过；Python 静态编译与 `git diff --check` 通过。该中间证据当时尚未覆盖章节自身事实枚举、no-data/failed 分支或 15 张图表，后续矩阵证据已在本节末补齐。
+- `localize_fact_set` 在 runner 与 narrator 边界统一本地化引擎自有格式化值，同时保持每个事实的 raw value、source ID 和 source record IDs 不变；覆盖阶段/方向、百分点、情感/严重性、媒体社交标签、时间线角色、代表内容类别、固定议题标签和商业影响状态。19 章应用/runner 的通用失败片段也按请求语言输出，metrics 的 no-data 英文分支已补齐。
+- presentation、全部 runner、assembler 和 application 聚焦范围实际收集并通过 128 项；Python 静态编译与 `git diff --check` 通过。真实 fixture PostgreSQL 的临时英文 19 章运行得到 19 章 complete、0 no_data、0 failed、19 次 narrator 操作和 15 张图；非证据/原文/平台专名的 Markdown 系统中文审计为空。
+- 15 个 chart builder 现在都接收默认中文、可显式传入英文的 `language` 参数；15 个对应 runner 将公共配置语言传入图表边界。图表仍复用同一份事实、算法、150 dpi 与颜色契约，没有复制英文算法分支；来源标题、抽取短语和平台专名继续原样显示。
+- 图表与 runner 合并范围共 121 项通过；新增可见文字检查在 `savefig` 时读取全部 15 张图的 matplotlib 文本图元，验证英文引擎标签无中文回退，同时只豁免真实来源/短语/专名。Python 静态编译和 `git diff --check` 通过。
+- 最终代码在真实 fixture PostgreSQL 下生成英文 19 章 bundle：19 complete、0 no_data、0 failed、19 次 narrator 操作、15 张 150 dpi 图。A4 PDF 共 14 页，metadata title 为英文。全部 15 张图已人工检查；英文长标签导致的标题/图例重叠和柱内裁切已修正，最终未发现引擎中文回退、裁切或遮挡。
+- M2 矩阵验收暴露出确定性 stub 成功正文与部分 runner 的 `no_data` / 特殊完整 / `failed` 分支各自硬编码标题，导致同一英文章节随状态变成不同名称。stub 现在以共享 `section_heading` 统一替换首个章节标题，`trend`、`media-social` 和 `spread-path` 的非 narrator 分支也使用同一来源；runner/stub/application 聚焦 95 项通过，未改变叙述正文、SQL、事实、图表或公共契约。
+- `examples/report-config.all-sections.en.json` 已固化完整 19 章英文入口，并同时提供有效 `responseDate`、`comparisonTag` 与独立标注的未验证 `notes`。四项真实 fixture PostgreSQL + stub CLI 验收覆盖：19 章全部成功及严格顺序、含三类专属输入的五章混合重排、19 章全部 `no_data` 且零 narrator、以及 `responseDate` 缺失时仅该章失败而前后章节继续。
+- 完整英文验收产物为 19 complete、0 no_data、0 failed、19 次 narrator 操作、15 张 150 dpi 图、14 页 A4 PDF；metadata、章节标题、图表集合、图片引用、统计和允许保留的来源中文均有自动断言。最新真实 CLI 产物逐页渲染检查未发现乱码、裁切、重叠、黑块或孤立标题。
+- M2 阶段收口检查：健康 fixture PostgreSQL 下完整 pytest `366 passed`；系统 Python `pip check` 返回 `No broken requirements found.`；全仓静态编译与 `git diff --check` 通过。
+- M2 的确定性/stub 验收已完成；OpenAI-compatible narrator 后续阶段的实现与验证见下一节。RAG、M3、CatalogPublisher 和 n8n 在 M2 收口时均未开始；不得把本阶段的 stub 证据描述成真实模型冒烟。
+
+## OpenAI-compatible narrator 阶段
+
+- 本阶段映射任务书 R-06/R-10 和核心要求 4/5：在不改变 `Narrator` 端口、公共 `ReportConfig` 或 bundle 契约的前提下，接通四个既有 LLM 环境变量、一次逻辑调用、瞬时错误退避重试和安全失败边界。
+- D-39 选择最小 Chat Completions 兼容面：`LLM_BASE_URL` 规范化后追加 `/chat/completions`，请求只包含配置模型与 system/user messages；密钥只进入 Bearer 请求头。超时、网络错误、HTTP 408/429/5xx 最多重试一次，其他 4xx 与畸形成功响应立即失败，provider body 不进入异常或 metadata。
+- prompt 只序列化章节 ID、语言、共享规范标题、已批准格式化事实、有限真实证据和独立标记的未验证用户上下文；不发送 DSN、API key、无关环境变量，也不让模型生成 SQL 或计算数字。
+- 实现前审计发现 `AnalysisScope.report_type` 未进入 `NarrationRequest`，导致真实模型无法区分 `csuite` 与 `pr`。19 个 runner 现已显式从同一 scope 传入规范化报告类型，默认值只为既有直接构造保持兼容；全 19 章 PR 集成断言和 runner 合并范围共 94 项通过，且 19/19 调用点静态检查均存在显式传递。
+- `OpenAICompatibleNarrator` 与可注入 `JsonHttpTransport` 已实现：标准库 transport 只做同步 JSON POST；适配器校验安全基址、构造最小 `model + messages` 请求、解析非空 `choices[0].message.content`，并记录每章节尝试次数与成功状态。prompt 显式携带 19 章各自目的、规范化 report type、共享标题和批准上下文，同时把来源/用户文字标为数据而非指令。
+- adapter 聚焦 21 项通过，覆盖 19 章 purpose 完整性、标准库编码但不联网、FactSet/EvidenceSet/UserContext 精确序列化、密钥与 raw fact 隔离、四类瞬时 HTTP 状态、transport 错误、永久 4xx、畸形/截断成功响应、基址/凭据边界和安全 diagnostics；Python 静态编译及 `git diff --check` 通过。
+- `report generate` 现在默认要求三个 LLM 环境变量并构造真实 `OpenAICompatibleNarrator`；只有显式 `--stub-llm` 才使用确定性离线实现。缺失变量和不安全基址在连接数据库前作为配置错误退出，错误文本不暴露 API key。
+- CLI 接线与完整 CLI 回归共 41 项通过：adapter 21、settings 4、CLI 配置 2、真实 fixture PostgreSQL CLI 集成 14。其中一项不带 `--stub-llm`，在真实适配器构造点用 `StubNarrator` 测试替身截断，因此零网络外呼，同时验证环境变量精确传入并生成 1 章 complete 的完整 bundle；其余既有离线 CLI 入口也全部回归通过。Python 静态编译、`git diff --check` 及系统 Python `pip check` 均通过。
+- narrator 阶段最终在健康 fixture PostgreSQL 下完整 pytest 实际收集并通过 392 项；系统 Python `pip check` 返回 `No broken requirements found.`，全仓 Python 静态编译与 `git diff --check` 通过。阶段本地提交为 `fca2760`（transport 合同）、`590059b`（report type 贯通）、`6974128`（adapter）和 `43cb5a3`（CLI 接线）。
+- 阶段状态由 `490aba5` 收口，并以本地 merge commit `0245c9a` 合入 `codex/local-integration`；`main@5909005` 未移动，未执行 push、PR 或远程写操作，未跟踪 `.codegraph/` 继续不修改、不暂存。
+- 真实 provider 冒烟仍受凭据门控，当前没有执行，也不把 fake/Stub 证据描述为模型质量验收。本小步未新增凭据，也未实现 RAG、CatalogPublisher、M3 或 n8n。
+
+## CatalogPublisher 阶段
+
+- 本阶段映射任务书最终用户流程和 R-19，但 `index.json` 的文件形状、排序、并发与损坏处理不是原始任务书固定契约，属于项目自主设计；固定 `out/{id}` bundle 与 `meta.json` 主体字段不改变。
+- 仓库审计确认没有前端源码、既有 `ReportMeta` 类型文件或 `index.json` 样例，无法证明既有页面需要对象外壳还是数组。D-40 采用最小可替换基线：UTF-8 顶层数组，条目是已发布 bundle 中完整 `meta.json` 对象，按带时区 `generatedAt` 新到旧、再按 report ID 排序，未知扩展字段原样保留。
+- 发布策略先验证 bundle 必需文件和 metadata，再用进程内共享锁执行读—改—写，通过同目录临时文件和原子替换保护旧 catalog；相同 ID/相同 metadata 为幂等，相同 ID/不同 metadata、畸形/重复旧条目均拒绝覆盖。catalog 失败时完整 bundle 保留，但本次生成不能被宣称为完整用户流程成功。
+- 规格一致性检查通过：变更严格限定为 architecture、final framework、D-40 与本状态文件；`git diff --check`、唯一 D-40、数组/锁/原子替换/畸形拒绝/报告级失败合同均可定位。
+- 规格小步没有修改代码；随后独立 adapter 小步新增 `CatalogPublisher`，它只读取已完成 bundle 内的准确 `meta.json`，严格验证 `ReportMeta` 主体与带时区时间，使用共享进程锁、同目录临时文件和原子替换发布顶层数组。
+- adapter 专属测试 12 项通过，覆盖首次发布、未知扩展字段保留、新到旧且同时间 ID 升序、相同条目幂等、冲突 ID、畸形/重复旧目录、无时区或非法 metadata、原子替换失败保护以及多个 publisher 实例并发不丢条目。
+- adapter 与相邻 bundle publisher 合并回归共 16 项通过；storage 与测试静态编译及 `git diff --check` 通过。此证据只证明独立存储适配器，不冒充 application service 端到端接线；下一小步才注入并调用它。
+- 本 adapter 小步不修改公共输入、章节、SQL、图表、PDF、RAG、M3 或 n8n，也不执行 push、PR 或远程写操作。
+- application service 现在依赖最小 `BundlePublisherPort` / `CatalogPublisherPort` Protocol，而不是存储适配器具体类；运行时组合根注入两个真实 publisher，并严格按 bundle 原子发布 → 读取已发布 metadata 更新 catalog → 返回成功的顺序执行。
+- 应用层测试验证首次生成的 catalog 条目与 bundle `meta.json` 完全一致、重复生成保留两个版本，以及 catalog 失败会向上报告且保留已完成 bundle、旧目录不被伪造。真实 fixture PostgreSQL CLI 测试进一步验证生成命令立即写出相同条目。
+- CLI 对安全的 `CatalogPublicationError` 返回退出码 1 和明确发布失败提示，不输出 provider、DSN 或底层文件系统细节；该错误不会删除已完成 bundle，也不会创建假的 `index.json`。
+- application/storage/CLI 合并范围共 39 项通过，其中 CLI 使用健康的真实 fixture PostgreSQL 与 stub narrator；全仓 Python 静态编译和 `git diff --check` 通过。
+- 本接线小步没有改变固定公共输入或 bundle 主体，没有修改章节 SQL、事实、图表、PDF、RAG、M3 或 n8n，也没有执行 push、PR 或远程写操作。
+- 首次阶段全量回归得到 402 项通过、4 项失败；失败均来自 M2 验收 helper 把新增的合法 `out/index.json` 当成第二个 bundle，而非报告行为失败。helper 已改为只枚举 bundle 目录，并新增 catalog 与 bundle metadata 完全相同的断言，没有删除或放宽原业务断言。
+- 修正后在健康 fixture PostgreSQL + stub narrator 下完整 pytest 实际收集并通过 406 项；系统 Python `pip check` 返回 `No broken requirements found.`，全仓 Python 静态编译和 `git diff --check` 通过。CatalogPublisher 阶段的本地实现与验收完成，真实前端格式仍受“未收到前端源码/样例”这一已记录边界约束。
+- CatalogPublisher 阶段本地提交为 `127d2a8`（目录合同）、`501156c`（原子适配器）和 `94112b9`（应用/CLI 接线）；以本地 merge commit `31bc06b` 合入 `codex/local-integration`。`main@5909005` 未移动，未执行 push、PR 或远程写操作，未跟踪 `.codegraph/` 继续不修改、不暂存。
+
+## M3 API 阶段
+
+- 本阶段映射任务书 R-15/M3 的提交、状态、下载、双任务隔离和重启后成品可下载；任务书未定义状态码、响应字段、错误体、幂等、队列容量、状态文件与 ZIP 形状，这些明确属于 D-41/D-42 项目自主设计。
+- `docs/api-contract.md` 已固定同仓库前端/n8n 的本地单进程合同：POST 原样接收 `ReportConfig` 并返回 202 UUID task；状态为 queued/running/completed/failed；PDF/ZIP 只按 task ID 下载；统一安全错误体携带稳定 code 与 requestId。
+- 可选 `Idempotency-Key` 只持久化 hash，相同 key/config 返回原任务、不同 config 返回 409；默认两个 worker、最多 16 个 queued/running，每任务独占 PostgreSQL connection、narrator 和 application service，不新增环境变量。
+- D-42 规定任务状态和 ZIP 置于 `out/.report-jobs` 并原子写入；completed 在重启后继续查询/下载，意外遗留 queued/running 明确转为 `failed/service_restarted`，损坏状态禁止静默忽略。固定 `out/{reportId}` bundle 和 D-40 `index.json` 不改变。
+- API 规格遵循当前 FastAPI 官方建议：用 lifespan 管理 manager 生命周期，以 202 表达响应后处理，并使用文件响应下载；本仓库的决定唯一来源仍是 `docs/design-decisions.md`，没有另建技能建议的重复 `.gsd/DECISIONS.md`。
+- 规格小步一致性检查通过：变更严格限定为 7 份文档，`git diff --check`、D-41/D-42 唯一性、四个端点、四种状态、统一错误/幂等/过载/重启合同及本地 Markdown 链接均可验证。初版临时链接检查器未 URL-decode 中文任务书路径而误报，修正检查器后同一链接通过，文档本身无需迎合错误检查器。
+- 本规格小步只修改文档，不安装 FastAPI、不修改 CLI/引擎/SQL/PDF/RAG/n8n，也不执行网络服务、push、PR 或远程写操作。下一小步先实现并测试框架无关的 JobRecord/原子 JobStore，再接 executor 和 HTTP 层。
+- 框架无关的 `JobRecord` 与 `JobStore` 已实现：四种任务状态只能单向迁移，时间、进度、报告 ID、下载 URL、失败信息和幂等 hash 均在写盘前验证；过期写入不能回退进度，终态不能重开。状态文件只保存任务运行元数据，不保存 ReportConfig、用户 notes、凭据或 provider 内容。
+- `JobStore` 将记录原子写入 `out/.report-jobs/tasks/{taskId}.json`，保留未知扩展字段，并拒绝损坏 JSON、非法状态、文件名/UUID 不一致、损坏或符号链接状态目录以及非 UUID 路径输入。原子替换失败保留旧记录并清理临时文件；同一进程内多个 store 实例由共享锁避免丢任务。
+- 持久化小步专属状态机/存储测试 20 项通过；与既有 bundle/catalog 原子发布合并回归共 36 项通过，新增 Python 静态编译和行宽检查通过。该小步随 `codex/m3-api-local` 当前 HEAD 本地提交，不执行 push、PR 或远程写操作，未跟踪 `.codegraph/` 继续不修改、不暂存。
+- 持久化小步本身没有安装 FastAPI、启动线程池、连接 PostgreSQL/LLM、创建 ZIP 或修改 n8n；这些边界没有被倒写成已完成的旧证据。
+- 可注入的有界 `JobManager` 已实现：默认 2 worker/16 个 queued+running 容量，提交前原子持久化 queued 状态，每个 worker 从独立 service context 获取数据库/LLM/应用资源，章节进度逐步持久化，成功 bundle/catalog 后再发布 ZIP 并写 completed；报告内局部章节失败不会被 manager 误判为报告级失败。
+- manager 启动会加载全部状态，保留 completed/failed，并把遗留 queued/running 原子收口为安全的 `service_restarted`；相同幂等 key/config 在运行中、完成后及 manager 重启后均返回原 task，不同 config 明确冲突。关闭先停止接收，再等待已接受任务完成。
+- `ReportApplicationService` 新增可选进度回调而不改变同步调用方；`ReportIdAllocator` 使用进程内共享预留消除两个独立 service 同时获得同一版本 ID 的竞态，失败或发布后释放预留，固定 report ID 格式不变。
+- 原子 ZIP 适配器已独立到 `storage/archive.py`，只打包 `{reportId}/report.md`、`report.pdf`、`meta.json` 与 `charts/*.png`，不包含 `index.json`、任务状态或缓存；替换失败不暴露半成品，状态/ZIP 父链符号链接和完成后文件缺失均安全拒绝。
+- 本小步合并检查覆盖 manager、JobStore、应用进度/ID、bundle/catalog，共 62 项通过；其中验证两个 worker 同时使用不同资源 context、queued+running 容量、失败释放、进度、幂等冲突/重启、优雅关闭、中断恢复、ZIP 精确内容、原子失败和路径安全。全范围 Python 静态编译、行宽与 `git diff --check` 通过。
+- 本小步没有安装 FastAPI、创建 HTTP 路由、连接真实 PostgreSQL/LLM、修改或激活 n8n，也不执行 push、PR 或远程写操作。下一小步实现 FastAPI 薄适配层与真实运行时 service factory，再做真实 fixture 双任务 API 验收。
+- FastAPI 薄适配层已实现四个未版本化端点，POST 原样接收固定 `ReportConfig`，状态响应不泄露持久化内部字段；动态 200/202 幂等重放、统一安全错误体、`X-Request-ID`、`Retry-After`、UUID 校验以及 PDF/ZIP attachment 均与 `docs/api-contract.md` 一致。OpenAPI 明确列出四条路径、请求/响应模型和各错误状态，未加入认证、CORS 或列表接口。
+- 应用使用 FastAPI lifespan 启停注入的 manager。真实 Uvicorn factory 只读取既有四个 PG/LLM 环境变量，并通过 `build_report_service_factory` 为每个任务分别构造 narrator、psycopg connection 和 `ReportApplicationService`；CLI 与 API 共用同一个真实 narrator 构造边界，没有复制生成算法。
+- HTTP/运行时、manager 与 CLI 配置合并检查共 24 项通过，覆盖 202 提交、状态迁移、PDF/ZIP 内容、幂等运行中/终态重放与冲突、队列过载、非法配置不回显输入、非法/未知 task、未完成下载、成品丢失、精确 OpenAPI、lifespan 关闭和逐任务资源隔离；上游 Starlette 当前推荐的 `httpx2` 消除了旧 TestClient 弃用警告。
+- HTTP 实现小步没有修改固定配置、章节 SQL/事实/图表/PDF/bundle、RAG 或 n8n，也未连接真实模型、执行 push、PR 或远程写操作；其当时待补的真实双任务与重启验收已由下述阶段收口完成。
+- M3 真实验收通过：两个 API 任务使用真实 fixture PostgreSQL 和两个独立 `StubNarrator`，通过 barrier 证明同时进入叙述阶段，并记录两个不同的 connection object 与 PostgreSQL backend PID；相同配置并发生成互不覆盖的 `v1` / `v2` bundle、各一张 150 dpi 图和 A4 PDF，catalog 同时保留两条完整 metadata。
+- 两个任务的 HTTP 状态均为 completed，PDF 与精确固定内容的 ZIP 可下载；关闭第一组 lifespan 后，用同一 `out/` 创建全新 manager，未创建新数据库/模型资源即可重新查询两个 completed 状态，并字节级下载原 PDF/ZIP。CLI 真实 narrator 的测试替身也已迁移到共享 runtime 组合根，避免测试依赖旧私有接缝。
+- M3 阶段收口检查在健康 fixture PostgreSQL + stub 下完整 pytest 为 `452 passed`；虚拟环境 `uv pip check` 检查 46 个包全部兼容，系统 `python3 -m pip check` 无破损依赖，全仓 Python 静态编译与 `git diff --check` 通过。实际 Uvicorn factory 使用既有四个环境变量启动，`GET /openapi.json` 返回 200、有效 `X-Request-ID` 和精确四条报告路径，随后 lifespan 优雅关闭。
+- 上述证据完成任务书 R-15/M3；没有真实 provider 调用、RAG、生产部署、前端发布或 n8n 激活。真实模型质量仍是凭据门控冒烟边界，缺失 gold-report HTML/CSS 仍是已记录外部资产差异。
+- M3 本地提交为 `81702a4`（HTTP 合同）、`a6fcd87`（原子任务状态）、`80c1c6b`（有界 manager/恢复）、`c6a4408`（FastAPI/运行时）和 `e6648a2`（真实 PostgreSQL 验收）；以本地 merge commit `555b42c` 合入 `codex/local-integration`。没有 push、PR、远程 CI 或 `main` 变更，未跟踪 `.codegraph/` 继续不修改、不暂存。
+
+## n8n Draft 演示层本地收口
+
+- 本阶段落实项目自主决定 D-13，不新增任务书要求：n8n 只提交 M3 `POST /reports`、等待、轮询状态并展示成功/失败；没有数据库、Code、LangChain、LLM、事实计算或报告生成节点。
+- 修改前使用本地临时 `n8n-mcp@2.65.1` 读取 live node schema，确认 HTTP Request 4.4、Wait 1.1、If 2.3 和 Stop And Error 1 为当前版本；原工作流 runtime 校验已是结构有效，但 `Report Failed` 与 `API Error` 使用 No Operation，会让失败路径以绿色成功结束，且备注仍错误声称 M3 尚未实现。
+- 两个失败终点已改为 Stop And Error：报告级 `failed` 使用 API 返回的安全 code/message，HTTP 请求失败给出固定安全提示；完成路径仍以 No Operation 原样保留状态响应中的 PDF/ZIP 下载路径。M3 备注已更新为端点存在，仓库规范版本继续 `active: false`。
+- 修改后 `n8n-mcp@2.65.1` strict 校验通过：9 个可执行节点、10 条有效连接、5 个表达式，0 个错误、0 个警告。重新读取 `connections` 后人工确认：两个 HTTP 节点的错误输出均进入 `API Error`；completed 进入 `Report Ready`；failed 进入 `Report Failed`；queued/running 才回到 5 秒等待循环。
+- n8n 聚焦 pytest 6 项通过，覆盖 inactive、UUID、无凭据/数据库/Code/AI 节点、当前 HTTP 版本与重试、错误输出、三态分支、正式失败终点，以及提交体可被公共 `ReportConfig` 解析并严格保留 csuite 七章顺序；`git diff --check` 通过。
+- 阶段收口在健康的 synthetic fixture PostgreSQL 下完整 pytest 为 `454 passed in 16.43s`；虚拟环境 `uv pip check` 检查 46 个包全部兼容，系统 `python3 -m pip check` 无破损依赖，全仓 Python 静态编译与 `git diff --check` 通过。
+- n8n 功能提交为 `d70f3f8`，以本地 merge commit `9b31452` 合入 `codex/local-integration`。没有 push、PR、远程 CI 或 `main` 变更，未跟踪 `.codegraph/` 继续不修改、不暂存。
+- 本小步没有导入、更新、激活或执行本机 n8n 工作流，也没有真实提交报告任务；真实执行有生成产物的副作用，继续等待用户明确确认。没有修改 M3 API、固定配置/bundle、SQL、LLM、PDF 或 RAG，也没有执行 push、PR 或远程写操作。
 
 ## M2 `top-content` 阶段入口
 

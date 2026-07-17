@@ -29,7 +29,12 @@ class FakeChartBuilder:
         self.error = error
         self.calls = 0
 
-    def build(self, _snapshot, output_directory: Path):
+    def build(
+        self,
+        _snapshot,
+        output_directory: Path,
+        _language: Language = Language.ZH,
+    ):
         self.calls += 1
         if self.error:
             raise self.error
@@ -124,7 +129,7 @@ def test_english_narration_preserves_observable_order_limit() -> None:
     ).run(scope(), Language.EN, Path("charts"))
 
     assert result.status is SectionStatus.COMPLETE
-    assert "## Propagation path (observable order)" in result.markdown
+    assert "## Observable platform sequence" in result.markdown
     assert "wave 1 | B站 | first 2026-03-17 09:00" in result.markdown
     assert "no repost, quote, parent, referral, or source-edge fields" in result.markdown
     assert "not event origin, a transmission chain" in result.markdown

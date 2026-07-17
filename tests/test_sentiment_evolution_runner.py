@@ -49,7 +49,12 @@ class FakeChartBuilder:
         self.error = error
         self.calls = 0
 
-    def build(self, _snapshot, output_directory: Path):
+    def build(
+        self,
+        _snapshot,
+        output_directory: Path,
+        _language: Language = Language.ZH,
+    ):
         self.calls += 1
         if self.error:
             raise self.error

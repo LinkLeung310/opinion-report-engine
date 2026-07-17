@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import date
 from importlib.resources import files
 from typing import Any
@@ -148,6 +150,15 @@ SPREAD_PATH_SQL = (
 )
 
 
+@contextmanager
+def _isolated_dict_cursor(connection: Connection[Any]) -> Iterator[Any]:
+    """Run one fixed read query without leaking transaction state to another section."""
+
+    with connection.transaction():
+        with connection.cursor(row_factory=dict_row) as cursor:
+            yield cursor
+
+
 class PostgresMetricsRepository:
     def __init__(self, connection: Connection[Any]) -> None:
         self._connection = connection
@@ -159,7 +170,7 @@ class PostgresMetricsRepository:
             "to_exclusive": scope.to_exclusive,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(METRICS_SQL, parameters)
             row = cursor.fetchone()
 
@@ -192,7 +203,7 @@ class PostgresEngagementRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(ENGAGEMENT_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -243,7 +254,7 @@ class PostgresKeywordsRepository:
             "to_exclusive": scope.to_exclusive,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(KEYWORDS_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -275,7 +286,7 @@ class PostgresMediaSocialRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(MEDIA_SOCIAL_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -319,7 +330,7 @@ class PostgresVerdictRepository:
             "to_date": scope.to_date,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(VERDICT_SQL, parameters)
             row = cursor.fetchone()
 
@@ -351,7 +362,7 @@ class PostgresTrendRepository:
             "to_exclusive": scope.to_exclusive,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(TREND_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -383,7 +394,7 @@ class PostgresSentimentEvolutionRepository:
             "to_exclusive": scope.to_exclusive,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(SENTIMENT_EVOLUTION_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -418,7 +429,7 @@ class PostgresResponseRepository:
             "to_exclusive": scope.to_exclusive,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(RESPONSE_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -450,7 +461,7 @@ class PostgresBenchmarkRepository:
             "calendar_days": calendar_days,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(BENCHMARK_SQL, parameters)
             rows = cursor.fetchall()
         if tuple(row["cohort"] for row in rows) != ("current", "comparison"):
@@ -488,7 +499,7 @@ class PostgresBizImpactRepository:
             "to_exclusive": scope.to_exclusive,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(BIZ_IMPACT_SQL, parameters)
             row = cursor.fetchone()
         if row is None:
@@ -526,7 +537,7 @@ class PostgresPlatformsRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(PLATFORMS_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -559,7 +570,7 @@ class PostgresSeverityRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(SEVERITY_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -632,7 +643,7 @@ class PostgresRiskRepository:
             "to_exclusive": scope.to_exclusive,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(RISK_SQL, parameters)
             row = cursor.fetchone()
 
@@ -665,7 +676,7 @@ class PostgresViewpointsRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(VIEWPOINTS_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -713,7 +724,7 @@ class PostgresTimelineRepository:
             "to_exclusive": scope.to_exclusive,
             "timezone_name": scope.timezone_name,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(TIMELINE_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -774,7 +785,7 @@ class PostgresTopContentRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(TOP_CONTENT_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -830,7 +841,7 @@ class PostgresNegativeThemesRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(NEGATIVE_THEMES_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -876,7 +887,7 @@ class PostgresRecommendationsRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(RECOMMENDATIONS_SQL, parameters)
             rows = cursor.fetchall()
 
@@ -922,7 +933,7 @@ class PostgresSpreadPathRepository:
             "from_inclusive": scope.from_inclusive,
             "to_exclusive": scope.to_exclusive,
         }
-        with self._connection.cursor(row_factory=dict_row) as cursor:
+        with _isolated_dict_cursor(self._connection) as cursor:
             cursor.execute(SPREAD_PATH_SQL, parameters)
             rows = cursor.fetchall()
 

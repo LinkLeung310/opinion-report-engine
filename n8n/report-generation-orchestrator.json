@@ -18,6 +18,15 @@
         "method": "POST",
         "url": "http://127.0.0.1:8000/reports",
         "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $execution.id }}"
+            }
+          ]
+        },
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
@@ -132,18 +141,22 @@
       "position": [420, 180]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "errorMessage": "=Report generation failed: {{ $json.error?.code || 'unknown' }} - {{ $json.error?.message || 'No safe detail was returned' }}"
+      },
       "id": "fca385da-97bc-4c98-94b5-3a87fad6a8a5",
       "name": "Report Failed",
-      "type": "n8n-nodes-base.noOp",
+      "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [700, 140]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "errorMessage": "Report API request failed; inspect the preceding HTTP Request node"
+      },
       "id": "2b0d9e55-8382-4875-9a6d-270ed4725f30",
       "name": "API Error",
-      "type": "n8n-nodes-base.noOp",
+      "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [-120, 340]
     },
@@ -162,7 +175,7 @@
     },
     {
       "parameters": {
-        "content": "## Draft until M3\n\nThe status loop becomes executable after POST /reports and GET /reports/{taskId}/status are implemented. Keep this workflow inactive until then.",
+        "content": "## Local M3 demo is ready\n\nThe FastAPI endpoints now exist and this canonical workflow validates locally. Keep it inactive in source control; import and run it manually only while the local API is reachable. Failure branches stop the execution visibly.",
         "height": 190,
         "width": 430,
         "color": 3

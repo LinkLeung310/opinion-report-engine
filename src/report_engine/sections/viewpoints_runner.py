@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.viewpoints import ViewpointsSnapshot
 
 
@@ -46,7 +47,11 @@ class ViewpointsSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Viewpoints data query failed")
+            return self._failed(
+                FailureStage.QUERY,
+                "Viewpoints data query failed",
+                language,
+            )
 
         if not snapshot.has_data:
             heading = "Main viewpoints" if language is Language.EN else "主要观点"
@@ -62,23 +67,31 @@ class ViewpointsSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.VIEWPOINTS, snapshot.to_fact_set(), language)
             evidence = snapshot.to_evidence_set()
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
                 "Viewpoints facts or evidence construction failed",
+                language,
             )
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.VIEWPOINTS, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.VIEWPOINTS,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_evidence_markdown(markdown, evidence)
         except Exception:
             return self._failed(
                 FailureStage.LLM,
                 "Viewpoints narration or evidence validation failed",
+                language,
                 facts=facts,
                 evidence=evidence,
             )
@@ -107,13 +120,14 @@ class ViewpointsSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         evidence: EvidenceSet = EvidenceSet(),
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.VIEWPOINTS,
             status=SectionStatus.FAILED,
-            markdown="## 主要观点\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.VIEWPOINTS, language),
             facts=facts,
             evidence=evidence,
             failure=SectionFailure(stage, message),

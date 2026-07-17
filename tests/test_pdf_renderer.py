@@ -82,3 +82,14 @@ def test_blockquote_renders_markdown_entities_as_literal_context(tmp_path) -> No
 
     assert "<script>[not a link]" in extracted_text
     assert "&lt;" not in extracted_text
+
+
+def test_pdf_metadata_uses_the_rendered_English_report_title(tmp_path) -> None:
+    title = "Bilibili Recommendation Controls Public Opinion Analysis Report"
+    pdf_bytes = ReportLabPdfRenderer().render(
+        f"# {title}\n\n## Monitoring overview\n\nNo matching records.\n",
+        tmp_path / "charts",
+    )
+
+    reader = PdfReader(BytesIO(pdf_bytes))
+    assert reader.metadata.title == title

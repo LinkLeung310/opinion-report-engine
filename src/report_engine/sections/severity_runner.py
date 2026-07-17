@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.severity import SeveritySnapshot
 
 
@@ -28,7 +29,12 @@ class SeverityRepository(Protocol):
 
 
 class SeverityChartBuilder(Protocol):
-    def build(self, snapshot: SeveritySnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: SeveritySnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class SeveritySectionRunner:
@@ -52,7 +58,7 @@ class SeveritySectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Severity data query failed")
+            return self._failed(FailureStage.QUERY, "Severity data query failed", language)
 
         if not snapshot.has_data:
             heading = "Negative severity" if language is Language.EN else "负面严重程度"
@@ -68,33 +74,42 @@ class SeveritySectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.SEVERITY, snapshot.to_fact_set(), language)
             evidence = snapshot.to_evidence_set()
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
                 "Severity facts or evidence construction failed",
+                language,
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
                 "Severity chart rendering failed",
+                language,
                 facts=facts,
                 evidence=evidence,
             )
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.SEVERITY, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.SEVERITY,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_evidence_markdown(markdown, evidence)
         except Exception:
             return self._failed(
                 FailureStage.LLM,
                 "Severity narration or evidence validation failed",
+                language,
                 facts=facts,
                 evidence=evidence,
                 charts=(chart_path.name,),
@@ -122,6 +137,7 @@ class SeveritySectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         evidence: EvidenceSet = EvidenceSet(),
         charts: tuple[str, ...] = (),
@@ -129,7 +145,7 @@ class SeveritySectionRunner:
         return SectionResult(
             section_id=SectionId.SEVERITY,
             status=SectionStatus.FAILED,
-            markdown="## 负面严重程度\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.SEVERITY, language),
             facts=facts,
             evidence=evidence,
             charts=charts,

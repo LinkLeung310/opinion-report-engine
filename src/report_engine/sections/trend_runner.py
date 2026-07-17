@@ -16,6 +16,11 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import (
+    failed_section_markdown,
+    localize_fact_set,
+    section_heading,
+)
 from report_engine.sections.trend import TrendSnapshot
 
 
@@ -24,7 +29,12 @@ class TrendRepository(Protocol):
 
 
 class TrendChartBuilder(Protocol):
-    def build(self, snapshot: TrendSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: TrendSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class TrendSectionRunner:
@@ -48,10 +58,9 @@ class TrendSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Trend data query failed")
+            return self._failed(FailureStage.QUERY, "Trend data query failed", language)
 
         if not snapshot.has_data:
-            heading = "Heat trend" if language is Language.EN else "热度趋势"
             message = (
                 "No relevant data is available for this monitoring scope."
                 if language is Language.EN
@@ -60,31 +69,43 @@ class TrendSectionRunner:
             return SectionResult(
                 SectionId.TREND,
                 SectionStatus.NO_DATA,
-                f"## {heading}\n\n{message}",
+                f"## {section_heading(SectionId.TREND, language)}\n\n{message}",
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.TREND, snapshot.to_fact_set(), language)
         except Exception:
-            return self._failed(FailureStage.CALCULATION, "Trend calculation failed")
+            return self._failed(
+                FailureStage.CALCULATION,
+                "Trend calculation failed",
+                language,
+            )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
                 "Trend chart rendering failed",
+                language,
                 facts=facts,
             )
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.TREND, language, facts, EvidenceSet())
+                NarrationRequest(
+                    SectionId.TREND,
+                    language,
+                    facts,
+                    EvidenceSet(),
+                    report_type=scope.report_type,
+                )
             )
         except Exception:
             return self._failed(
                 FailureStage.LLM,
                 "Trend narration failed",
+                language,
                 facts=facts,
                 charts=(chart_path.name,),
             )
@@ -101,13 +122,14 @@ class TrendSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         charts: tuple[str, ...] = (),
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.TREND,
             status=SectionStatus.FAILED,
-            markdown="## 热度趋势\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.TREND, language),
             facts=facts,
             charts=charts,
             failure=SectionFailure(stage, message),

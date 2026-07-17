@@ -7,10 +7,65 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+import report_engine.cli as cli_module
+import report_engine.runtime as runtime_module
 from report_engine.cli import app
+from report_engine.llm.stub import StubNarrator
+from report_engine.storage import CatalogPublicationError
 
 
 pytestmark = pytest.mark.integration
+
+
+def test_cli_real_mode_builds_narrator_from_environment_without_network(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+    monkeypatch.setenv("LLM_BASE_URL", "https://provider.invalid/v1")
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_MODEL", "test-model")
+    captured: dict[str, str] = {}
+
+    def fake_real_narrator(*, base_url: str, api_key: str, model: str) -> StubNarrator:
+        captured.update(base_url=base_url, api_key=api_key, model=model)
+        return StubNarrator()
+
+    monkeypatch.setattr(
+        runtime_module,
+        "OpenAICompatibleNarrator",
+        fake_real_narrator,
+    )
+    config = Path(__file__).parents[2] / "examples" / "report-config.metrics.json"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(tmp_path / "out"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured == {
+        "base_url": "https://provider.invalid/v1",
+        "api_key": "test-key",
+        "model": "test-model",
+    }
+    target = tmp_path / "out" / "bilibili-dislike-2026-03-23-v1"
+    meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
+    assert meta["generation"] == {
+        "requested": 1,
+        "complete": 1,
+        "noData": 0,
+        "failed": 0,
+    }
 
 
 def test_cli_generates_a_complete_metrics_bundle(tmp_path, monkeypatch) -> None:
@@ -43,6 +98,50 @@ def test_cli_generates_a_complete_metrics_bundle(tmp_path, monkeypatch) -> None:
         "negativeRatio": "58.3%",
         "peakDay": "3/20",
     }
+    catalog = json.loads(
+        (tmp_path / "out" / "index.json").read_text(encoding="utf-8")
+    )
+    assert catalog == [meta]
+
+
+def test_cli_reports_catalog_failure_without_hiding_the_completed_bundle(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    dsn = os.getenv("PG_DSN")
+    if not dsn:
+        pytest.skip("PG_DSN is required for fixture integration tests")
+    monkeypatch.setenv("PG_DSN", dsn)
+
+    class FailingCatalogPublisher:
+        def publish(self, bundle_path: Path, output_root: Path) -> Path:
+            assert bundle_path.parent == output_root
+            raise CatalogPublicationError("Could not update report catalog")
+
+    monkeypatch.setattr(
+        runtime_module,
+        "CatalogPublisher",
+        FailingCatalogPublisher,
+    )
+    config = Path(__file__).parents[2] / "examples" / "report-config.metrics.json"
+    output_root = tmp_path / "out"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "generate",
+            "--config",
+            str(config),
+            "--out",
+            str(output_root),
+            "--stub-llm",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Report publication failed: Could not update report catalog" in result.output
+    assert (output_root / "bilibili-dislike-2026-03-23-v1").is_dir()
+    assert not (output_root / "index.json").exists()
 
 
 def test_cli_generates_verdict_before_metrics_in_configured_order(

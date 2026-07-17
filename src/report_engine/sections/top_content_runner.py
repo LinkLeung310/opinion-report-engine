@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import localize_fact_set
 from report_engine.sections.top_content import TopContentSnapshot
 
 
@@ -45,7 +46,12 @@ class TopContentRepository(Protocol):
 
 
 class TopContentChartBuilder(Protocol):
-    def build(self, snapshot: TopContentSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: TopContentSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class TopContentSectionRunner:
@@ -89,7 +95,7 @@ class TopContentSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.TOP_CONTENT, snapshot.to_fact_set(), language)
             evidence = snapshot.to_evidence_set()
         except Exception:
             return self._failed(
@@ -108,7 +114,7 @@ class TopContentSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
@@ -120,7 +126,13 @@ class TopContentSectionRunner:
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.TOP_CONTENT, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.TOP_CONTENT,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_markdown(markdown, facts, evidence, language)
         except Exception:

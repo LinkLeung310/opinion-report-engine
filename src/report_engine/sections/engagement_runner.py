@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.engagement import EngagementSnapshot
 
 
@@ -28,7 +29,12 @@ class EngagementRepository(Protocol):
 
 
 class EngagementChartBuilder(Protocol):
-    def build(self, snapshot: EngagementSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: EngagementSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class EngagementSectionRunner:
@@ -52,7 +58,11 @@ class EngagementSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Engagement data query failed")
+            return self._failed(
+                FailureStage.QUERY,
+                "Engagement data query failed",
+                language,
+            )
 
         if not snapshot.has_articles:
             heading = "Engagement" if language is Language.EN else "互动传播"
@@ -68,12 +78,13 @@ class EngagementSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.ENGAGEMENT, snapshot.to_fact_set(), language)
             evidence = snapshot.to_evidence_set()
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
                 "Engagement facts or evidence construction failed",
+                language,
             )
 
         if not snapshot.has_engagement:
@@ -86,24 +97,32 @@ class EngagementSectionRunner:
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
                 "Engagement chart rendering failed",
+                language,
                 facts=facts,
                 evidence=evidence,
             )
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.ENGAGEMENT, language, facts, evidence)
+                NarrationRequest(
+                    SectionId.ENGAGEMENT,
+                    language,
+                    facts,
+                    evidence,
+                    report_type=scope.report_type,
+                )
             )
             self._validate_evidence_markdown(markdown, evidence, facts)
         except Exception:
             return self._failed(
                 FailureStage.LLM,
                 "Engagement narration or evidence validation failed",
+                language,
                 facts=facts,
                 evidence=evidence,
                 charts=(chart_path.name,),
@@ -167,6 +186,7 @@ class EngagementSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         evidence: EvidenceSet = EvidenceSet(),
         charts: tuple[str, ...] = (),
@@ -174,7 +194,7 @@ class EngagementSectionRunner:
         return SectionResult(
             section_id=SectionId.ENGAGEMENT,
             status=SectionStatus.FAILED,
-            markdown="## 互动传播\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.ENGAGEMENT, language),
             facts=facts,
             evidence=evidence,
             charts=charts,

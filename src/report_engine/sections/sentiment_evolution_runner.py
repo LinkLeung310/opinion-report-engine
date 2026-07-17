@@ -16,6 +16,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.sentiment_evolution import SentimentEvolutionSnapshot
 
 
@@ -28,6 +29,7 @@ class SentimentEvolutionChartBuilder(Protocol):
         self,
         snapshot: SentimentEvolutionSnapshot,
         output_directory: Path,
+        language: Language = Language.ZH,
     ) -> Path: ...
 
 
@@ -52,7 +54,11 @@ class SentimentEvolutionSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Sentiment evolution query failed")
+            return self._failed(
+                FailureStage.QUERY,
+                "Sentiment evolution query failed",
+                language,
+            )
 
         if not snapshot.has_data:
             heading = (
@@ -72,19 +78,25 @@ class SentimentEvolutionSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(
+                SectionId.SENTIMENT_EVOLUTION,
+                snapshot.to_fact_set(),
+                language,
+            )
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
                 "Sentiment evolution calculation failed",
+                language,
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
                 "Sentiment evolution chart rendering failed",
+                language,
                 facts=facts,
             )
 
@@ -95,12 +107,14 @@ class SentimentEvolutionSectionRunner:
                     language,
                     facts,
                     EvidenceSet(),
+                    report_type=scope.report_type,
                 )
             )
         except Exception:
             return self._failed(
                 FailureStage.LLM,
                 "Sentiment evolution narration failed",
+                language,
                 facts=facts,
                 charts=(chart_path.name,),
             )
@@ -117,13 +131,14 @@ class SentimentEvolutionSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         charts: tuple[str, ...] = (),
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.SENTIMENT_EVOLUTION,
             status=SectionStatus.FAILED,
-            markdown="## 情感演变\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.SENTIMENT_EVOLUTION, language),
             facts=facts,
             charts=charts,
             failure=SectionFailure(stage, message),

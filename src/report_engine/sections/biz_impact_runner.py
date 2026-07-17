@@ -17,6 +17,7 @@ from report_engine.domain.results import (
 from report_engine.domain.scope import AnalysisScope
 from report_engine.domain.user_context import UserContext
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import localize_fact_set
 from report_engine.sections.biz_impact import (
     BizImpactInputError,
     BizImpactSnapshot,
@@ -66,7 +67,7 @@ class BizImpactSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.BIZ_IMPACT, snapshot.to_fact_set(), language)
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
@@ -97,6 +98,7 @@ class BizImpactSectionRunner:
                     facts,
                     EvidenceSet(),
                     user_context=user_context,
+                    report_type=scope.report_type,
                 )
             )
             self._validate_markdown(markdown, facts, user_context, language)
@@ -178,7 +180,8 @@ class BizImpactSectionRunner:
 
         required = tuple(
             "unavailable"
-            if language is Language.EN and values[key] == "不可用"
+            if language is Language.EN
+            and values[key] in {"不可用", "Unavailable"}
             else values[key]
             for key in required_fact_keys
         )

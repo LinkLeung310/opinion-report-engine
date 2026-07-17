@@ -46,8 +46,16 @@ The M2 vertical slices now also implement `timeline`, `top-content`, `negative-t
 `spread-path`, `response`, `benchmark`, `biz-impact`, and `recommendations`. The last of
 these converts fixed risk/theme signals into at most four evidence-linked, human-review
 actions without assigning owners, executing work, or claiming an effectiveness score.
-Full M2 completion still requires the cross-section English and arbitrary-combination
-matrix; see `docs/current-state.md` for the exact boundary.
+The deterministic M2 acceptance matrix now covers all 19 English sections, all three
+section-specific inputs, a reordered mixed selection, all-section `no_data`, localized
+partial failure, narrator call limits, the complete bundle, 15 charts, and A4 PDF output.
+The CLI also wires the same engine to a minimal OpenAI-compatible Chat Completions
+adapter. The adapter is implemented and deterministically tested; a live-provider
+smoke test remains credential-gated. See `docs/current-state.md` for the exact boundary.
+M3 now exposes the same application service through four FastAPI endpoints for task
+submission, status, PDF download, and ZIP download. Task state and completed downloads
+survive a process restart; generation still uses one database connection and narrator
+per task.
 
 From the repository root:
 
@@ -61,8 +69,10 @@ $env:PG_DSN='postgresql://report:report_local_only@localhost:55432/opinion_fixtu
 
 The command prints the created `out/{id}` directory. It contains `report.md`,
 `report.pdf`, `charts/*.png`, and `meta.json`. `--stub-llm` is an explicit offline mode
-for deterministic review. Development and CI stay on the injectable stub; the real
-OpenAI-compatible model is reserved for a final credential-gated smoke test.
+for deterministic review. Without that flag, the CLI requires `LLM_BASE_URL`,
+`LLM_API_KEY`, and `LLM_MODEL` and uses the OpenAI-compatible adapter. Development and
+CI stay on the injectable stub; a real-provider request is reserved for a final
+credential-gated smoke test.
 
 The complete eleven-section PR default uses the same engine and fixture scope:
 
@@ -70,11 +80,30 @@ The complete eleven-section PR default uses the same engine and fixture scope:
 .\.venv\Scripts\report.exe generate --config examples\report-config.pr.json --out out --stub-llm
 ```
 
+Generate the complete 19-section English M2 review bundle:
+
+```powershell
+.\.venv\Scripts\report.exe generate --config examples\report-config.all-sections.en.json --out out --stub-llm
+```
+
 Review the recommendation playbook as a standalone selectable section:
 
 ```powershell
 .\.venv\Scripts\report.exe generate --config examples\report-config.recommendations.json --out out --stub-llm
 ```
+
+Run the local M3 API after setting `PG_DSN`, `LLM_BASE_URL`, `LLM_API_KEY`, and
+`LLM_MODEL`:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn report_engine.api.app:create_runtime_app --factory
+```
+
+The unversioned local contract is documented in
+[`docs/api-contract.md`](docs/api-contract.md). The service intentionally has no local
+application authentication or CORS policy; that is a recorded local M3 boundary, not a
+production deployment recommendation. Automated development tests inject a stub
+narrator and do not call a paid model.
 
 Run all tests, including the real fixture SQL and CLI integration test:
 

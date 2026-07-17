@@ -189,3 +189,41 @@ def test_meta_summary_maps_business_impact_negative_share() -> None:
         "negativeRatio": "58.3%",
         "peakDay": "3/20",
     }
+
+
+def test_english_report_shell_and_unavailable_metadata_are_localized() -> None:
+    raw = sample_config()
+    raw["language"] = "en"
+    raw["topic"] = {
+        "tag": "bilibili-dislike",
+        "displayName": "Bilibili recommendation controls",
+        "eventTitle": "Bilibili Recommendation Controls",
+    }
+    raw["sections"] = [{"id": "timeline", "enabled": True}]
+    config = ReportConfig.model_validate(raw)
+
+    result = ReportAssembler().assemble(
+        config,
+        "bilibili-dislike-2026-03-23-v1",
+        (
+            SectionResult(
+                section_id=SectionId.TIMELINE,
+                status=SectionStatus.NO_DATA,
+                markdown="## Event timeline\n\nNo matching records were captured.",
+            ),
+        ),
+        datetime(2026, 7, 15, 2, 0, tzinfo=UTC),
+    )
+
+    assert result.meta["title"] == (
+        "Bilibili Recommendation Controls Public Opinion Analysis Report"
+    )
+    assert result.meta["stats"] == {
+        "articles": 0,
+        "negativeRatio": "N/A",
+        "peakDay": "N/A",
+    }
+    assert "Monitoring scope: 2026-03-17 to 2026-03-23" in result.markdown
+    assert "Method: all report figures are calculated" in result.markdown
+    assert "监测范围" not in result.markdown
+    assert "方法说明" not in result.markdown

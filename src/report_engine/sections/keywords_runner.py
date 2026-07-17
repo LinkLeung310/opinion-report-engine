@@ -16,6 +16,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.keywords import KeywordsSnapshot
 
 
@@ -24,7 +25,12 @@ class KeywordsRepository(Protocol):
 
 
 class KeywordsChartBuilder(Protocol):
-    def build(self, snapshot: KeywordsSnapshot, output_directory: Path) -> Path: ...
+    def build(
+        self,
+        snapshot: KeywordsSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path: ...
 
 
 class KeywordsSectionRunner:
@@ -48,7 +54,7 @@ class KeywordsSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Keywords data query failed")
+            return self._failed(FailureStage.QUERY, "Keywords data query failed", language)
 
         if not snapshot.has_articles:
             return self._no_data(language, has_articles=False)
@@ -56,30 +62,39 @@ class KeywordsSectionRunner:
             return self._no_data(language, has_articles=True)
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.KEYWORDS, snapshot.to_fact_set(), language)
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
                 "Keywords extraction failed",
+                language,
             )
 
         try:
-            chart_path = self._chart_builder.build(snapshot, chart_directory)
+            chart_path = self._chart_builder.build(snapshot, chart_directory, language)
         except Exception:
             return self._failed(
                 FailureStage.CHART,
                 "Keywords chart rendering failed",
+                language,
                 facts=facts,
             )
 
         try:
             markdown = self._narrator.narrate(
-                NarrationRequest(SectionId.KEYWORDS, language, facts, EvidenceSet())
+                NarrationRequest(
+                    SectionId.KEYWORDS,
+                    language,
+                    facts,
+                    EvidenceSet(),
+                    report_type=scope.report_type,
+                )
             )
         except Exception:
             return self._failed(
                 FailureStage.LLM,
                 "Keywords narration failed",
+                language,
                 facts=facts,
                 charts=(chart_path.name,),
             )
@@ -118,13 +133,14 @@ class KeywordsSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
         charts: tuple[str, ...] = (),
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.KEYWORDS,
             status=SectionStatus.FAILED,
-            markdown="## 关键词与话题\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.KEYWORDS, language),
             facts=facts,
             charts=charts,
             failure=SectionFailure(stage, message),

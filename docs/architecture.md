@@ -80,6 +80,12 @@ The engine catches errors at the section boundary and continues with the next se
 Internal shared calculations may be cached, but must never change which public sections
 are rendered or their configured order.
 
+Each PostgreSQL repository fetch opens a short transaction around its one fixed,
+read-only SQL statement. The transaction closes before charting or narration begins.
+If the statement fails, psycopg rolls that transaction back before the section runner
+converts the error to `failed`, so the connection remains usable by later sections.
+This is section fault isolation, not a report-wide identical-snapshot guarantee.
+
 ### Phase C: assemble and publish
 
 1. Assemble complete, no-data, and visible-failed section fragments in config order.
@@ -88,6 +94,18 @@ are rendered or their configured order.
 4. Write visible no-data/failed fragments and failure metadata for section failures.
 5. Atomically rename the temporary directory to `out/{id}` only after required bundle
    files exist.
+6. Read the exact `meta.json` back from the published bundle and atomically add it to
+   `out/index.json`; only then is the complete user flow successful.
+
+The repository did not receive the existing frontend source, its `ReportMeta` type, or
+an `index.json` sample. D-40 therefore defines the smallest replaceable local catalog
+contract: a top-level array of complete `ReportMeta` objects, newest `generatedAt`
+first. `CatalogPublisher` verifies the bundle and metadata before a locked read-modify-
+replace operation. It preserves unknown entry fields for forward compatibility, treats
+an identical report ID as an idempotent retry, and refuses malformed catalogs,
+duplicate IDs, or a conflicting reuse of one ID. A catalog error occurs after the
+bundle is safely published, leaves the previous catalog intact, and is a report-level
+publication failure rather than a false success.
 
 ## 5. Core domain models
 
@@ -171,6 +189,25 @@ Narrator protocol
   └── StubNarrator               # deterministic automated tests
 ```
 
+### OpenAI-compatible transport contract
+
+The real adapter treats `LLM_BASE_URL` as the provider's versioned API base and posts
+to its normalized `/chat/completions` child. It uses the configured model, a Bearer
+authorization header, and one system plus one user message. The user message is a
+deterministic JSON envelope containing only the section ID and purpose, requested
+language, normalized report type, canonical heading, approved formatted `FactSet`
+values, bounded `EvidenceSet` records, and any separately labelled unverified
+`UserContext`. API keys, DSNs, raw exceptions, and unrelated process environment values
+never enter the prompt or report metadata.
+
+One call to `Narrator.narrate` remains one logical model operation. A transport timeout,
+network error, HTTP 408/429, or 5xx response may make one bounded retry after an
+injectable backoff; all other 4xx responses and malformed successful responses fail
+immediately. The adapter accepts only a non-empty `choices[0].message.content` string.
+Provider response bodies are not copied into exceptions, logs, or section failure
+metadata. Automated tests inject a deterministic transport and sleeper; real provider
+access remains a final credential-gated smoke test.
+
 ## 7. Failure semantics
 
 | Failure | Section result | Report behavior |
@@ -183,6 +220,10 @@ Narrator protocol
 | PDF render error | report-level failure | Preserve Markdown and diagnostics |
 
 Only failures that prevent the required bundle contract are report-level failures.
+
+A caught PostgreSQL error must never leave the shared connection in an aborted
+transaction. Real fixture integration tests inject a failing first-section SQL query
+and require a later section to complete on that same connection.
 
 `meta.json` keeps the required frontend fields and adds a `generation` summary plus a
 `failures` array when one or more sections fail. Each entry contains `sectionId`,
@@ -242,10 +283,13 @@ src/report_engine/
 │   ├── pdf.py
 │   └── templates/
 ├── storage/
-│   └── bundle.py
+│   ├── bundle.py
+│   ├── catalog.py
+│   └── archive.py
 └── api/
     ├── app.py
-    └── jobs.py
+    ├── jobs.py
+    └── manager.py
 ```
 
 This is a package-boundary proposal, not permission to create empty abstraction files.
@@ -270,8 +314,16 @@ variants without changing the core execution flow.
 
 ### M3
 
-Wrap `ReportApplicationService` with job submission, status, and download endpoints.
-Persist completed bundle state on disk so completed reports survive service restarts.
+Wrap `ReportApplicationService` with the exact HTTP contract in
+[`api-contract.md`](api-contract.md). A bounded in-process job manager owns UUID task
+IDs, progress, atomic task-state persistence and ZIP publication. Each real worker owns
+its PostgreSQL connection, narrator and application service; concurrent jobs never
+share a psycopg connection. FastAPI remains a thin adapter over that manager.
+
+The application uses FastAPI lifespan to start and close the manager. Completed task
+records reload from disk after restart and remain downloadable. A queued/running record
+left by an unexpected stop becomes a safe `service_restarted` failure rather than being
+silently resumed or reported as complete.
 
 ### n8n demonstration workflow
 
@@ -301,9 +353,10 @@ These choices are deliberately explicit and form part of the project's product d
    `-3`, ... suffix when the same report is generated concurrently or repeatedly. A
    task ID remains separate from a report ID in M3.
 5. **LLM attempts:** one narrator operation per section, with at most one bounded
-   transport retry for transient failures; attempts are recorded in diagnostics.
+   transport retry for transient failures; the adapter records the attempt count in
+   in-memory diagnostics without exposing provider payloads or credentials.
 6. **Generated-report list:** after atomic bundle publication, `CatalogPublisher`
-   atomically updates `index.json` so the report appears immediately.
+   atomically updates the D-40 `index.json` array so the report appears immediately.
 7. **Metadata failures:** append the safe `failures` array described above; preserve all
    existing required `ReportMeta` fields.
 8. **Empty charts directory:** always create `charts/`, including when every enabled

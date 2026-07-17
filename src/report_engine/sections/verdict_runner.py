@@ -16,6 +16,7 @@ from report_engine.domain.results import (
 )
 from report_engine.domain.scope import AnalysisScope
 from report_engine.llm.protocol import NarrationRequest, Narrator
+from report_engine.presentation import failed_section_markdown, localize_fact_set
 from report_engine.sections.verdict import VerdictSnapshot
 
 
@@ -38,7 +39,7 @@ class VerdictSectionRunner:
         try:
             snapshot = self._repository.fetch(scope)
         except Exception:
-            return self._failed(FailureStage.QUERY, "Verdict data query failed")
+            return self._failed(FailureStage.QUERY, "Verdict data query failed", language)
 
         if not snapshot.has_data:
             message = (
@@ -54,11 +55,12 @@ class VerdictSectionRunner:
             )
 
         try:
-            facts = snapshot.to_fact_set()
+            facts = localize_fact_set(SectionId.VERDICT, snapshot.to_fact_set(), language)
         except Exception:
             return self._failed(
                 FailureStage.CALCULATION,
                 "Verdict calculation failed",
+                language,
             )
 
         try:
@@ -68,12 +70,14 @@ class VerdictSectionRunner:
                     language=language,
                     facts=facts,
                     evidence=EvidenceSet(),
+                    report_type=scope.report_type,
                 )
             )
         except Exception:
             return self._failed(
                 FailureStage.LLM,
                 "Verdict narration failed",
+                language,
                 facts=facts,
             )
 
@@ -88,12 +92,13 @@ class VerdictSectionRunner:
     def _failed(
         stage: FailureStage,
         message: str,
+        language: Language,
         facts: FactSet | None = None,
     ) -> SectionResult:
         return SectionResult(
             section_id=SectionId.VERDICT,
             status=SectionStatus.FAILED,
-            markdown="## 核心结论\n\n本章节生成失败，请稍后重试。",
+            markdown=failed_section_markdown(SectionId.VERDICT, language),
             facts=facts,
             failure=SectionFailure(stage=stage, message=message),
         )

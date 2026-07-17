@@ -2,11 +2,18 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
+
 from report_engine.application.planner import ReportPlanner
-from report_engine.application.service import ReportApplicationService
+from report_engine.application.service import (
+    CatalogPublisherPort,
+    ReportApplicationService,
+    ReportIdAllocator,
+)
 from report_engine.charts.metrics import MetricsChartBuilder
 from report_engine.config import ReportConfig, SectionId
 from report_engine.llm.stub import StubNarrator
@@ -15,6 +22,7 @@ from report_engine.sections.metrics import MetricsSnapshot
 from report_engine.sections.metrics_runner import MetricsSectionRunner
 from report_engine.sections.registry import default_registry
 from report_engine.storage.bundle import BundlePublisher
+from report_engine.storage.catalog import CatalogPublicationError, CatalogPublisher
 from tests.test_config import sample_config
 
 
@@ -81,6 +89,7 @@ def metrics_only_config(
 def build_service(
     narrator: StubNarrator,
     captured_inputs: list[dict[str, object]] | None = None,
+    catalog_publisher: CatalogPublisherPort | None = None,
 ) -> ReportApplicationService:
     metrics_runner = MetricsSectionRunner(
         repository=FakeMetricsRepository(),
@@ -98,6 +107,7 @@ def build_service(
         assembler=ReportAssembler(),
         pdf_renderer=FakePdfRenderer(),
         publisher=BundlePublisher(),
+        catalog_publisher=catalog_publisher or CatalogPublisher(),
         clock=lambda: datetime(2026, 7, 15, 2, 0, tzinfo=UTC),
     )
 
@@ -116,6 +126,10 @@ def test_generates_and_publishes_one_complete_metrics_bundle(tmp_path) -> None:
     meta = json.loads((target / "meta.json").read_text(encoding="utf-8"))
     assert meta["stats"]["articles"] == 12
     assert meta["stats"]["negativeRatio"] == "58.3%"
+    catalog = json.loads(
+        (tmp_path / "out" / "index.json").read_text(encoding="utf-8")
+    )
+    assert catalog == [meta]
 
 
 def test_allocates_a_new_human_readable_version_without_overwriting(tmp_path) -> None:
@@ -129,6 +143,54 @@ def test_allocates_a_new_human_readable_version_without_overwriting(tmp_path) ->
     assert second.report_id == "bilibili-dislike-2026-03-23-v2"
     assert (output_root / first.report_id).is_dir()
     assert (output_root / second.report_id).is_dir()
+    catalog = json.loads(
+        (output_root / "index.json").read_text(encoding="utf-8")
+    )
+    assert [entry["id"] for entry in catalog] == [first.report_id, second.report_id]
+
+
+def test_report_id_allocator_reserves_versions_across_service_instances(
+    tmp_path,
+) -> None:
+    output_root = tmp_path / "out"
+    config = metrics_only_config()
+    allocators = [ReportIdAllocator() for _ in range(8)]
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        report_ids = list(
+            executor.map(
+                lambda allocator: allocator.allocate(config, output_root),
+                allocators,
+            )
+        )
+    try:
+        assert set(report_ids) == {
+            f"bilibili-dislike-2026-03-23-v{version}"
+            for version in range(1, 9)
+        }
+    finally:
+        for allocator, report_id in zip(allocators, report_ids, strict=True):
+            allocator.release(report_id, output_root)
+
+
+def test_catalog_failure_is_a_report_level_failure_after_bundle_publication(
+    tmp_path,
+) -> None:
+    class FailingCatalogPublisher:
+        def publish(self, bundle_path: Path, output_root: Path) -> Path:
+            assert bundle_path.parent == output_root
+            assert (bundle_path / "meta.json").is_file()
+            raise CatalogPublicationError("safe catalog failure")
+
+    output_root = tmp_path / "out"
+
+    with pytest.raises(CatalogPublicationError, match="safe catalog failure"):
+        build_service(
+            StubNarrator(), catalog_publisher=FailingCatalogPublisher()
+        ).generate(metrics_only_config(), output_root)
+
+    assert (output_root / "bilibili-dislike-2026-03-23-v1").is_dir()
+    assert not (output_root / "index.json").exists()
 
 
 def test_passes_the_planned_section_input_to_the_runner(tmp_path) -> None:
@@ -141,6 +203,21 @@ def test_passes_the_planned_section_input_to_the_runner(tmp_path) -> None:
     )
 
     assert captured_inputs == [{"fixtureFlag": "preserved"}]
+
+
+def test_reports_ordered_section_progress_without_changing_generation(tmp_path) -> None:
+    progress: list[tuple[SectionId | None, int]] = []
+
+    result = build_service(StubNarrator()).generate(
+        metrics_only_config(),
+        tmp_path / "out",
+        progress_callback=lambda section_id, completed: progress.append(
+            (section_id, completed)
+        ),
+    )
+
+    assert result.report_id == "bilibili-dislike-2026-03-23-v1"
+    assert progress == [(SectionId.METRICS, 0), (None, 1)]
 
 
 def test_unimplemented_sections_become_visible_failures_instead_of_crashing(tmp_path) -> None:
@@ -168,3 +245,21 @@ def test_unimplemented_sections_become_visible_failures_instead_of_crashing(tmp_
             "message": "Section is not implemented",
         }
     ]
+
+
+def test_unimplemented_section_uses_the_requested_English_presentation(tmp_path) -> None:
+    raw = sample_config()
+    raw["language"] = "en"
+    raw["sections"] = [
+        {"id": "metrics", "enabled": True},
+        {"id": "trend", "enabled": True},
+    ]
+
+    result = build_service(StubNarrator()).generate(
+        ReportConfig.model_validate(raw),
+        tmp_path / "out",
+    )
+
+    assert "## Volume trend" in result.markdown
+    assert "This section could not be generated" in result.markdown
+    assert "本章节生成失败" not in result.markdown

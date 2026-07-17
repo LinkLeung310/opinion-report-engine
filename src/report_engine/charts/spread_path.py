@@ -14,6 +14,8 @@ from matplotlib.patches import Patch, Rectangle
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import select
 from report_engine.sections.spread_path import SpreadPathSnapshot
 
 
@@ -31,7 +33,12 @@ class SpreadPathChartBuilder:
             }
         )
 
-    def build(self, snapshot: SpreadPathSnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: SpreadPathSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if snapshot.platform_count < 2:
             raise ValueError("cannot chart spread path without multiple platforms")
 
@@ -84,7 +91,10 @@ class SpreadPathChartBuilder:
                 range(len(platforms)),
                 [observation.platform for observation in platforms],
             )
-            axes.set_ylabel("首次收录顺序", color=ChartTheme.MUTED)
+            axes.set_ylabel(
+                select(language, "首次收录顺序", "First-observed order"),
+                color=ChartTheme.MUTED,
+            )
             axes.set_xticks(
                 [index - 0.5 for index in range(1, len(days))],
                 minor=True,
@@ -136,8 +146,13 @@ class SpreadPathChartBuilder:
                 )
 
             figure.suptitle(
-                f"{snapshot.platform_count} 个平台的首次收录间隔 "
-                f"{snapshot.first_observation_interval_hours:.1f} 小时",
+                select(
+                    language,
+                    f"{snapshot.platform_count} 个平台的首次收录间隔 "
+                    f"{snapshot.first_observation_interval_hours:.1f} 小时",
+                    f"{snapshot.platform_count} platforms observed across "
+                    f"{snapshot.first_observation_interval_hours:.1f} hours",
+                ),
                 x=0.08,
                 y=0.97,
                 ha="left",
@@ -150,7 +165,11 @@ class SpreadPathChartBuilder:
                         facecolor="none",
                         edgecolor=ChartTheme.NEGATIVE,
                         linewidth=2,
-                        label="首次收录单元格 / 波次",
+                        label=select(
+                            language,
+                            "首次收录单元格 / 波次",
+                            "First-observed cell / wave",
+                        ),
                     ),
                 ),
                 frameon=False,
@@ -160,7 +179,13 @@ class SpreadPathChartBuilder:
             figure.text(
                 0.08,
                 0.025,
-                "数字为当日收录量；波次只表示首次收录时间，不代表转载边或因果路径。",
+                select(
+                    language,
+                    "数字为当日收录量；波次只表示首次收录时间，"
+                    "不代表转载边或因果路径。",
+                    "Numbers are daily observed counts; waves show timing, not repost "
+                    "edges or causality.",
+                ),
                 color=ChartTheme.MUTED,
                 fontsize=8.2,
             )

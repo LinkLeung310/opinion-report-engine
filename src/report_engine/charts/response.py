@@ -11,6 +11,8 @@ from matplotlib.font_manager import FontProperties, fontManager
 
 from report_engine.assets import report_font_path
 from report_engine.charts.theme import ChartTheme
+from report_engine.config import Language
+from report_engine.presentation import sentiment_label, select, unavailable
 from report_engine.sections.response import ResponseSnapshot, ResponseWindowStats
 
 
@@ -18,11 +20,16 @@ class ResponseChartBuilder:
     filename = "response-window-comparison.png"
 
     @staticmethod
-    def _share_label(side: ResponseWindowStats) -> str:
+    def _share_label(side: ResponseWindowStats, language: Language) -> str:
         share = side.share("negative")
-        return "不可用" if share is None else f"{share:.1%}"
+        return unavailable(language) if share is None else f"{share:.1%}"
 
-    def build(self, snapshot: ResponseSnapshot, output_directory: Path) -> Path:
+    def build(
+        self,
+        snapshot: ResponseSnapshot,
+        output_directory: Path,
+        language: Language = Language.ZH,
+    ) -> Path:
         if not snapshot.has_comparison_data:
             raise ValueError("cannot chart an empty response comparison")
 
@@ -44,33 +51,51 @@ class ResponseChartBuilder:
         with rc_context(
             {"font.sans-serif": [font_family], "axes.unicode_minus": False}
         ):
-            figure = Figure(figsize=(6.8, 3.65))
+            figure = Figure(
+                figsize=(6.8, 3.95 if language is Language.EN else 3.65)
+            )
             FigureCanvasAgg(figure)
             axes = figure.subplots()
             ChartTheme.apply(figure, axes)
-            axes.bar(positions, positive, color=ChartTheme.POSITIVE, label="正面")
+            axes.bar(
+                positions,
+                positive,
+                color=ChartTheme.POSITIVE,
+                label=sentiment_label("positive", language),
+            )
             axes.bar(
                 positions,
                 neutral,
                 bottom=positive,
                 color=ChartTheme.NEUTRAL,
-                label="中性",
+                label=sentiment_label("neutral", language),
             )
             axes.bar(
                 positions,
                 negative,
                 bottom=negative_bottom,
                 color=ChartTheme.NEGATIVE,
-                label="负面",
+                label=sentiment_label("negative", language),
             )
             axes.set_xticks(
                 positions,
                 [
-                    f"回应前\n{pre.date_range_label}",
-                    f"回应后\n{post.date_range_label}",
+                    select(
+                        language,
+                        f"回应前\n{pre.date_range_label}",
+                        f"Before response\n{pre.date_range_label}",
+                    ),
+                    select(
+                        language,
+                        f"回应后\n{post.date_range_label}",
+                        f"After response\n{post.date_range_label}",
+                    ),
                 ],
             )
-            axes.set_ylabel("收录篇数", color=ChartTheme.MUTED)
+            axes.set_ylabel(
+                select(language, "收录篇数", "Observed articles"),
+                color=ChartTheme.MUTED,
+            )
             maximum = max(pre.article_count, post.article_count, 1)
             axes.set_ylim(0, maximum * 1.38)
             axes.set_yticks(range(0, maximum + 1))
@@ -78,8 +103,14 @@ class ResponseChartBuilder:
                 axes.text(
                     position,
                     side.article_count + maximum * 0.06,
-                    f"{side.article_count} 篇｜日均 {side.daily_average:.1f}\n"
-                    f"负面 {self._share_label(side)}",
+                    select(
+                        language,
+                        f"{side.article_count} 篇｜日均 {side.daily_average:.1f}\n"
+                        f"负面 {self._share_label(side, language)}",
+                        f"{side.article_count} articles | daily avg "
+                        f"{side.daily_average:.1f}\nNegative "
+                        f"{self._share_label(side, language)}",
+                    ),
                     ha="center",
                     va="bottom",
                     color=ChartTheme.TEXT,
@@ -87,8 +118,15 @@ class ResponseChartBuilder:
                 )
 
             figure.suptitle(
-                f"回应日前后收录 {pre.article_count}→{post.article_count} 篇，"
-                f"负面占比 {self._share_label(pre)}→{self._share_label(post)}",
+                select(
+                    language,
+                    f"回应日前后收录 {pre.article_count}→{post.article_count} 篇，"
+                    f"负面占比 {self._share_label(pre, language)}→"
+                    f"{self._share_label(post, language)}",
+                    f"Observed volume {pre.article_count}→{post.article_count}; "
+                    f"negative share {self._share_label(pre, language)}→"
+                    f"{self._share_label(post, language)}",
+                ),
                 x=0.08,
                 y=0.98,
                 ha="left",
@@ -101,19 +139,29 @@ class ResponseChartBuilder:
                 labels,
                 frameon=False,
                 ncol=3,
-                loc="upper right",
-                bbox_to_anchor=(0.97, 0.98),
+                loc="upper center" if language is Language.EN else "upper right",
+                bbox_to_anchor=(
+                    (0.72, 0.86) if language is Language.EN else (0.97, 0.98)
+                ),
             )
             figure.text(
                 0.08,
                 0.015,
-                f"等长窗口：{pre.date_range_label} 与 {post.date_range_label}；"
-                f"回应日 {snapshot.window.response_date.isoformat()} 整体排除。"
-                "前后差异仅为观察结果，不证明因果或回应效果。",
+                select(
+                    language,
+                    f"等长窗口：{pre.date_range_label} 与 {post.date_range_label}；"
+                    f"回应日 {snapshot.window.response_date.isoformat()} 整体排除。"
+                    "前后差异仅为观察结果，不证明因果或回应效果。",
+                    f"Equal windows: {pre.date_range_label} and {post.date_range_label}; "
+                    f"response day {snapshot.window.response_date.isoformat()} excluded. "
+                    "Observed differences do not establish causality or effectiveness.",
+                ),
                 color=ChartTheme.MUTED,
                 fontsize=8.2,
             )
-            figure.tight_layout(rect=(0, 0.09, 1, 0.86))
+            figure.tight_layout(
+                rect=(0, 0.09, 1, 0.70 if language is Language.EN else 0.86)
+            )
 
             output_path = output_directory / self.filename
             figure.savefig(

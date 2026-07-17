@@ -19,6 +19,27 @@ The fixture data is deliberately synthetic and deterministic. It resembles a pla
 multi-platform event only so that calculations, edge cases, and visual output can be
 reviewed without leaking production data.
 
+## Shared language contract
+
+`language` selects one presentation pipeline, not separate section implementations.
+For `en`, every engine-owned report title suffix, scope/method note, section heading,
+status or failure message, fact label, fixed playbook label, chart title, legend, axis,
+annotation, and PDF metadata title is English. A missing English string must fail a
+test; it must not silently fall back to Chinese.
+
+The engine does not translate or rewrite provenance-bearing content. User-supplied
+topic text and `biz-impact` notes, stored platform/proper names, exact source titles and
+summaries, and exact phrases or indicators extracted from those sources may retain
+their original language. English narration must frame such content as preserved source
+material rather than presenting an engine-owned Chinese label as a quotation. Numeric
+facts keep the same raw value and provenance in both languages; only their display
+labels, unavailable markers, units, and surrounding prose change.
+
+The same rule applies to visible partial results: `no_data` and `failed` fragments are
+localized before report assembly, and one failed English section cannot cause a Chinese
+generic fallback. Charts receive the configured language explicitly so that image text
+follows the same contract as Markdown, PDF, and metadata.
+
 ## `metrics` — 全网数据概览
 
 Purpose: give the reader a compact, auditable overview of the selected monitoring scope.

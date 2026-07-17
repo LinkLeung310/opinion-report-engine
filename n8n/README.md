@@ -10,10 +10,17 @@ manual trigger
   -> completed / failed / continue polling
 ```
 
-The workflow is intentionally inactive until the FastAPI endpoints exist. It contains
-no database queries, LLM nodes, credentials, or report calculations; the Python engine
-remains the source of truth required by the assignment.
+The FastAPI endpoints now exist, but the repository copy remains intentionally inactive.
+Import and run it manually only while the local API is reachable. It contains no database
+queries, LLM nodes, credentials, or report calculations; the Python engine remains the
+source of truth required by the assignment.
 
 Both HTTP nodes retry transient failures and route persistent failures to a visible
-`API Error` terminal node. After importing or updating the workflow, inspect its
-connections in n8n before activation.
+`API Error` terminal that marks the execution failed. A report-level `failed` status does
+the same, while `completed` preserves the API response with its PDF and ZIP download
+paths. After importing or updating the workflow, inspect its connections in n8n before
+any manual execution.
+
+`Submit Report` sends `Idempotency-Key: {{ $execution.id }}`. Retries inside one n8n
+execution therefore resolve to the same M3 task, while a later manual execution remains
+a distinct report request. This identifier is not an authentication credential.
