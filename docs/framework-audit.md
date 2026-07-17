@@ -1,6 +1,7 @@
 # Framework Coverage Audit
 
-Authoritative source: `docs/source/2026-07-11-舆情报告生成模块 — 开发任务书.md`.
+Authoritative source: the interview assignment supplied outside the repository; its
+repository-safe requirement summary is `docs/requirements-traceability.md`.
 
 This audit checks framework coverage, not implementation completion. `PASS` means the
 final framework assigns an owner, behavior, and verification method to the requirement.

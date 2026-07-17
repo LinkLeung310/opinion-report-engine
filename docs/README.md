@@ -4,13 +4,13 @@
 
 ## Binding source
 
-- [`source/2026-07-11-舆情报告生成模块 — 开发任务书.md`](source/2026-07-11-舆情报告生成模块%20%E2%80%94%20开发任务书.md)：面试方任务书的本地副本；固定契约和工作约定的最高仓库内来源。
+- 面试方原始任务书不保存在仓库。用户在当前任务中重新提供时作为仓库外输入读取；仓库内以 [`requirements-traceability.md`](requirements-traceability.md) 保存条款摘要和验证映射。
 
 ## Governance and current truth
 
 - [`../AGENTS.md`](../AGENTS.md)：所有 Codex 工作的长期入口、来源优先级和不可越过的工程规则。
 - [`current-state.md`](current-state.md)：最后一次确认过的实现状态、证据、未完成项和恢复步骤；不定义新需求。
-- [`requirements-traceability.md`](requirements-traceability.md)：任务书条款到设计责任和验证证据的映射。
+- [`requirements-traceability.md`](requirements-traceability.md)：任务书条款摘要到设计责任和验证证据的映射。
 
 ## Project-owned design
 
